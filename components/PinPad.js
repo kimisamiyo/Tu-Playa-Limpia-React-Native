@@ -1,55 +1,166 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SIZES } from '../constants/theme';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withSpring,
+    withTiming,
+} from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import ScalePressable from './ScalePressable';
+import { useTheme } from '../context/ThemeContext';
+import { rs, rf, SCREEN } from '../constants/responsive';
+import { SPRING } from '../constants/animations';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PREMIUM PIN PAD - Glassmorphism-styled numeric keypad
+// ═══════════════════════════════════════════════════════════════════════════
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+// Single key component with premium styling
+const PinKey = ({ value, onPress, children, variant = 'number' }) => {
+    const { colors, isDark } = useTheme();
+    const scale = useSharedValue(1);
+    const bgOpacity = useSharedValue(0);
+
+    const handlePressIn = () => {
+        scale.value = withSpring(0.92, SPRING.snappy);
+        bgOpacity.value = withTiming(1, { duration: 100 });
+    };
+
+    const handlePressOut = () => {
+        scale.value = withSpring(1, SPRING.snappy);
+        bgOpacity.value = withTiming(0, { duration: 200 });
+    };
+
+    const handlePress = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress?.(value);
+    };
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
+    }));
+
+    const bgStyle = useAnimatedStyle(() => ({
+        opacity: bgOpacity.value,
+    }));
+
+    const getKeyColor = () => {
+        if (variant === 'biometric') return colors.accent;
+        if (variant === 'delete') return colors.textSecondary;
+        return colors.text;
+    };
+
+    // Calculate responsive key size
+    const keySize = Math.min(rs(75), (SCREEN.width - rs(100)) / 3);
+
+    return (
+        <AnimatedPressable
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            onPress={handlePress}
+            style={[
+                styles.keyWrapper,
+                { width: keySize, height: keySize },
+                animatedStyle,
+            ]}
+        >
+            {/* Glass background */}
+            <View
+                style={[
+                    styles.keyGlass,
+                    {
+                        backgroundColor: isDark
+                            ? 'rgba(255, 255, 255, 0.06)'
+                            : 'rgba(0, 51, 78, 0.04)',
+                        borderColor: isDark
+                            ? 'rgba(255, 255, 255, 0.1)'
+                            : 'rgba(0, 51, 78, 0.08)',
+                    },
+                ]}
+            >
+                {/* Press highlight */}
+                <Animated.View
+                    style={[
+                        styles.keyHighlight,
+                        {
+                            backgroundColor: isDark
+                                ? 'rgba(255, 255, 255, 0.15)'
+                                : 'rgba(0, 51, 78, 0.08)',
+                        },
+                        bgStyle,
+                    ]}
+                />
+
+                {/* Content */}
+                {children || (
+                    <Text style={[styles.keyNumber, { color: getKeyColor() }]}>
+                        {value}
+                    </Text>
+                )}
+            </View>
+        </AnimatedPressable>
+    );
+};
 
 export default function PinPad({ onPinPress, onBiometricPress, onDeletePress }) {
-
-    const handlePress = (val) => {
-        // Haptic feedback moved here for self-containment, or keep in parent based on preference.
-        // Parent logic currently handles logic, we just trigger.
-        onPinPress(val);
-    };
+    const { colors, isDark } = useTheme();
 
     const numbers = [
         [1, 2, 3],
         [4, 5, 6],
         [7, 8, 9],
-        ['bio', 0, 'del']
+        ['bio', 0, 'del'],
     ];
 
     return (
         <View style={styles.container}>
             {numbers.map((row, rowIndex) => (
                 <View key={rowIndex} style={styles.row}>
-                    {row.map((item, colIndex) => {
-                        // Render Biometric Button
+                    {row.map((item) => {
+                        // Biometric button
                         if (item === 'bio') {
                             return (
-                                <ScalePressable key={item} style={styles.keyWrapper} onPress={onBiometricPress}>
-                                    <Ionicons name="finger-print" size={32} color={COLORS.highlight} />
-                                </ScalePressable>
+                                <PinKey
+                                    key={item}
+                                    value={item}
+                                    onPress={onBiometricPress}
+                                    variant="biometric"
+                                >
+                                    <Ionicons
+                                        name="finger-print"
+                                        size={rs(32)}
+                                        color={colors.accent}
+                                    />
+                                </PinKey>
                             );
                         }
-                        // Render Delete Button
+                        // Delete button
                         if (item === 'del') {
                             return (
-                                <ScalePressable key={item} style={styles.keyWrapper} onPress={onDeletePress}>
-                                    <Ionicons name="backspace-outline" size={28} color={COLORS.accent} />
-                                </ScalePressable>
+                                <PinKey
+                                    key={item}
+                                    value={item}
+                                    onPress={onDeletePress}
+                                    variant="delete"
+                                >
+                                    <Ionicons
+                                        name="backspace-outline"
+                                        size={rs(28)}
+                                        color={isDark ? colors.textSecondary : colors.textMuted}
+                                    />
+                                </PinKey>
                             );
                         }
-                        // Render Number Button
+                        // Number button
                         return (
-                            <ScalePressable
+                            <PinKey
                                 key={item}
-                                style={styles.keyWrapper}
-                                onPress={() => onPinPress(item.toString())}
-                            >
-                                <Text style={styles.number}>{item}</Text>
-                            </ScalePressable>
+                                value={item.toString()}
+                                onPress={onPinPress}
+                            />
                         );
                     })}
                 </View>
@@ -62,24 +173,35 @@ const styles = StyleSheet.create({
     container: {
         width: '100%',
         alignItems: 'center',
-        paddingHorizontal: 20,
+        paddingHorizontal: rs(20),
     },
     row: {
         flexDirection: 'row',
         justifyContent: 'space-evenly',
         width: '100%',
-        maxWidth: 350, // Constrain width on tablets
-        marginBottom: 20, // Increased spacing for comfort
+        maxWidth: rs(350),
+        marginBottom: rs(16),
     },
     keyWrapper: {
-        width: 70, // Slightly larger touch target
-        height: 70,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    number: {
-        fontSize: 28,
-        color: '#fff',
+    keyGlass: {
+        width: '100%',
+        height: '100%',
+        borderRadius: rs(24),
+        borderWidth: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden',
+    },
+    keyHighlight: {
+        ...StyleSheet.absoluteFillObject,
+        borderRadius: rs(24),
+    },
+    keyNumber: {
+        fontSize: rf(28),
         fontWeight: '400',
-    }
+        letterSpacing: 1,
+    },
 });

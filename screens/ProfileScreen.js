@@ -1,39 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-    View, Text, StyleSheet, ScrollView, TouchableOpacity,
-    TextInput, Image, Alert, Dimensions, Modal, Platform
+    View, Text, StyleSheet, ScrollView,
+    TextInput, Image, Alert, Modal, Platform, Switch
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as Haptics from 'expo-haptics';
+import Animated, {
+    FadeInDown,
+    FadeInUp,
+    useSharedValue,
+    useAnimatedStyle,
+    withSpring,
+    withTiming,
+} from 'react-native-reanimated';
 import { useGame } from '../context/GameContext';
-import { COLORS, SIZES, SHADOWS } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { BRAND } from '../constants/theme';
+import { rs, rf, rh, SPACING, RADIUS, SCREEN } from '../constants/responsive';
+import { SPRING } from '../constants/animations';
 import LivingWater from '../components/LivingWater';
+import FloatingBubbles from '../components/premium/FloatingBubbles';
+import GlassCard from '../components/premium/GlassCard';
+import ScalePressable from '../components/ScalePressable';
 
-const { width, height } = Dimensions.get('window');
-const isSmallDevice = width < 375;
-const scale = width / 375; // Base design on iPhone X width
+// ═══════════════════════════════════════════════════════════════════════════
+// PREMIUM PROFILE SCREEN
+// ═══════════════════════════════════════════════════════════════════════════
 
 export default function ProfileScreen({ navigation }) {
     const { user, updateUserProfile, nfts, points, level, scannedItems } = useGame();
+    const { colors, shadows, isDark, themeMode, setDarkMode, setLightMode, setSystemMode, THEME_MODES } = useTheme();
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState(user.name);
     const [showImagePicker, setShowImagePicker] = useState(false);
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
 
-    // Show success toast
+    // Animation values
+    const toastOpacity = useSharedValue(0);
+    const toastY = useSharedValue(rs(-50));
+
     const showSuccess = (message) => {
         setSuccessMessage(message);
         setShowSuccessToast(true);
-        setTimeout(() => setShowSuccessToast(false), 2500);
+        toastOpacity.value = withSpring(1);
+        toastY.value = withSpring(0);
+        setTimeout(() => {
+            toastOpacity.value = withTiming(0, { duration: 300 });
+            toastY.value = withTiming(rs(-50), { duration: 300 });
+            setTimeout(() => setShowSuccessToast(false), 300);
+        }, 2500);
     };
 
-    // Pick image from gallery
+    // Image picker functions
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
-            Alert.alert('Permiso Requerido', 'Necesitamos acceso a tu galería para cambiar la foto de perfil.');
+            Alert.alert('Permiso Requerido', 'Necesitamos acceso a tu galería.');
             return;
         }
 
@@ -51,11 +76,10 @@ export default function ProfileScreen({ navigation }) {
         setShowImagePicker(false);
     };
 
-    // Take photo with camera
     const takePhoto = async () => {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
-            Alert.alert('Permiso Requerido', 'Necesitamos acceso a tu cámara para tomar una foto.');
+            Alert.alert('Permiso Requerido', 'Necesitamos acceso a tu cámara.');
             return;
         }
 
@@ -72,564 +96,533 @@ export default function ProfileScreen({ navigation }) {
         setShowImagePicker(false);
     };
 
-    // Handle username change - Direct save without confirmation dialog
     const handleSaveName = () => {
-        console.log('=== handleSaveName START ===');
-        console.log('Current user.name:', user.name);
-        console.log('New name to save:', newName);
-        console.log('hasChangedUsername:', user.hasChangedUsername);
-
-        // Already changed check
         if (user.hasChangedUsername) {
-            Alert.alert(
-                'Cambio No Permitido',
-                'Solo puedes cambiar tu nombre de usuario una vez por razones de seguridad Web3.'
-            );
+            Alert.alert('Cambio No Permitido', 'Solo puedes cambiar tu nombre una vez.');
             setIsEditingName(false);
             return;
         }
 
-        // Validate length
         const trimmedName = newName.trim();
         if (trimmedName.length < 3) {
             Alert.alert('Nombre Inválido', 'El nombre debe tener al menos 3 caracteres.');
             return;
         }
 
-        // Same name check
         if (trimmedName === user.name) {
             setIsEditingName(false);
             return;
         }
 
-        // Direct save - no confirmation dialog
-        console.log('=== SAVING NAME ===', trimmedName);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         updateUserProfile({ name: trimmedName });
         setIsEditingName(false);
         showSuccess('Nombre guardado');
-        console.log('=== handleSaveName END ===');
     };
 
+    // Theme mode selector
+    const handleThemeChange = (mode) => {
+        if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        if (mode === 'dark') setDarkMode();
+        else if (mode === 'light') setLightMode();
+        else setSystemMode();
+        showSuccess(`Tema: ${mode === 'system' ? 'Automático' : mode === 'dark' ? 'Oscuro' : 'Claro'}`);
+    };
+
+    const toastStyle = useAnimatedStyle(() => ({
+        opacity: toastOpacity.value,
+        transform: [{ translateY: toastY.value }],
+    }));
+
     return (
-        <View style={styles.container}>
-            <LinearGradient
-                colors={[COLORS.primary, '#00101a']}
-                style={StyleSheet.absoluteFill}
-            />
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            {/* Background */}
+            {isDark && (
+                <LinearGradient
+                    colors={[BRAND.oceanDeep, BRAND.oceanDark, BRAND.oceanMid]}
+                    style={StyleSheet.absoluteFill}
+                />
+            )}
+            {isDark && <FloatingBubbles count={6} minSize={4} maxSize={12} />}
             <View style={styles.bgContainer}>
                 <LivingWater />
             </View>
 
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                {/* Header with Back Button */}
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                        <Ionicons name="arrow-back" size={24} color="#fff" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Mi Perfil</Text>
-                    <View style={{ width: 40 }} />
-                </View>
-
-                {/* Profile Picture */}
-                <TouchableOpacity
-                    style={styles.avatarContainer}
-                    onPress={() => setShowImagePicker(true)}
+            <ScrollView
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Header */}
+                <Animated.View
+                    entering={FadeInDown.delay(100).springify()}
+                    style={styles.header}
                 >
-                    {user.avatar ? (
-                        <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
-                    ) : (
-                        <View style={styles.avatarPlaceholder}>
-                            <Text style={styles.avatarInitials}>{user.initials}</Text>
+                    <ScalePressable
+                        onPress={() => navigation.goBack()}
+                        style={[styles.backButton, { backgroundColor: colors.glass }]}
+                    >
+                        <Ionicons name="arrow-back" size={rs(24)} color={colors.text} />
+                    </ScalePressable>
+                    <Text style={[styles.headerTitle, { color: colors.text }]}>Mi Perfil</Text>
+                    <View style={{ width: rs(44) }} />
+                </Animated.View>
+
+                {/* Avatar */}
+                <Animated.View entering={FadeInUp.delay(200).springify()}>
+                    <ScalePressable
+                        style={styles.avatarContainer}
+                        onPress={() => setShowImagePicker(true)}
+                    >
+                        <LinearGradient
+                            colors={[BRAND.sandGold, BRAND.goldShimmer, BRAND.sandGold]}
+                            style={styles.avatarBorder}
+                        >
+                            {user.avatar ? (
+                                <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+                            ) : (
+                                <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surface }]}>
+                                    <Text style={[styles.avatarInitials, { color: colors.tabInactive }]}>
+                                        {user.initials}
+                                    </Text>
+                                </View>
+                            )}
+                        </LinearGradient>
+                        <View style={[styles.editBadge, { backgroundColor: colors.tabInactive }]}>
+                            <Ionicons name="camera" size={rs(16)} color="#fff" />
                         </View>
-                    )}
-                    <View style={styles.editBadge}>
-                        <Ionicons name="camera" size={16} color="#fff" />
-                    </View>
-                </TouchableOpacity>
+                    </ScalePressable>
+                </Animated.View>
 
                 {/* Username */}
-                <View style={styles.nameContainer}>
+                <Animated.View
+                    entering={FadeInUp.delay(300).springify()}
+                    style={styles.nameContainer}
+                >
                     {isEditingName ? (
                         <View style={styles.editNameContainer}>
                             <TextInput
-                                style={styles.nameInput}
+                                style={[styles.nameInput, { color: colors.text, borderColor: colors.border }]}
                                 value={newName}
                                 onChangeText={setNewName}
                                 placeholder="Nuevo nombre"
-                                placeholderTextColor="rgba(255,255,255,0.5)"
+                                placeholderTextColor={colors.textMuted}
                                 maxLength={20}
-                                autoFocus={true}
+                                autoFocus
                             />
-                            <TouchableOpacity
-                                onPress={() => {
-                                    console.log('Save button pressed');
-                                    handleSaveName();
-                                }}
-                                style={styles.saveButton}
-                                activeOpacity={0.7}
+                            <ScalePressable onPress={handleSaveName} style={[styles.saveButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.success }]}>
+                                <Ionicons name="checkmark" size={rs(20)} color="#fff" />
+                            </ScalePressable>
+                            <ScalePressable
+                                onPress={() => { setNewName(user.name); setIsEditingName(false); }}
+                                style={[styles.cancelButton, { backgroundColor: colors.glass }]}
                             >
-                                <Ionicons name="checkmark" size={20} color="#fff" />
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={() => {
-                                    setNewName(user.name);
-                                    setIsEditingName(false);
-                                }}
-                                style={styles.cancelButton}
-                                activeOpacity={0.7}
-                            >
-                                <Ionicons name="close" size={20} color="#fff" />
-                            </TouchableOpacity>
+                                <Ionicons name="close" size={rs(20)} color={colors.text} />
+                            </ScalePressable>
                         </View>
                     ) : (
-                        <TouchableOpacity
+                        <ScalePressable
                             onPress={() => !user.hasChangedUsername && setIsEditingName(true)}
                             style={styles.nameDisplay}
                         >
-                            <Text style={styles.userName}>{user.name}</Text>
+                            <Text style={[styles.userName, { color: colors.text }]}>{user.name}</Text>
                             {!user.hasChangedUsername && (
-                                <Ionicons name="pencil" size={16} color={COLORS.secondary} style={{ marginLeft: 10 }} />
+                                <Ionicons name="pencil" size={rs(16)} color={colors.textSecondary} style={{ marginLeft: rs(10) }} />
                             )}
-                        </TouchableOpacity>
+                        </ScalePressable>
                     )}
                     {user.hasChangedUsername && (
-                        <Text style={styles.nameLockedHint}>Nombre bloqueado (ya cambiado)</Text>
+                        <Text style={[styles.nameLockedHint, { color: colors.textMuted }]}>
+                            Nombre bloqueado (ya cambiado)
+                        </Text>
                     )}
-                </View>
+                </Animated.View>
 
                 {/* Level Badge */}
-                <View style={styles.levelBadge}>
-                    <Text style={styles.levelText}>NIVEL {level}</Text>
-                </View>
+                <Animated.View entering={FadeInUp.delay(350).springify()}>
+                    <LinearGradient
+                        colors={BRAND.goldShimmer ? [BRAND.sandGold, BRAND.goldShimmer] : ['#e8d5b5', '#FFD700']}
+                        style={[styles.levelBadge, shadows.goldGlow]}
+                    >
+                        <Text style={styles.levelText}>NIVEL {level}</Text>
+                    </LinearGradient>
+                </Animated.View>
 
                 {/* Stats Grid */}
-                <View style={styles.statsGrid}>
-                    <View style={styles.statItem}>
-                        <Text style={styles.statValue}>{nfts.length}</Text>
-                        <Text style={styles.statLabel}>NFTs</Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <Text style={styles.statValue}>{points}</Text>
-                        <Text style={styles.statLabel}>Puntos</Text>
-                    </View>
-                    <View style={styles.statDivider} />
-                    <View style={styles.statItem}>
-                        <Text style={styles.statValue}>{scannedItems.total}</Text>
-                        <Text style={styles.statLabel}>Escaneos</Text>
-                    </View>
-                </View>
+                <Animated.View entering={FadeInUp.delay(400).springify()}>
+                    <GlassCard variant="elevated" style={styles.statsCard}>
+                        <View style={styles.statsGrid}>
+                            <View style={styles.statItem}>
+                                <Text style={[styles.statValue, { color: colors.text }]}>{nfts.length}</Text>
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>NFTs</Text>
+                            </View>
+                            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                            <View style={styles.statItem}>
+                                <Text style={[styles.statValue, { color: colors.text }]}>{points}</Text>
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Puntos</Text>
+                            </View>
+                            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                            <View style={styles.statItem}>
+                                <Text style={[styles.statValue, { color: colors.text }]}>{scannedItems.total}</Text>
+                                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Escaneos</Text>
+                            </View>
+                        </View>
+                    </GlassCard>
+                </Animated.View>
+
+                {/* Theme Settings Section */}
+                <Animated.View entering={FadeInUp.delay(450).springify()}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Apariencia</Text>
+                    <GlassCard variant="default" style={styles.settingsCard}>
+                        <View style={styles.themeRow}>
+                            <View style={styles.themeInfo}>
+                                <Ionicons name={isDark ? 'moon' : 'sunny'} size={rs(22)} color={colors.accent} />
+                                <View style={{ marginLeft: SPACING.md }}>
+                                    <Text style={[styles.settingLabel, { color: colors.text }]}>Tema de la App</Text>
+                                    <Text style={[styles.settingHint, { color: colors.textMuted }]}>
+                                        {themeMode === THEME_MODES.SYSTEM
+                                            ? 'Sigue tu dispositivo'
+                                            : themeMode === THEME_MODES.DARK
+                                                ? 'Modo oscuro'
+                                                : 'Modo claro'}
+                                    </Text>
+                                </View>
+                            </View>
+                        </View>
+                        <View style={styles.themeButtons}>
+                            {[
+                                { mode: THEME_MODES.SYSTEM, icon: 'phone-portrait-outline', label: 'Auto' },
+                                { mode: THEME_MODES.LIGHT, icon: 'sunny-outline', label: 'Claro' },
+                                { mode: THEME_MODES.DARK, icon: 'moon-outline', label: 'Oscuro' },
+                            ].map(({ mode, icon, label }) => (
+                                <ScalePressable
+                                    key={mode}
+                                    style={[
+                                        styles.themeButton,
+                                        {
+                                            backgroundColor: themeMode === mode
+                                                ? (isDark ? colors.tabInactive : BRAND.oceanDark)
+                                                : colors.glass,
+                                            borderColor: themeMode === mode ? colors.accent : colors.border,
+                                        }
+                                    ]}
+                                    onPress={() => handleThemeChange(mode)}
+                                >
+                                    <Ionicons
+                                        name={icon}
+                                        size={rs(18)}
+                                        color={themeMode === mode ? '#fff' : colors.textSecondary}
+                                    />
+                                    <Text style={[
+                                        styles.themeButtonText,
+                                        { color: themeMode === mode ? '#fff' : colors.textSecondary }
+                                    ]}>
+                                        {label}
+                                    </Text>
+                                </ScalePressable>
+                            ))}
+                        </View>
+                    </GlassCard>
+                </Animated.View>
 
                 {/* Profile Info Cards */}
-                <View style={styles.infoSection}>
-                    <Text style={styles.sectionTitle}>Información Privada</Text>
-
-                    <View style={styles.infoCard}>
-                        <Ionicons name="calendar-outline" size={20} color={COLORS.secondary} />
+                <Animated.View entering={FadeInUp.delay(500).springify()}>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Información Privada</Text>
+                    <GlassCard variant="default" style={styles.infoCard}>
+                        <Ionicons name="calendar-outline" size={rs(20)} color={colors.accent} />
                         <View style={styles.infoContent}>
-                            <Text style={styles.infoLabel}>Fecha de Registro</Text>
-                            <Text style={styles.infoValue}>{user.joinDate}</Text>
+                            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Fecha de Registro</Text>
+                            <Text style={[styles.infoValue, { color: colors.text }]}>{user.joinDate}</Text>
                         </View>
-                    </View>
+                    </GlassCard>
 
-                    <View style={styles.infoCard}>
-                        <Ionicons name="wallet-outline" size={20} color={COLORS.secondary} />
+                    <GlassCard variant="default" style={styles.infoCard}>
+                        <Ionicons name="wallet-outline" size={rs(20)} color={colors.accent} />
                         <View style={styles.infoContent}>
-                            <Text style={styles.infoLabel}>Wallet Web3</Text>
-                            <Text style={styles.infoValue}>
+                            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Wallet Web3</Text>
+                            <Text style={[styles.infoValue, { color: colors.text }]}>
                                 {user.walletAddress || 'No conectada'}
                             </Text>
                         </View>
-                        <TouchableOpacity style={styles.connectButton}>
+                        <ScalePressable style={[styles.connectButton, { backgroundColor: colors.tabInactive }]}>
                             <Text style={styles.connectText}>CONECTAR</Text>
-                        </TouchableOpacity>
-                    </View>
+                        </ScalePressable>
+                    </GlassCard>
 
-                    <View style={styles.infoCard}>
-                        <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.secondary} />
+                    <GlassCard variant="default" style={styles.infoCard}>
+                        <Ionicons name="shield-checkmark-outline" size={rs(20)} color={colors.accent} />
                         <View style={styles.infoContent}>
-                            <Text style={styles.infoLabel}>Seguridad</Text>
-                            <Text style={styles.infoValue}>Cuenta Verificada</Text>
+                            <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>Seguridad</Text>
+                            <Text style={[styles.infoValue, { color: colors.text }]}>Cuenta Verificada</Text>
                         </View>
-                    </View>
-                </View>
+                    </GlassCard>
+                </Animated.View>
 
                 {/* Privacy Notice */}
-                <View style={styles.privacyNotice}>
-                    <Ionicons name="lock-closed" size={16} color="rgba(255,255,255,0.5)" />
-                    <Text style={styles.privacyText}>
-                        Tu información es privada y segura. Solo se comparte lo necesario para validar tus NFTs en la blockchain.
+                <Animated.View entering={FadeInUp.delay(550).springify()} style={styles.privacyNotice}>
+                    <Ionicons name="lock-closed" size={rs(14)} color={colors.textMuted} />
+                    <Text style={[styles.privacyText, { color: colors.textMuted }]}>
+                        Tu información es privada y segura. Solo se comparte lo necesario para validar tus NFTs.
                     </Text>
-                </View>
+                </Animated.View>
 
             </ScrollView>
 
             {/* Image Picker Modal */}
-            <Modal
-                visible={showImagePicker}
-                transparent={true}
-                animationType="slide"
-            >
+            <Modal visible={showImagePicker} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Cambiar Foto de Perfil</Text>
+                    <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+                        <Text style={[styles.modalTitle, { color: colors.text }]}>Cambiar Foto de Perfil</Text>
 
-                        <TouchableOpacity style={styles.modalOption} onPress={takePhoto}>
-                            <Ionicons name="camera" size={24} color={COLORS.secondary} />
-                            <Text style={styles.modalOptionText}>Tomar Foto</Text>
-                        </TouchableOpacity>
+                        <ScalePressable style={styles.modalOption} onPress={takePhoto}>
+                            <Ionicons name="camera" size={rs(24)} color={colors.accent} />
+                            <Text style={[styles.modalOptionText, { color: colors.text }]}>Tomar Foto</Text>
+                        </ScalePressable>
 
-                        <TouchableOpacity style={styles.modalOption} onPress={pickImage}>
-                            <Ionicons name="images" size={24} color={COLORS.secondary} />
-                            <Text style={styles.modalOptionText}>Elegir de Galería</Text>
-                        </TouchableOpacity>
+                        <ScalePressable style={styles.modalOption} onPress={pickImage}>
+                            <Ionicons name="images" size={rs(24)} color={colors.accent} />
+                            <Text style={[styles.modalOptionText, { color: colors.text }]}>Elegir de Galería</Text>
+                        </ScalePressable>
 
-                        <TouchableOpacity
-                            style={styles.modalCancel}
+                        <ScalePressable
+                            style={[styles.modalCancel, { backgroundColor: colors.glass }]}
                             onPress={() => setShowImagePicker(false)}
                         >
-                            <Text style={styles.modalCancelText}>Cancelar</Text>
-                        </TouchableOpacity>
+                            <Text style={[styles.modalCancelText, { color: colors.text }]}>Cancelar</Text>
+                        </ScalePressable>
                     </View>
                 </View>
             </Modal>
 
-            {/* Success Toast - Card Style */}
+            {/* Success Toast */}
             {showSuccessToast && (
-                <View style={styles.toastCard}>
-                    <View style={styles.toastIconBox}>
-                        <LinearGradient
-                            colors={[COLORS.accent, COLORS.secondary]}
-                            style={styles.toastIconGradient}
-                        >
-                            <Ionicons name="checkmark" size={20} color="#fff" />
-                        </LinearGradient>
-                    </View>
+                <Animated.View style={[styles.toastCard, { backgroundColor: colors.surface }, shadows.lg, toastStyle]}>
+                    <LinearGradient colors={isDark ? [BRAND.oceanLight, BRAND.oceanMid] : [BRAND.success, '#388e3c']} style={styles.toastIconGradient}>
+                        <Ionicons name="checkmark" size={rs(18)} color="#fff" />
+                    </LinearGradient>
                     <View style={styles.toastTextBox}>
-                        <Text style={styles.toastTitle}>Tu Playa Limpia</Text>
-                        <Text style={styles.toastMessage}>{successMessage}</Text>
+                        <Text style={[styles.toastTitle, { color: colors.text }]}>Tu Playa Limpia</Text>
+                        <Text style={[styles.toastMessage, { color: colors.textSecondary }]}>{successMessage}</Text>
                     </View>
-                </View>
+                </Animated.View>
             )}
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    bgContainer: {
-        ...StyleSheet.absoluteFillObject,
-        opacity: 0.2,
-    },
+    container: { flex: 1 },
+    bgContainer: { ...StyleSheet.absoluteFillObject, opacity: 0.2 },
     scrollContent: {
-        padding: Math.max(16, 20 * scale),
-        paddingTop: Platform.OS === 'ios' ? 60 : 50,
-        paddingBottom: 120,
+        padding: SPACING.lg,
+        paddingTop: Platform.OS === 'ios' ? rh(60) : rh(50),
+        paddingBottom: rh(120),
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 25 * scale,
+        marginBottom: SPACING.xl,
     },
     backButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: 'rgba(255,255,255,0.1)',
+        width: rs(44),
+        height: rs(44),
+        borderRadius: rs(22),
         justifyContent: 'center',
         alignItems: 'center',
     },
-    headerTitle: {
-        color: '#fff',
-        fontSize: Math.max(18, 20 * scale),
-        fontWeight: 'bold',
-    },
-    avatarContainer: {
-        alignSelf: 'center',
-        marginBottom: 20,
+    headerTitle: { fontSize: rf(20), fontWeight: '700' },
+
+    // Avatar
+    avatarContainer: { alignSelf: 'center', marginBottom: SPACING.lg },
+    avatarBorder: {
+        width: rs(124),
+        height: rs(124),
+        borderRadius: rs(62),
+        padding: rs(4),
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     avatarImage: {
-        width: Math.min(120, width * 0.3),
-        height: Math.min(120, width * 0.3),
-        borderRadius: Math.min(60, width * 0.15),
-        borderWidth: 3,
-        borderColor: COLORS.secondary,
+        width: rs(116),
+        height: rs(116),
+        borderRadius: rs(58),
     },
     avatarPlaceholder: {
-        width: Math.min(120, width * 0.3),
-        height: Math.min(120, width * 0.3),
-        borderRadius: Math.min(60, width * 0.15),
-        backgroundColor: COLORS.secondary,
+        width: rs(116),
+        height: rs(116),
+        borderRadius: rs(58),
         justifyContent: 'center',
         alignItems: 'center',
-        borderWidth: 3,
-        borderColor: 'rgba(255,255,255,0.3)',
     },
-    avatarInitials: {
-        color: '#fff',
-        fontSize: 40,
-        fontWeight: 'bold',
-    },
+    avatarInitials: { fontSize: rf(36), fontWeight: '700' },
     editBadge: {
         position: 'absolute',
-        bottom: 5,
-        right: 5,
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: COLORS.primary,
+        bottom: rs(4),
+        right: rs(4),
+        width: rs(36),
+        height: rs(36),
+        borderRadius: rs(18),
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
         borderColor: '#fff',
     },
-    nameContainer: {
-        alignItems: 'center',
-        marginBottom: 15,
-    },
-    nameDisplay: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    userName: {
-        color: '#fff',
-        fontSize: 24,
-        fontWeight: 'bold',
-    },
-    editNameContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
+
+    // Name
+    nameContainer: { alignItems: 'center', marginBottom: SPACING.md },
+    nameDisplay: { flexDirection: 'row', alignItems: 'center' },
+    userName: { fontSize: rf(24), fontWeight: '700' },
+    nameLockedHint: { fontSize: rf(11), marginTop: rs(4) },
+    editNameContainer: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
     nameInput: {
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        color: '#fff',
-        paddingHorizontal: 15,
-        paddingVertical: 12,
-        borderRadius: 12,
-        fontSize: Math.max(16, 18 * scale),
-        minWidth: Math.max(120, width * 0.35),
-        textAlign: 'center',
+        fontSize: rf(18),
+        fontWeight: '600',
+        paddingVertical: SPACING.sm,
+        paddingHorizontal: SPACING.md,
         borderWidth: 1,
-        borderColor: COLORS.secondary,
+        borderRadius: RADIUS.md,
+        minWidth: rs(150),
     },
     saveButton: {
-        marginLeft: 10,
-        backgroundColor: COLORS.secondary,
-        width: 44, // Apple HIG minimum touch target
-        height: 44,
-        borderRadius: 22,
+        width: rs(40),
+        height: rs(40),
+        borderRadius: rs(20),
         justifyContent: 'center',
         alignItems: 'center',
     },
     cancelButton: {
-        marginLeft: 8,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: rs(40),
+        height: rs(40),
+        borderRadius: rs(20),
         justifyContent: 'center',
         alignItems: 'center',
     },
-    nameLockedHint: {
-        color: 'rgba(255,255,255,0.5)',
-        fontSize: 11,
-        marginTop: 5,
-    },
+
+    // Level Badge
     levelBadge: {
         alignSelf: 'center',
-        backgroundColor: COLORS.secondary,
-        paddingHorizontal: 25,
-        paddingVertical: 8,
-        borderRadius: 20,
-        marginBottom: 25,
+        paddingVertical: SPACING.sm,
+        paddingHorizontal: SPACING.xl,
+        borderRadius: RADIUS.xl,
+        marginBottom: SPACING.lg,
     },
     levelText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 14,
+        fontSize: rf(12),
+        fontWeight: '800',
+        color: BRAND.oceanDark,
         letterSpacing: 2,
     },
-    statsGrid: {
-        flexDirection: 'row',
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius: 16,
-        padding: 20,
-        marginBottom: 25,
-    },
-    statItem: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    statValue: {
-        color: '#fff',
-        fontSize: 24,
-        fontWeight: 'bold',
-    },
-    statLabel: {
-        color: 'rgba(255,255,255,0.6)',
-        fontSize: 12,
-        marginTop: 5,
-    },
-    statDivider: {
-        width: 1,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-    },
-    infoSection: {
-        marginBottom: 20,
-    },
+
+    // Stats
+    statsCard: { marginBottom: SPACING.xl, padding: SPACING.lg },
+    statsGrid: { flexDirection: 'row', justifyContent: 'space-around' },
+    statItem: { flex: 1, alignItems: 'center' },
+    statValue: { fontSize: rf(24), fontWeight: '700' },
+    statLabel: { fontSize: rf(12), marginTop: rs(4), textTransform: 'uppercase' },
+    statDivider: { width: 1, height: '80%', alignSelf: 'center' },
+
+    // Section
     sectionTitle: {
-        color: COLORS.highlight,
-        fontSize: 14,
-        fontWeight: 'bold',
-        textTransform: 'uppercase',
-        letterSpacing: 1,
-        marginBottom: 15,
+        fontSize: rf(16),
+        fontWeight: '700',
+        marginBottom: SPACING.md,
+        marginTop: SPACING.sm,
     },
+
+    // Theme Settings
+    settingsCard: { marginBottom: SPACING.lg, padding: SPACING.md },
+    themeRow: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.md },
+    themeInfo: { flexDirection: 'row', alignItems: 'center' },
+    settingLabel: { fontSize: rf(14), fontWeight: '600' },
+    settingHint: { fontSize: rf(11), marginTop: rs(2) },
+    themeButtons: { flexDirection: 'row', gap: SPACING.sm },
+    themeButton: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: SPACING.sm,
+        paddingHorizontal: SPACING.sm,
+        borderRadius: RADIUS.md,
+        borderWidth: 1,
+        gap: rs(6),
+    },
+    themeButtonText: { fontSize: rf(12), fontWeight: '600' },
+
+    // Info Cards
     infoCard: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderRadius: 12,
-        padding: 15,
-        marginBottom: 10,
+        padding: SPACING.md,
+        marginBottom: SPACING.sm,
     },
-    infoContent: {
-        flex: 1,
-        marginLeft: 15,
-    },
-    infoLabel: {
-        color: 'rgba(255,255,255,0.5)',
-        fontSize: 11,
-        textTransform: 'uppercase',
-    },
-    infoValue: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: '600',
-        marginTop: 2,
-    },
+    infoContent: { flex: 1, marginLeft: SPACING.md },
+    infoLabel: { fontSize: rf(11), textTransform: 'uppercase', letterSpacing: 0.5 },
+    infoValue: { fontSize: rf(14), fontWeight: '600', marginTop: rs(2) },
     connectButton: {
-        backgroundColor: COLORS.secondary,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 15,
+        paddingVertical: SPACING.xs,
+        paddingHorizontal: SPACING.md,
+        borderRadius: RADIUS.sm,
     },
-    connectText: {
-        color: '#fff',
-        fontSize: 10,
-        fontWeight: 'bold',
-    },
+    connectText: { color: '#fff', fontSize: rf(10), fontWeight: '700' },
+
+    // Privacy
     privacyNotice: {
         flexDirection: 'row',
         alignItems: 'flex-start',
-        backgroundColor: 'rgba(0,0,0,0.3)',
-        borderRadius: 10,
-        padding: 15,
-        marginTop: 10,
+        marginTop: SPACING.md,
+        gap: SPACING.sm,
     },
-    privacyText: {
-        flex: 1,
-        color: 'rgba(255,255,255,0.5)',
-        fontSize: 12,
-        marginLeft: 10,
-        lineHeight: 18,
-    },
-    // Modal Styles
+    privacyText: { flex: 1, fontSize: rf(11), lineHeight: rf(16) },
+
+    // Modal
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.8)',
+        backgroundColor: 'rgba(0,0,0,0.6)',
         justifyContent: 'flex-end',
     },
     modalContent: {
-        backgroundColor: COLORS.primary,
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        padding: 20,
-        paddingBottom: 40,
+        borderTopLeftRadius: RADIUS.xl,
+        borderTopRightRadius: RADIUS.xl,
+        padding: SPACING.xl,
+        paddingBottom: rh(40),
     },
-    modalTitle: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 20,
-    },
+    modalTitle: { fontSize: rf(18), fontWeight: '700', textAlign: 'center', marginBottom: SPACING.lg },
     modalOption: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 15,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius: 12,
-        marginBottom: 10,
+        paddingVertical: SPACING.md,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: 'rgba(0,0,0,0.1)',
     },
-    modalOptionText: {
-        color: '#fff',
-        fontSize: 16,
-        marginLeft: 15,
-    },
+    modalOptionText: { fontSize: rf(16), marginLeft: SPACING.md },
     modalCancel: {
-        marginTop: 10,
-        padding: 15,
+        marginTop: SPACING.lg,
+        paddingVertical: SPACING.md,
+        borderRadius: RADIUS.md,
         alignItems: 'center',
     },
-    modalCancelText: {
-        color: 'rgba(255,255,255,0.6)',
-        fontSize: 16,
-    },
-    // Success Toast
-    successToast: {
-        position: 'absolute',
-        top: 80,
-        left: 20,
-        right: 20,
-        zIndex: 1000,
-    },
-    // Card-style Toast
+    modalCancelText: { fontSize: rf(16), fontWeight: '600' },
+
+    // Toast
     toastCard: {
         position: 'absolute',
-        top: 60,
-        left: 20,
-        right: 20,
-        height: 70,
-        backgroundColor: '#353535',
-        borderRadius: 20,
+        top: Platform.OS === 'ios' ? rh(60) : rh(40),
+        left: SPACING.lg,
+        right: SPACING.lg,
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 10,
-        zIndex: 1000,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 8,
-    },
-    toastIconBox: {
-        width: 50,
-        height: 50,
-        borderRadius: 10,
-        overflow: 'hidden',
+        padding: SPACING.md,
+        borderRadius: RADIUS.lg,
     },
     toastIconGradient: {
-        width: '100%',
-        height: '100%',
+        width: rs(36),
+        height: rs(36),
+        borderRadius: rs(18),
         justifyContent: 'center',
         alignItems: 'center',
     },
-    toastTextBox: {
-        flex: 1,
-        marginLeft: 12,
-    },
-    toastTitle: {
-        color: '#fff',
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
-    toastMessage: {
-        color: 'rgba(255,255,255,0.8)',
-        fontSize: 12,
-        marginTop: 2,
-    },
+    toastTextBox: { marginLeft: SPACING.md },
+    toastTitle: { fontSize: rf(12), fontWeight: '700' },
+    toastMessage: { fontSize: rf(11), marginTop: rs(2) },
 });

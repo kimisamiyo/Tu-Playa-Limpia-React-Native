@@ -6,10 +6,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './navigation/AppNavigator';
 import CustomSplash from './components/CustomSplash';
 import { GameProvider } from './context/GameContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 
-export default function App() {
+// Inner App component that can use theme
+function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isSplashVisible, setIsSplashVisible] = useState(true); // Show splash screen
+  const [isSplashVisible, setIsSplashVisible] = useState(true);
+  const { isDark } = useTheme();
 
   const handleSplashFinish = () => {
     setIsSplashVisible(false);
@@ -23,15 +26,24 @@ export default function App() {
     return <CustomSplash onAnimationFinish={handleSplashFinish} />;
   }
 
+  return (
+    <>
+      <NavigationContainer>
+        <AppNavigator isAuthenticated={isAuthenticated} onAuthSuccess={handleAuthenticated} />
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+      </NavigationContainer>
+    </>
+  );
+}
 
+export default function App() {
   return (
     <SafeAreaProvider style={{ flex: 1 }}>
-      <GameProvider>
-        <NavigationContainer>
-          <AppNavigator isAuthenticated={isAuthenticated} onAuthSuccess={handleAuthenticated} />
-          <StatusBar style="light" />
-        </NavigationContainer>
-      </GameProvider>
+      <ThemeProvider>
+        <GameProvider>
+          <AppContent />
+        </GameProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
@@ -44,3 +56,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+

@@ -1,0 +1,103 @@
+import { Dimensions, PixelRatio, Platform } from 'react-native';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RESPONSIVE UTILITIES - Scales UI perfectly across all device sizes
+// ═══════════════════════════════════════════════════════════════════════════
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+// Base design dimensions (iPhone 14 Pro as reference)
+const BASE_WIDTH = 393;
+const BASE_HEIGHT = 852;
+
+// Scale factors
+const widthScale = SCREEN_WIDTH / BASE_WIDTH;
+const heightScale = SCREEN_HEIGHT / BASE_HEIGHT;
+const scale = Math.min(widthScale, heightScale);
+
+/**
+ * Responsive width - scales based on screen width
+ * @param {number} size - Size in base design pixels
+ */
+export const rw = (size) => Math.round(size * widthScale);
+
+/**
+ * Responsive height - scales based on screen height
+ * @param {number} size - Size in base design pixels
+ */
+export const rh = (size) => Math.round(size * heightScale);
+
+/**
+ * Responsive size - scales based on smaller dimension (best for fonts/icons)
+ * @param {number} size - Size in base design pixels
+ */
+export const rs = (size) => Math.round(size * scale);
+
+/**
+ * Responsive font size with pixel ratio normalization
+ * @param {number} size - Font size in base design
+ */
+export const rf = (size) => {
+    const newSize = size * scale;
+    if (Platform.OS === 'ios') {
+        return Math.round(PixelRatio.roundToNearestPixel(newSize));
+    }
+    return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
+};
+
+// Device type detection
+export const isSmallDevice = SCREEN_WIDTH < 375;
+export const isMediumDevice = SCREEN_WIDTH >= 375 && SCREEN_WIDTH < 414;
+export const isLargeDevice = SCREEN_WIDTH >= 414;
+export const isTablet = SCREEN_WIDTH >= 768;
+
+// Screen dimensions
+export const SCREEN = {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    isSmall: isSmallDevice,
+    isMedium: isMediumDevice,
+    isLarge: isLargeDevice,
+    isTablet: isTablet,
+};
+
+// Responsive spacing scale (8px base grid)
+export const SPACING = {
+    xs: rs(4),
+    sm: rs(8),
+    md: rs(16),
+    lg: rs(24),
+    xl: rs(32),
+    xxl: rs(48),
+    xxxl: rs(64),
+};
+
+// Responsive border radius
+export const RADIUS = {
+    xs: rs(4),
+    sm: rs(8),
+    md: rs(12),
+    lg: rs(16),
+    xl: rs(24),
+    xxl: rs(32),
+    full: rs(999),
+};
+
+// Responsive icon sizes
+export const ICON_SIZE = {
+    xs: rs(16),
+    sm: rs(20),
+    md: rs(24),
+    lg: rs(32),
+    xl: rs(48),
+};
+
+// Responsive component heights
+export const HEIGHT = {
+    button: rh(52),
+    buttonSmall: rh(40),
+    input: rh(52),
+    tabBar: rh(70),
+    header: rh(56),
+    card: rh(180),
+};

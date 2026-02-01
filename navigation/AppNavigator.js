@@ -1,10 +1,13 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SHADOWS } from '../constants/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useGame } from '../context/GameContext';
+import { useTheme } from '../context/ThemeContext';
+import { BRAND } from '../constants/theme';
+import { rs, rh, SPACING, RADIUS, HEIGHT } from '../constants/responsive';
 
 // Screens
 import HomeScreen from '../screens/HomeScreen';
@@ -13,37 +16,53 @@ import AuthScreen from '../components/AuthScreen';
 import ScanScreen from '../screens/ScanScreen';
 import PromotionsScreen from '../screens/PromotionsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import BeachMapScreen from '../screens/BeachMapScreen';
 import AnimatedTabIcon from './AnimatedTabIcon';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Locked Screen Placeholder
-function LockedPromotionsScreen({ navigation }) {
+// ═══════════════════════════════════════════════════════════════════════════
+// LOCKED PROMOTIONS SCREEN
+// ═══════════════════════════════════════════════════════════════════════════
+function LockedPromotionsScreen() {
+    const { colors, isDark } = useTheme();
+
     return (
-        <View style={styles.lockedContainer}>
-            {/* Darkened Preview Background */}
+        <View style={[styles.lockedContainer, { backgroundColor: colors.background }]}>
+            {isDark && (
+                <LinearGradient
+                    colors={[BRAND.oceanDeep, BRAND.oceanDark]}
+                    style={StyleSheet.absoluteFill}
+                />
+            )}
             <View style={styles.lockedOverlay} />
 
-            {/* Lock Content */}
             <View style={styles.lockContent}>
-                <Text style={styles.lockEmoji}>🔒</Text>
-                <Text style={styles.lockTitle}>Promociones Bloqueadas</Text>
-                <Text style={styles.lockDesc}>
+                <Ionicons name="lock-closed" size={rs(60)} color={colors.textMuted} />
+                <Text style={[styles.lockTitle, { color: colors.text }]}>
+                    Promociones Bloqueadas
+                </Text>
+                <Text style={[styles.lockDesc, { color: colors.textSecondary }]}>
                     Alcanza Nivel 2 (8 NFTs) para desbloquear
                 </Text>
-                <Text style={styles.lockHint}>
-                    ¡Sigue escaneando basura y canjeando recompensas!
+                <Text style={[styles.lockHint, { color: colors.accent }]}>
+                    ¡Sigue escaneando y canjeando recompensas!
                 </Text>
             </View>
 
-            {/* Preview Cards (Blurred/Darkened) */}
             <View style={styles.previewContainer}>
                 {[1, 2, 3].map((i) => (
-                    <View key={i} style={styles.previewCard}>
-                        <View style={styles.previewBadge} />
-                        <View style={styles.previewLine} />
-                        <View style={styles.previewLineShort} />
+                    <View
+                        key={i}
+                        style={[
+                            styles.previewCard,
+                            { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }
+                        ]}
+                    >
+                        <View style={[styles.previewBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]} />
+                        <View style={[styles.previewLine, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
+                        <View style={[styles.previewLineShort, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]} />
                     </View>
                 ))}
             </View>
@@ -51,46 +70,71 @@ function LockedPromotionsScreen({ navigation }) {
     );
 }
 
-// Tab Icon with Lock indicator
-function LockedTabIcon({ name, size, color, focused, isLocked }) {
+// ═══════════════════════════════════════════════════════════════════════════
+// LOCKED TAB ICON
+// ═══════════════════════════════════════════════════════════════════════════
+function LockedTabIcon({ name, size, focused, isLocked }) {
+    const { colors, isDark } = useTheme();
+
     return (
         <View style={styles.tabIconContainer}>
             <Ionicons
-                name={name}
-                size={size}
-                color={isLocked ? 'rgba(255,255,255,0.3)' : color}
+                name={focused ? name : `${name}-outline`}
+                size={rs(size)}
+                color={isLocked
+                    ? (isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,51,78,0.25)')
+                    : (focused ? colors.tabActive : colors.tabInactive)
+                }
             />
             {isLocked && (
                 <View style={styles.lockBadge}>
-                    <Text style={styles.lockBadgeText}>🔒</Text>
+                    <Ionicons name="lock-closed" size={rs(10)} color={colors.textMuted} />
                 </View>
             )}
         </View>
     );
 }
 
-// Custom Tab Bar Design
+// ═══════════════════════════════════════════════════════════════════════════
+// PREMIUM FLOATING TAB BAR
+// ═══════════════════════════════════════════════════════════════════════════
 function TabNavigator() {
     const { level } = useGame();
+    const { colors, shadows, isDark } = useTheme();
     const isPromotionsLocked = level < 2;
 
     return (
         <Tab.Navigator
             screenOptions={{
                 headerShown: false,
-                tabBarStyle: styles.tabBar,
                 tabBarShowLabel: false,
-                tabBarActiveTintColor: COLORS.text,
-                tabBarInactiveTintColor: COLORS.textLight,
                 lazy: false,
+                tabBarStyle: [
+                    styles.tabBar,
+                    {
+                        backgroundColor: isDark ? colors.tabBar : 'rgba(0, 51, 78, 0.95)',
+                        borderColor: isDark ? colors.tabBarBorder : 'rgba(255,255,255,0.1)',
+                        ...shadows.xl,
+                    }
+                ],
             }}
         >
             <Tab.Screen
                 name="Inicio"
                 component={HomeScreen}
                 options={{
-                    tabBarIcon: ({ color, size, focused }) => (
-                        <AnimatedTabIcon name="home" size={24} color={color} focused={focused} />
+                    tabBarIcon: ({ focused }) => (
+                        <AnimatedTabIcon name="home" size={24} focused={focused} />
+                    )
+                }}
+            />
+
+            <Tab.Screen
+                name="Mapa"
+                component={BeachMapScreen}
+                options={{
+                    tabBarIcon: ({ focused }) => (
+                        <AnimatedTabIcon name="map" size={24} focused={focused} />
                     )
                 }}
             />
@@ -99,8 +143,8 @@ function TabNavigator() {
                 name="Escanear"
                 component={ScanScreen}
                 options={{
-                    tabBarIcon: ({ color, size, focused }) => (
-                        <AnimatedTabIcon name="scan" size={24} color={color} focused={focused} />
+                    tabBarIcon: ({ focused }) => (
+                        <AnimatedTabIcon name="scan" size={24} focused={focused} />
                     )
                 }}
             />
@@ -109,8 +153,8 @@ function TabNavigator() {
                 name="Premios"
                 component={RewardsScreen}
                 options={{
-                    tabBarIcon: ({ color, size, focused }) => (
-                        <AnimatedTabIcon name="trophy" size={24} color={color} focused={focused} />
+                    tabBarIcon: ({ focused }) => (
+                        <AnimatedTabIcon name="trophy" size={24} focused={focused} />
                     )
                 }}
             />
@@ -119,11 +163,10 @@ function TabNavigator() {
                 name="Promos"
                 component={isPromotionsLocked ? LockedPromotionsScreen : PromotionsScreen}
                 options={{
-                    tabBarIcon: ({ color, size, focused }) => (
+                    tabBarIcon: ({ focused }) => (
                         <LockedTabIcon
                             name="gift"
                             size={24}
-                            color={color}
                             focused={focused}
                             isLocked={isPromotionsLocked}
                         />
@@ -134,6 +177,9 @@ function TabNavigator() {
     );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN NAVIGATOR
+// ═══════════════════════════════════════════════════════════════════════════
 export default function AppNavigator({ isAuthenticated, onAuthSuccess }) {
     if (!isAuthenticated) {
         return (
@@ -158,106 +204,92 @@ export default function AppNavigator({ isAuthenticated, onAuthSuccess }) {
 }
 
 const styles = StyleSheet.create({
+    // Premium Floating Tab Bar
     tabBar: {
         position: 'absolute',
-        bottom: 25,
-        left: 20,
-        right: 20,
-        elevation: 0,
-        backgroundColor: COLORS.primary,
-        borderRadius: 35,
-        height: 70,
-        ...SHADOWS.medium,
-        borderTopWidth: 0,
+        bottom: rh(25),
+        left: rs(20),
+        right: rs(20),
+        height: HEIGHT.tabBar,
+        borderRadius: rs(35),
+        borderWidth: 1,
+        borderTopWidth: 1,
         paddingBottom: 0,
         paddingTop: 0,
-        justifyContent: 'center',
-        opacity: 0.98,
+        elevation: 0, // Remove Android default elevation
     },
+
     tabIconContainer: {
         alignItems: 'center',
         justifyContent: 'center',
     },
     lockBadge: {
         position: 'absolute',
-        top: -5,
-        right: -8,
+        top: rs(-4),
+        right: rs(-8),
     },
-    lockBadgeText: {
-        fontSize: 10,
-    },
-    // Locked Screen Styles
+
+    // Locked Screen
     lockedContainer: {
         flex: 1,
-        backgroundColor: COLORS.primary,
         justifyContent: 'center',
         alignItems: 'center',
     },
     lockedOverlay: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.7)',
+        backgroundColor: 'rgba(0,0,0,0.3)',
     },
     lockContent: {
         alignItems: 'center',
         zIndex: 10,
-        padding: 30,
-    },
-    lockEmoji: {
-        fontSize: 60,
-        marginBottom: 20,
+        padding: SPACING.xl,
     },
     lockTitle: {
-        color: '#fff',
-        fontSize: 22,
-        fontWeight: 'bold',
-        marginBottom: 10,
+        fontSize: rs(22),
+        fontWeight: '700',
+        marginTop: SPACING.lg,
+        marginBottom: SPACING.sm,
     },
     lockDesc: {
-        color: 'rgba(255,255,255,0.7)',
-        fontSize: 14,
+        fontSize: rs(14),
         textAlign: 'center',
-        marginBottom: 5,
     },
     lockHint: {
-        color: COLORS.secondary,
-        fontSize: 12,
+        fontSize: rs(12),
         textAlign: 'center',
-        marginTop: 10,
+        marginTop: SPACING.md,
+        fontWeight: '600',
     },
     previewContainer: {
         position: 'absolute',
-        bottom: 150,
-        left: 20,
-        right: 20,
-        opacity: 0.3,
+        bottom: rh(120),
+        left: SPACING.lg,
+        right: SPACING.lg,
+        opacity: 0.4,
     },
     previewCard: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius: 12,
-        padding: 15,
-        marginBottom: 10,
-        height: 80,
+        borderRadius: RADIUS.lg,
+        padding: SPACING.md,
+        marginBottom: SPACING.sm,
+        height: rh(70),
     },
     previewBadge: {
         position: 'absolute',
-        top: 10,
-        right: 10,
-        width: 40,
-        height: 20,
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        borderRadius: 10,
+        top: SPACING.sm,
+        right: SPACING.sm,
+        width: rs(40),
+        height: rs(18),
+        borderRadius: RADIUS.sm,
     },
     previewLine: {
         width: '60%',
-        height: 12,
-        backgroundColor: 'rgba(255,255,255,0.15)',
-        borderRadius: 6,
-        marginBottom: 8,
+        height: rs(12),
+        borderRadius: RADIUS.xs,
+        marginBottom: SPACING.xs,
     },
     previewLineShort: {
         width: '40%',
-        height: 10,
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        borderRadius: 5,
+        height: rs(10),
+        borderRadius: RADIUS.xs,
     },
 });

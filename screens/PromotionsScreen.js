@@ -1,13 +1,30 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withSpring,
+    FadeInDown,
+    FadeInUp,
+} from 'react-native-reanimated';
 import { useGame } from '../context/GameContext';
-import { COLORS, SHADOWS } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { BRAND } from '../constants/theme';
+import { rs, rf, rh, SPACING, RADIUS, SCREEN } from '../constants/responsive';
+import { SPRING } from '../constants/animations';
 import LivingWater from '../components/LivingWater';
+import FloatingBubbles from '../components/premium/FloatingBubbles';
+import GlassCard from '../components/premium/GlassCard';
 
-const { width } = Dimensions.get('window');
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// Sample promotions data
+// ═══════════════════════════════════════════════════════════════════════════
+// SAMPLE PROMOTIONS DATA
+// ═══════════════════════════════════════════════════════════════════════════
 const PROMOTIONS = [
     {
         id: 1,
@@ -16,7 +33,8 @@ const PROMOTIONS = [
         discount: '20%',
         validUntil: '31/03/2026',
         partner: 'EcoStore',
-        color: ['#134e5e', '#71b280'],
+        icon: 'leaf',
+        gradient: ['#134e5e', '#71b280'],
     },
     {
         id: 2,
@@ -25,7 +43,8 @@ const PROMOTIONS = [
         discount: 'GRATIS',
         validUntil: '15/02/2026',
         partner: 'Clean Ocean Co.',
-        color: ['#0f2027', '#203a43', '#2c5364'],
+        icon: 'water',
+        gradient: ['#0f2027', '#203a43', '#2c5364'],
     },
     {
         id: 3,
@@ -34,7 +53,8 @@ const PROMOTIONS = [
         discount: '2x1',
         validUntil: '28/02/2026',
         partner: 'AquaAdventures',
-        color: ['#1a2a6c', '#b21f1f', '#fdbb2d'],
+        icon: 'fish',
+        gradient: ['#1a2a6c', '#4b79a1'],
     },
     {
         id: 4,
@@ -43,224 +63,306 @@ const PROMOTIONS = [
         discount: 'GRATIS',
         validUntil: '30/04/2026',
         partner: 'Green Café',
-        color: ['#3a1c71', '#d76d77', '#ffaf7b'],
+        icon: 'cafe',
+        gradient: ['#3a1c71', '#d76d77'],
     },
 ];
 
-function PromotionCard({ promo }) {
+// ═══════════════════════════════════════════════════════════════════════════
+// PROMOTION CARD
+// ═══════════════════════════════════════════════════════════════════════════
+const PromotionCard = ({ promo, index }) => {
+    const { colors, shadows } = useTheme();
+    const scale = useSharedValue(1);
+
+    const handlePressIn = () => {
+        scale.value = withSpring(0.97, SPRING.snappy);
+    };
+
+    const handlePressOut = () => {
+        scale.value = withSpring(1, SPRING.smooth);
+    };
+
+    const handlePress = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        // TODO: Navigate to promo detail
+    };
+
+    const cardStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
+    }));
+
     return (
-        <TouchableOpacity activeOpacity={0.9}>
-            <View style={styles.cardContainer}>
+        <AnimatedPressable
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            onPress={handlePress}
+            style={cardStyle}
+        >
+            <Animated.View entering={FadeInUp.delay(index * 100).springify()}>
                 <LinearGradient
-                    colors={promo.color}
+                    colors={promo.gradient}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={styles.card}
+                    style={[styles.promoCard, shadows.lg]}
                 >
-                    {/* Discount Badge */}
+                    {/* Shine overlay */}
+                    <View style={styles.cardShine} />
+
+                    {/* Icon */}
+                    <View style={styles.iconContainer}>
+                        <Ionicons name={`${promo.icon}-outline`} size={rs(40)} color="rgba(255,255,255,0.9)" />
+                    </View>
+
+                    {/* Discount badge */}
                     <View style={styles.discountBadge}>
                         <Text style={styles.discountText}>{promo.discount}</Text>
                     </View>
 
                     {/* Content */}
-                    <View style={styles.cardContent}>
+                    <View style={styles.promoContent}>
                         <Text style={styles.partnerName}>{promo.partner}</Text>
                         <Text style={styles.promoTitle}>{promo.title}</Text>
                         <Text style={styles.promoDesc}>{promo.description}</Text>
-                        <Text style={styles.validUntil}>Válido hasta: {promo.validUntil}</Text>
+                        <View style={styles.validRow}>
+                            <Ionicons name="calendar-outline" size={rs(12)} color="rgba(255,255,255,0.7)" />
+                            <Text style={styles.validUntil}>Válido hasta: {promo.validUntil}</Text>
+                        </View>
                     </View>
 
-                    {/* Use Button */}
-                    <TouchableOpacity style={styles.useButton}>
-                        <Text style={styles.useButtonText}>USAR</Text>
+                    {/* Use button */}
+                    <TouchableOpacity style={styles.useButton} activeOpacity={0.8}>
+                        <Text style={styles.useButtonText}>CANJEAR</Text>
                     </TouchableOpacity>
                 </LinearGradient>
-            </View>
-        </TouchableOpacity>
+            </Animated.View>
+        </AnimatedPressable>
     );
-}
+};
 
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN PROMOTIONS SCREEN
+// ═══════════════════════════════════════════════════════════════════════════
 export default function PromotionsScreen() {
-    const { user, level } = useGame();
+    const { user, level, nfts } = useGame();
+    const { colors, isDark } = useTheme();
 
     return (
-        <View style={styles.container}>
-            <LinearGradient
-                colors={[COLORS.primary, '#00101a']}
-                style={StyleSheet.absoluteFill}
-            />
-            {/* Background Animation */}
-            <View style={styles.bgContainer}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            {/* Background */}
+            {isDark && (
+                <LinearGradient
+                    colors={[BRAND.oceanDeep, BRAND.oceanDark]}
+                    style={StyleSheet.absoluteFill}
+                />
+            )}
+            {isDark && <FloatingBubbles count={6} minSize={4} maxSize={12} />}
+            <View style={styles.bgWater}>
                 <LivingWater />
             </View>
 
-            {/* Header */}
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Promociones Especiales</Text>
-                <Text style={styles.headerSub}>
-                    ¡Hola {user?.name}! Nivel {level}
-                </Text>
-                <View style={styles.levelBadge}>
-                    <Text style={styles.levelText}>NIVEL {level}</Text>
-                </View>
-            </View>
+            <SafeAreaView style={styles.safeArea} edges={['top']}>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {/* Header */}
+                    <Animated.View entering={FadeInDown.delay(100).springify()}>
+                        <Text style={[styles.headerTitle, { color: colors.text }]}>
+                            Promociones Especiales
+                        </Text>
+                        <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
+                            Exclusivo para Nivel {level}+ con {nfts.length} NFTs
+                        </Text>
+                    </Animated.View>
 
-            {/* Promotions List */}
-            <ScrollView
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                <Text style={styles.sectionTitle}>Ofertas Exclusivas</Text>
-                {PROMOTIONS.map((promo) => (
-                    <PromotionCard key={promo.id} promo={promo} />
-                ))}
+                    {/* Stats banner */}
+                    <Animated.View entering={FadeInDown.delay(200).springify()}>
+                        <GlassCard variant="elevated" style={styles.statsBanner}>
+                            <View style={styles.statsRow}>
+                                <View style={styles.statItem}>
+                                    <Ionicons name="ticket" size={rs(20)} color={colors.accent} />
+                                    <Text style={[styles.statValue, { color: colors.text }]}>
+                                        {PROMOTIONS.length}
+                                    </Text>
+                                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                                        Disponibles
+                                    </Text>
+                                </View>
+                                <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+                                <View style={styles.statItem}>
+                                    <Ionicons name="checkmark-circle" size={rs(20)} color={BRAND.success} />
+                                    <Text style={[styles.statValue, { color: colors.text }]}>0</Text>
+                                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                                        Canjeadas
+                                    </Text>
+                                </View>
+                            </View>
+                        </GlassCard>
+                    </Animated.View>
 
-                {/* More Coming */}
-                <View style={styles.moreSection}>
-                    <Text style={styles.moreText}>¡Más promociones próximamente!</Text>
-                    <Text style={styles.moreSub}>Sigue coleccionando NFTs para desbloquear más</Text>
-                </View>
-            </ScrollView>
+                    {/* Promotions List */}
+                    <View style={styles.promosList}>
+                        {PROMOTIONS.map((promo, index) => (
+                            <PromotionCard key={promo.id} promo={promo} index={index} />
+                        ))}
+                    </View>
+
+                    {/* Footer hint */}
+                    <Animated.View entering={FadeInUp.delay(600).springify()} style={styles.footer}>
+                        <Ionicons name="information-circle-outline" size={rs(16)} color={colors.textMuted} />
+                        <Text style={[styles.footerText, { color: colors.textMuted }]}>
+                            Nuevas promociones cada semana. Sigue escaneando para desbloquear más.
+                        </Text>
+                    </Animated.View>
+                </ScrollView>
+            </SafeAreaView>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    container: { flex: 1 },
+    bgWater: { ...StyleSheet.absoluteFillObject, opacity: 0.2 },
+    safeArea: { flex: 1 },
+    scrollContent: {
+        padding: SPACING.lg,
+        paddingBottom: rh(120),
+    },
+
+    // Header
+    headerTitle: {
+        fontSize: rf(26),
+        fontWeight: '700',
+    },
+    headerSubtitle: {
+        fontSize: rf(14),
+        marginTop: rs(4),
+        marginBottom: SPACING.lg,
+    },
+
+    // Stats
+    statsBanner: {
+        marginBottom: SPACING.xl,
+        padding: SPACING.lg,
+    },
+    statsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+    },
+    statItem: {
+        alignItems: 'center',
         flex: 1,
     },
-    bgContainer: {
-        ...StyleSheet.absoluteFillObject,
-        opacity: 0.2,
+    statValue: {
+        fontSize: rf(20),
+        fontWeight: '700',
+        marginTop: rs(4),
     },
-    header: {
-        paddingTop: 60,
-        paddingBottom: 20,
-        paddingHorizontal: 20,
-        backgroundColor: 'rgba(0,0,0,0.4)',
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(255,255,255,0.1)',
-    },
-    headerTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#fff',
-        marginBottom: 5,
-    },
-    headerSub: {
-        fontSize: 14,
-        color: 'rgba(255,255,255,0.7)',
-    },
-    levelBadge: {
-        marginTop: 10,
-        backgroundColor: COLORS.secondary,
-        paddingHorizontal: 20,
-        paddingVertical: 5,
-        borderRadius: 15,
-    },
-    levelText: {
-        color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 12,
-        letterSpacing: 2,
-    },
-    scrollContent: {
-        padding: 20,
-        paddingBottom: 120,
-    },
-    sectionTitle: {
-        color: COLORS.highlight,
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 15,
+    statLabel: {
+        fontSize: rf(10),
         textTransform: 'uppercase',
-        letterSpacing: 1,
+        letterSpacing: 0.5,
     },
-    cardContainer: {
-        marginBottom: 15,
-        borderRadius: 16,
-        ...SHADOWS.medium,
+    statDivider: {
+        width: 1,
+        height: '80%',
+        alignSelf: 'center',
     },
-    card: {
-        borderRadius: 16,
-        padding: 20,
-        minHeight: 150,
-        justifyContent: 'space-between',
+
+    // Promos
+    promosList: {
+        gap: SPACING.md,
+    },
+    promoCard: {
+        borderRadius: RADIUS.xl,
+        padding: SPACING.lg,
+        overflow: 'hidden',
+        minHeight: rh(160),
+    },
+    cardShine: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '50%',
+        backgroundColor: 'rgba(255,255,255,0.05)',
+    },
+    iconContainer: {
+        position: 'absolute',
+        top: SPACING.lg,
+        right: SPACING.lg,
+        opacity: 0.3,
     },
     discountBadge: {
-        position: 'absolute',
-        top: 15,
-        right: 15,
-        backgroundColor: '#fff',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
+        alignSelf: 'flex-start',
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        paddingVertical: rs(6),
+        paddingHorizontal: rs(14),
+        borderRadius: RADIUS.md,
+        marginBottom: SPACING.md,
     },
     discountText: {
-        color: COLORS.primary,
-        fontWeight: 'bold',
-        fontSize: 14,
+        color: '#fff',
+        fontSize: rf(14),
+        fontWeight: '800',
     },
-    cardContent: {
+    promoContent: {
         flex: 1,
     },
     partnerName: {
-        color: 'rgba(255,255,255,0.6)',
-        fontSize: 11,
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: rf(11),
         textTransform: 'uppercase',
         letterSpacing: 1,
-        marginBottom: 5,
+        marginBottom: rs(4),
     },
     promoTitle: {
         color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 5,
+        fontSize: rf(18),
+        fontWeight: '700',
+        marginBottom: rs(4),
     },
     promoDesc: {
         color: 'rgba(255,255,255,0.8)',
-        fontSize: 13,
-        marginBottom: 10,
+        fontSize: rf(13),
+        marginBottom: SPACING.sm,
+    },
+    validRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: rs(4),
     },
     validUntil: {
-        color: 'rgba(255,255,255,0.5)',
-        fontSize: 11,
+        color: 'rgba(255,255,255,0.6)',
+        fontSize: rf(11),
     },
     useButton: {
-        alignSelf: 'flex-start',
-        marginTop: 10,
+        alignSelf: 'flex-end',
         backgroundColor: 'rgba(255,255,255,0.2)',
-        paddingHorizontal: 25,
-        paddingVertical: 10,
-        borderRadius: 20,
+        paddingVertical: rs(8),
+        paddingHorizontal: rs(20),
+        borderRadius: RADIUS.md,
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.3)',
     },
     useButtonText: {
         color: '#fff',
-        fontWeight: 'bold',
-        fontSize: 12,
+        fontSize: rf(12),
+        fontWeight: '700',
         letterSpacing: 1,
     },
-    moreSection: {
+
+    // Footer
+    footer: {
+        flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 30,
-        padding: 20,
+        justifyContent: 'center',
+        marginTop: SPACING.xl,
+        gap: SPACING.xs,
     },
-    moreEmoji: {
-        fontSize: 40,
-        marginBottom: 10,
-    },
-    moreText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    moreSub: {
-        color: 'rgba(255,255,255,0.5)',
-        fontSize: 13,
-        marginTop: 5,
+    footerText: {
+        fontSize: rf(11),
         textAlign: 'center',
     },
 });

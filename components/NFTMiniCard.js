@@ -1,299 +1,356 @@
-import React, { useEffect } from 'react';
-import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path } from 'react-native-svg';
+import React, { useEffect, useMemo } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import Svg, { Defs, LinearGradient, Stop, Rect, Circle, Path, G } from 'react-native-svg';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
-    withSpring,
     withRepeat,
     withTiming,
+    withSpring,
+    interpolate,
     Easing,
 } from 'react-native-reanimated';
-import { COLORS, SHADOWS } from '../constants/theme';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient as ExpoGradient } from 'expo-linear-gradient';
+import { useTheme } from '../context/ThemeContext';
+import { BRAND } from '../constants/theme';
+import { rs, rf, SPACING, RADIUS } from '../constants/responsive';
+import { SPRING } from '../constants/animations';
 
-const { width } = Dimensions.get('window');
-const CARD_SIZE = (width - 60) / 3; // 3 columns with spacing
-const BORDER_WIDTH = 2;
+// ═══════════════════════════════════════════════════════════════════════════
+// UNIQUE GENERATIVE NFT ART - Beach/Ocean themed
+// Square corners, gallery style, shimmer only when NEW
+// ═══════════════════════════════════════════════════════════════════════════
 
-// Dark/Blue gradient palettes matching app theme
-const GRADIENT_PALETTES = [
-    ['#00334e', '#145374'],              // Deep Navy to Steel Blue
-    ['#0a1628', '#1a3a52'],              // Dark Navy
-    ['#171717', '#2d2d2d'],              // Dark Gray
-    ['#0d1b2a', '#1b263b', '#415a77'],   // Navy Gradient
-    ['#1a1a2e', '#16213e', '#0f3460'],   // Midnight Blue
-    ['#2c3e50', '#3d5a73'],              // Slate Blue
-    ['#1c1c1c', '#363636', '#4a4a4a'],   // Charcoal Gray
-    ['#001f3f', '#003366', '#004080'],   // Ocean Blue
-];
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-// Nature icons as simple SVG paths
-const NATURE_ICONS = {
-    Ocean: (
-        <Svg width={24} height={24} viewBox="0 0 24 24">
-            <Path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" fill="#fff" opacity={0.8} />
-        </Svg>
-    ),
-    Forest: (
-        <Svg width={24} height={24} viewBox="0 0 24 24">
-            <Path d="M17 12h2L12 2 5 12h2l-3 8h6v2h4v-2h6l-3-8z" fill="#fff" opacity={0.8} />
-        </Svg>
-    ),
-    Mountain: (
-        <Svg width={24} height={24} viewBox="0 0 24 24">
-            <Path d="M14 6l-3.75 5 2.85 3.8-1.6 1.2C9.81 13.75 7 10 7 10l-6 8h22L14 6z" fill="#fff" opacity={0.8} />
-        </Svg>
-    ),
-    River: (
-        <Svg width={24} height={24} viewBox="0 0 24 24">
-            <Path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.35 0-6-2.57-6-6.2 0-2.34 1.95-5.44 6-9.14 4.05 3.7 6 6.79 6 9.14 0 3.63-2.65 6.2-6 6.2z" fill="#fff" opacity={0.8} />
-        </Svg>
-    ),
+// Generate pattern from ID
+const generatePatternFromId = (id) => {
+    const hash = id?.toString() || Math.random().toString();
+    const seed = hash.split('').reduce((acc, char, i) => acc + char.charCodeAt(0) * (i + 1), 0);
+    return {
+        patternType: seed % 6,
+        colorVariant: seed % 4,
+        rotation: (seed * 37) % 360,
+    };
 };
 
-const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
+// Color palettes
+const NFT_PALETTES = [
+    { primary: '#0d4a6f', secondary: '#1a6b8f', accent: '#4a9bb8', bg: '#072d45' },
+    { primary: '#1a8f7a', secondary: '#2db99d', accent: '#5fd4bf', bg: '#0d4a3f' },
+    { primary: '#d4a574', secondary: '#e8c4a0', accent: '#f5dcc4', bg: '#8b6342' },
+    { primary: '#7c3aed', secondary: '#a78bfa', accent: '#c4b5fd', bg: '#4c1d95' },
+];
 
-export default function NFTMiniCard({ nft, onPress, index }) {
-    // Use index to pick consistent but varied gradient
-    const gradientIndex = (index || 0) % GRADIENT_PALETTES.length;
-    const gradient = GRADIENT_PALETTES[gradientIndex];
-    const natureType = nft?.image || 'Ocean';
+// Rarity config
+const RARITY_CONFIG = {
+    'Común': { shimmerSpeed: 4000, borderWidth: 1 },
+    'Raro': { shimmerSpeed: 3000, borderWidth: 1.5 },
+    'Épico': { shimmerSpeed: 2000, borderWidth: 2 },
+    'Legendario': { shimmerSpeed: 1500, borderWidth: 2.5 },
+};
 
-    // Animation values
-    const rotateX = useSharedValue(0);
-    const rotateY = useSharedValue(0);
+// Generative Art Component
+const GenerativeArt = ({ pattern, size, isDark }) => {
+    const palette = NFT_PALETTES[pattern.colorVariant];
+    const artSize = size - rs(8);
+
+    const renderPattern = () => {
+        switch (pattern.patternType) {
+            case 0: // Waves
+                return (
+                    <G>
+                        {[0, 1, 2, 3].map((i) => (
+                            <Path
+                                key={i}
+                                d={`M 0 ${25 + i * 15} Q ${artSize * 0.25} ${10 + i * 15}, ${artSize * 0.5} ${25 + i * 15} T ${artSize} ${25 + i * 15}`}
+                                stroke={i % 2 === 0 ? palette.secondary : palette.accent}
+                                strokeWidth={2.5 - i * 0.4}
+                                fill="none"
+                                opacity={0.9 - i * 0.15}
+                            />
+                        ))}
+                    </G>
+                );
+            case 1: // Shell
+                return (
+                    <G transform={`rotate(${pattern.rotation}, ${artSize / 2}, ${artSize / 2})`}>
+                        {[0, 1, 2, 3, 4].map((i) => (
+                            <Circle
+                                key={i}
+                                cx={artSize / 2 + Math.cos(i * 1.2) * (10 + i * 6)}
+                                cy={artSize / 2 + Math.sin(i * 1.2) * (10 + i * 6)}
+                                r={10 - i * 1.2}
+                                fill={i % 2 === 0 ? palette.primary : palette.secondary}
+                            />
+                        ))}
+                    </G>
+                );
+            case 2: // Coral
+                return (
+                    <G>
+                        <Path
+                            d={`M ${artSize / 2} ${artSize} L ${artSize / 2} ${artSize * 0.5}
+                                M ${artSize / 2} ${artSize * 0.6} L ${artSize * 0.3} ${artSize * 0.35}
+                                M ${artSize / 2} ${artSize * 0.6} L ${artSize * 0.7} ${artSize * 0.35}
+                                M ${artSize * 0.3} ${artSize * 0.35} L ${artSize * 0.2} ${artSize * 0.2}
+                                M ${artSize * 0.7} ${artSize * 0.35} L ${artSize * 0.8} ${artSize * 0.2}`}
+                            stroke={palette.primary}
+                            strokeWidth={3}
+                            strokeLinecap="round"
+                            fill="none"
+                        />
+                        {[0.2, 0.4, 0.6, 0.8].map((x, i) => (
+                            <Circle key={i} cx={artSize * x} cy={artSize * 0.2} r={4} fill={palette.accent} />
+                        ))}
+                    </G>
+                );
+            case 3: // Starfish
+                const outerR = 28;
+                const innerR = 10;
+                let star = '';
+                for (let i = 0; i < 10; i++) {
+                    const r = i % 2 === 0 ? outerR : innerR;
+                    const angle = (i * Math.PI) / 5 - Math.PI / 2;
+                    const x = artSize / 2 + r * Math.cos(angle);
+                    const y = artSize / 2 + r * Math.sin(angle);
+                    star += `${i === 0 ? 'M' : 'L'} ${x} ${y} `;
+                }
+                star += 'Z';
+                return (
+                    <G transform={`rotate(${pattern.rotation}, ${artSize / 2}, ${artSize / 2})`}>
+                        <Path d={star} fill={palette.primary} />
+                        <Circle cx={artSize / 2} cy={artSize / 2} r={6} fill={palette.secondary} />
+                    </G>
+                );
+            case 4: // Dunes
+                return (
+                    <G>
+                        {[0, 1, 2].map((i) => (
+                            <Path
+                                key={i}
+                                d={`M 0 ${artSize - 15 - i * 18}
+                                    Q ${artSize * 0.3} ${artSize - 30 - i * 18}, ${artSize * 0.5} ${artSize - 15 - i * 18}
+                                    T ${artSize} ${artSize - 15 - i * 18} L ${artSize} ${artSize} L 0 ${artSize} Z`}
+                                fill={i === 0 ? palette.secondary : i === 1 ? palette.primary : palette.accent}
+                                opacity={0.85 - i * 0.15}
+                            />
+                        ))}
+                        <Circle cx={artSize * 0.8} cy={15} r={12} fill="#fbbf24" opacity={0.9} />
+                    </G>
+                );
+            case 5: // Jellyfish
+                return (
+                    <G>
+                        <Path
+                            d={`M ${artSize * 0.3} ${artSize * 0.4}
+                                Q ${artSize * 0.5} ${artSize * 0.15}, ${artSize * 0.7} ${artSize * 0.4}
+                                Q ${artSize * 0.5} ${artSize * 0.5}, ${artSize * 0.3} ${artSize * 0.4}`}
+                            fill={palette.primary}
+                        />
+                        {[0.38, 0.48, 0.58].map((x, i) => (
+                            <Path
+                                key={i}
+                                d={`M ${artSize * x} ${artSize * 0.45}
+                                    Q ${artSize * (x + 0.02)} ${artSize * 0.65}, ${artSize * x} ${artSize * 0.9}`}
+                                stroke={palette.accent}
+                                strokeWidth={2}
+                                fill="none"
+                            />
+                        ))}
+                    </G>
+                );
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <Svg width={artSize} height={artSize} viewBox={`0 0 ${artSize} ${artSize}`}>
+            <Defs>
+                <LinearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <Stop offset="0%" stopColor={palette.bg} />
+                    <Stop offset="100%" stopColor={isDark ? '#001220' : palette.primary} />
+                </LinearGradient>
+            </Defs>
+            <Rect x="0" y="0" width={artSize} height={artSize} fill="url(#bgGrad)" />
+            {renderPattern()}
+        </Svg>
+    );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NFT MINI CARD - Square corners, shimmer only when NEW
+// ═══════════════════════════════════════════════════════════════════════════
+export default function NFTMiniCard({ nft, onPress, size = 'default', isNew = false }) {
+    const { colors, shadows, isDark } = useTheme();
+
+    // Shimmer only runs if isNew
+    const shimmer = useSharedValue(0);
     const scale = useSharedValue(1);
-    const borderRotation = useSharedValue(0);
 
-    // Start continuous border rotation animation
+    const rarityConfig = RARITY_CONFIG[nft?.rarity] || RARITY_CONFIG['Común'];
+    const pattern = useMemo(() => generatePatternFromId(nft?.id), [nft?.id]);
+    const palette = NFT_PALETTES[pattern.colorVariant];
+
     useEffect(() => {
-        borderRotation.value = withRepeat(
-            withTiming(360, { duration: 4000, easing: Easing.linear }),
-            -1, // Infinite
-            false // Don't reverse
-        );
-    }, []);
+        if (isNew) {
+            shimmer.value = withRepeat(
+                withTiming(1, { duration: rarityConfig.shimmerSpeed, easing: Easing.linear }),
+                -1,
+                false
+            );
+        }
+    }, [isNew, rarityConfig.shimmerSpeed]);
 
     const handlePressIn = () => {
-        rotateY.value = withSpring(15, { damping: 10 });
-        rotateX.value = withSpring(-5, { damping: 10 });
-        scale.value = withSpring(1.05, { damping: 10 });
+        scale.value = withSpring(0.96, SPRING.snappy);
     };
 
     const handlePressOut = () => {
-        rotateY.value = withSpring(0, { damping: 10 });
-        rotateX.value = withSpring(0, { damping: 10 });
-        scale.value = withSpring(1, { damping: 10 });
+        scale.value = withSpring(1, SPRING.smooth);
     };
 
-    const cardAnimatedStyle = useAnimatedStyle(() => ({
-        transform: [
-            { perspective: 800 },
-            { rotateY: `${rotateY.value}deg` },
-            { rotateX: `${rotateX.value}deg` },
-            { scale: scale.value },
-        ],
+    const handlePress = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress?.(nft);
+    };
+
+    const cardStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
     }));
 
-    // Rotating border style
-    const borderAnimatedStyle = useAnimatedStyle(() => ({
-        transform: [{ rotate: `${borderRotation.value}deg` }],
-    }));
+    // Shimmer only visible when NEW
+    const shimmerStyle = useAnimatedStyle(() => {
+        if (!isNew) return { opacity: 0 };
+        const translateX = interpolate(shimmer.value, [0, 1], [-100, 100]);
+        return {
+            transform: [{ translateX }],
+            opacity: 0.8,
+        };
+    });
 
-    // Get owner info
-    const ownerInitials = nft?.ownerInitials || 'OG';
-    const ownerAvatar = nft?.ownerAvatar;
+    // Smaller cards for 3-column grid
+    const cardWidth = size === 'large' ? rs(150) : rs(105);
 
     return (
-        <TouchableOpacity
-            onPress={onPress}
+        <AnimatedPressable
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}
-            activeOpacity={1}
+            onPress={handlePress}
+            style={[styles.container, { width: cardWidth }, cardStyle]}
         >
-            <Animated.View style={[styles.cardContainer, cardAnimatedStyle]}>
-                {/* Rotating Gradient Border */}
-                <View style={styles.borderWrapper}>
-                    <Animated.View style={[styles.rotatingBorder, borderAnimatedStyle]}>
-                        <LinearGradient
-                            colors={[COLORS.secondary, '#00c6ff', COLORS.primary, COLORS.secondary]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.borderGradient}
+            {/* Card with SQUARE corners */}
+            <View style={[
+                styles.cardInner,
+                {
+                    backgroundColor: isDark ? 'rgba(0,18,32,0.95)' : colors.surface,
+                    borderWidth: rarityConfig.borderWidth,
+                    borderColor: palette.secondary,
+                },
+                shadows.sm
+            ]}>
+                {/* Shimmer (only for NEW items) */}
+                {isNew && (
+                    <Animated.View style={[styles.shimmer, shimmerStyle]}>
+                        <ExpoGradient
+                            colors={['transparent', `${palette.accent}40`, 'transparent']}
+                            start={{ x: 0, y: 0.5 }}
+                            end={{ x: 1, y: 0.5 }}
+                            style={styles.shimmerGradient}
                         />
                     </Animated.View>
+                )}
+
+                {/* NEW badge */}
+                {isNew && (
+                    <View style={[styles.newBadge, { backgroundColor: BRAND.success }]}>
+                        <Text style={styles.newBadgeText}>NUEVO</Text>
+                    </View>
+                )}
+
+                {/* Art */}
+                <View style={styles.artSection}>
+                    <GenerativeArt pattern={pattern} size={cardWidth - rs(8)} isDark={isDark} />
                 </View>
 
-                {/* Inner Card Content */}
-                <LinearGradient
-                    colors={gradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.card}
-                >
-                    {/* Owner Avatar (Top Left) */}
-                    <View style={styles.ownerBadge}>
-                        {ownerAvatar ? (
-                            <Image
-                                source={{ uri: ownerAvatar }}
-                                style={styles.avatarImage}
-                            />
-                        ) : (
-                            <View style={styles.avatarCircle}>
-                                <Text style={styles.avatarText}>{ownerInitials}</Text>
-                            </View>
-                        )}
-                    </View>
-
-                    {/* Watermark Drop (Top Right) */}
-                    <View style={styles.watermark}>
-                        <Svg width={12} height={12} viewBox="0 0 100 100">
-                            <Path
-                                d="M50 0 Q80 50 100 70 Q100 100 50 100 Q0 100 0 70 Q20 50 50 0 Z"
-                                fill="#fff"
-                                opacity={0.4}
-                            />
-                        </Svg>
-                    </View>
-
-                    {/* Nature Icon (Center) */}
-                    <View style={styles.iconContainer}>
-                        {NATURE_ICONS[natureType] || NATURE_ICONS.Ocean}
-                    </View>
-
-                    {/* Title */}
-                    <Text style={styles.title} numberOfLines={1}>
-                        {nft?.title?.split(':')[1]?.trim() || 'Spirit'}
+                {/* Info */}
+                <View style={[
+                    styles.infoSection,
+                    { backgroundColor: isDark ? 'rgba(0,18,32,0.9)' : colors.backgroundTertiary }
+                ]}>
+                    <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
+                        {nft?.title || 'Eco Guardian'}
                     </Text>
 
-                    {/* Lock Badge (Bottom Right) */}
-                    <View style={styles.lockBadge}>
-                        <Ionicons name="lock-closed" size={12} color="#fff" />
+                    <View style={[styles.rarityBadge, { backgroundColor: palette.primary }]}>
+                        <Text style={styles.rarityText}>{nft?.rarity || 'Común'}</Text>
                     </View>
-
-                    {/* 3D Shine Effect */}
-                    <View style={styles.shineOverlay} />
-                </LinearGradient>
-            </Animated.View>
-        </TouchableOpacity>
+                </View>
+            </View>
+        </AnimatedPressable>
     );
 }
 
 const styles = StyleSheet.create({
-    cardContainer: {
-        width: CARD_SIZE,
-        height: CARD_SIZE * 1.3,
-        margin: 5,
-        backgroundColor: '#171717',
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.5,
-        shadowRadius: 3,
-        elevation: 5,
+    container: {
+        marginBottom: SPACING.sm,
     },
-    borderWrapper: {
+    cardInner: {
+        borderRadius: RADIUS.sm,  // Square corners (small radius)
+        overflow: 'hidden',
+    },
+    shimmer: {
         position: 'absolute',
         top: 0,
-        left: 0,
-        right: 0,
         bottom: 0,
-        overflow: 'hidden',
+        width: rs(80),
+        zIndex: 10,
     },
-    rotatingBorder: {
+    shimmerGradient: {
+        flex: 1,
+    },
+    newBadge: {
         position: 'absolute',
-        top: '50%',
-        left: '50%',
-        width: 40,
-        height: CARD_SIZE * 2,
-        marginLeft: -20,
-        marginTop: -CARD_SIZE,
+        top: rs(4),
+        right: rs(4),
+        paddingHorizontal: rs(6),
+        paddingVertical: rs(2),
+        borderRadius: rs(3),
+        zIndex: 20,
     },
-    borderGradient: {
-        width: '100%',
-        height: '100%',
+    newBadgeText: {
+        color: '#fff',
+        fontSize: rf(8),
+        fontWeight: '800',
+        letterSpacing: 0.5,
     },
-    card: {
-        width: CARD_SIZE - 4,
-        height: CARD_SIZE * 1.3 - 4,
-        borderRadius: 5,
-        padding: 8,
+    artSection: {
         justifyContent: 'center',
         alignItems: 'center',
-        overflow: 'hidden',
-        zIndex: 1,
+        padding: rs(4),
     },
-    ownerBadge: {
-        position: 'absolute',
-        top: 6,
-        left: 6,
-        zIndex: 2,
-    },
-    avatarCircle: {
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        backgroundColor: 'rgba(255,255,255,0.9)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: 'rgba(0,0,0,0.1)',
-    },
-    avatarText: {
-        fontSize: 7,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    avatarImage: {
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.9)',
-    },
-    watermark: {
-        position: 'absolute',
-        top: 6,
-        right: 6,
-        zIndex: 2,
-    },
-    iconContainer: {
-        marginTop: 5,
-        opacity: 0.9,
+    infoSection: {
+        padding: SPACING.xs,
     },
     title: {
-        color: '#fff',
-        fontSize: 9,
-        fontWeight: 'bold',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        fontSize: rf(10),
+        fontWeight: '600',
         textAlign: 'center',
-        marginTop: 8,
-        textShadowColor: 'rgba(0,0,0,0.5)',
-        textShadowOffset: { width: 1, height: 1 },
-        textShadowRadius: 3,
+        marginBottom: rs(3),
     },
-    lockBadge: {
-        position: 'absolute',
-        bottom: 6,
-        right: 6,
-        zIndex: 2,
+    rarityBadge: {
+        alignSelf: 'center',
+        paddingVertical: rs(2),
+        paddingHorizontal: rs(6),
+        borderRadius: RADIUS.xs,
     },
-    lockText: {
-        fontSize: 10,
-    },
-    shineOverlay: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '50%',
-        backgroundColor: 'rgba(255,255,255,0.05)',
-        borderTopLeftRadius: 5,
-        borderTopRightRadius: 5,
+    rarityText: {
+        fontSize: rf(7),
+        fontWeight: '700',
+        color: '#ffffff',
+        textTransform: 'uppercase',
+        letterSpacing: 0.3,
     },
 });
-

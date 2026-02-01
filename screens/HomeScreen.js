@@ -1,14 +1,168 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { COLORS, SIZES, SHADOWS } from '../constants/theme';
+import React, { useEffect } from 'react';
+import {
+    View,
+    Text,
+    StyleSheet,
+    SafeAreaView,
+    ScrollView,
+    TouchableOpacity,
+    Image,
+    Pressable,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import Animated, {
+    useSharedValue,
+    useAnimatedStyle,
+    withSpring,
+    withDelay,
+    withTiming,
+    FadeInDown,
+    FadeInUp,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { useGame } from '../context/GameContext';
+import { useTheme } from '../context/ThemeContext';
+import { rs, rf, rh, SPACING, RADIUS, SCREEN } from '../constants/responsive';
+import { SPRING, SCALE } from '../constants/animations';
+import { BRAND, GRADIENTS } from '../constants/theme';
 import Water from '../components/Water';
+import FloatingBubbles from '../components/premium/FloatingBubbles';
+import GlassCard from '../components/premium/GlassCard';
 
+// ═══════════════════════════════════════════════════════════════════════════
+// ANIMATED ACTION ITEM
+// ═══════════════════════════════════════════════════════════════════════════
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+const ActionItem = ({ icon, label, delay = 0, onPress }) => {
+    const { colors, shadows, isDark } = useTheme();
+    const scale = useSharedValue(1);
+
+    const handlePressIn = () => {
+        scale.value = withSpring(SCALE.pressed, SPRING.snappy);
+    };
+
+    const handlePressOut = () => {
+        scale.value = withSpring(1, SPRING.snappy);
+    };
+
+    const handlePress = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress?.();
+    };
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: scale.value }],
+    }));
+
+    return (
+        <AnimatedPressable
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            onPress={handlePress}
+            entering={FadeInDown.delay(delay).springify()}
+            style={[styles.actionItem, animatedStyle]}
+        >
+            <GlassCard variant="elevated" style={styles.actionCard}>
+                <View style={styles.actionContent}>
+                    <LinearGradient
+                        colors={isDark ? GRADIENTS.oceanSurface : GRADIENTS.primaryButton}
+                        style={[styles.iconBox, shadows.sm]}
+                    >
+                        <Ionicons name={icon} size={rs(24)} color="#fff" />
+                    </LinearGradient>
+                    <Text style={[styles.actionLabel, { color: colors.text }]}>{label}</Text>
+                </View>
+            </GlassCard>
+        </AnimatedPressable>
+    );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PREMIUM BALANCE CARD
+// ═══════════════════════════════════════════════════════════════════════════
+const BalanceCard = () => {
+    const { colors, shadows, isDark } = useTheme();
+    const { points, nfts } = useGame();
+    const balanceScale = useSharedValue(1);
+
+    // Pulse animation on load
+    useEffect(() => {
+        balanceScale.value = withDelay(
+            500,
+            withSpring(1.02, SPRING.bouncy)
+        );
+        setTimeout(() => {
+            balanceScale.value = withSpring(1, SPRING.gentle);
+        }, 1000);
+    }, []);
+
+    const balanceStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: balanceScale.value }],
+    }));
+
+    return (
+        <Animated.View
+            entering={FadeInUp.delay(200).springify()}
+            style={[styles.balanceContainer, balanceStyle]}
+        >
+            <LinearGradient
+                colors={isDark
+                    ? [BRAND.oceanMid, BRAND.oceanDark, BRAND.oceanDeep]
+                    : [BRAND.oceanDark, BRAND.oceanDeep, '#001220']
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.balanceCard, shadows.xl]}
+            >
+                {/* Shine overlay */}
+                <View style={styles.cardShine} />
+
+                {/* Content */}
+                <View style={styles.balanceContent}>
+                    <Text style={styles.balanceLabel}>BALANCE TOTAL</Text>
+                    <Text style={styles.balanceValue}>1,240.50 TPL</Text>
+
+                    <View style={styles.balanceRow}>
+                        <View style={styles.badge}>
+                            <Ionicons name="trending-up" size={rs(14)} color={BRAND.success} />
+                            <Text style={styles.badgeText}>+12% esta semana</Text>
+                        </View>
+                    </View>
+
+                    {/* Stats row */}
+                    <View style={styles.statsRow}>
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{nfts.length}</Text>
+                            <Text style={styles.statLabel}>NFTs</Text>
+                        </View>
+                        <View style={styles.statDivider} />
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{points}</Text>
+                            <Text style={styles.statLabel}>Puntos</Text>
+                        </View>
+                    </View>
+                </View>
+
+                {/* Decorative elements */}
+                <View style={styles.cardDecor}>
+                    <View style={[styles.decorCircle, styles.decorCircle1]} />
+                    <View style={[styles.decorCircle, styles.decorCircle2]} />
+                </View>
+            </LinearGradient>
+        </Animated.View>
+    );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN HOME SCREEN
+// ═══════════════════════════════════════════════════════════════════════════
 export default function HomeScreen() {
     const navigation = useNavigation();
     const { user, points, nfts, level } = useGame();
+    const { colors, shadows, isDark } = useTheme();
 
     // Get current date in Spanish
     const today = new Date();
@@ -16,179 +170,279 @@ export default function HomeScreen() {
     const dateString = today.toLocaleDateString('es-ES', options);
 
     return (
-        <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={[styles.container, { backgroundColor: colors.background }]}>
+            {/* Background gradient for dark mode */}
+            {isDark && (
+                <LinearGradient
+                    colors={[BRAND.oceanDeep, BRAND.oceanDark]}
+                    style={StyleSheet.absoluteFill}
+                />
+            )}
 
-                {/* Header */}
-                <View style={styles.header}>
-                    <View>
-                        <Text style={styles.greeting}>Hola, {user.name.split(' ')[0]}</Text>
-                        <Text style={styles.date}>{dateString}</Text>
-                    </View>
-                    <TouchableOpacity
-                        style={styles.avatar}
-                        onPress={() => navigation.navigate('Profile')}
+            {/* Ambient bubbles - both modes */}
+            <FloatingBubbles count={8} minSize={4} maxSize={14} zIndex={0} />
+
+            <SafeAreaView style={styles.safeArea}>
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    showsVerticalScrollIndicator={false}
+                >
+                    {/* Header */}
+                    <Animated.View
+                        entering={FadeInDown.delay(100).springify()}
+                        style={styles.header}
                     >
-                        {user.avatar ? (
-                            <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
-                        ) : (
-                            <Text style={styles.avatarInitials}>{user.initials}</Text>
-                        )}
-                    </TouchableOpacity>
-                </View>
-
-                {/* Main Card */}
-                <View style={styles.card}>
-                    <Text style={styles.cardLabel}>Balance Total</Text>
-                    <Text style={styles.cardValue}>1,240.50 TPL</Text>
-                    <View style={styles.cardRow}>
-                        <View style={styles.badge}>
-                            <Text style={styles.badgeText}>+12% esta semana</Text>
+                        <View>
+                            <Text style={[styles.greeting, { color: colors.text }]}>
+                                Hola, {user.name.split(' ')[0]}
+                            </Text>
+                            <Text style={[styles.date, { color: colors.textMuted }]}>
+                                {dateString}
+                            </Text>
                         </View>
+                        <TouchableOpacity
+                            style={[
+                                styles.avatar,
+                                {
+                                    backgroundColor: isDark ? colors.surface : BRAND.sandGold,
+                                    ...shadows.md
+                                }
+                            ]}
+                            onPress={() => navigation.navigate('Profile')}
+                            activeOpacity={0.8}
+                        >
+                            {user.avatar ? (
+                                <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+                            ) : (
+                                <Text style={[styles.avatarInitials, { color: colors.primary }]}>
+                                    {user.initials}
+                                </Text>
+                            )}
+                        </TouchableOpacity>
+                    </Animated.View>
+
+                    {/* Main Balance Card */}
+                    <BalanceCard />
+
+                    {/* Action Grid */}
+                    <Animated.View entering={FadeInUp.delay(400).springify()}>
+                        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                            Acciones Rápidas
+                        </Text>
+                    </Animated.View>
+
+                    <View style={styles.grid}>
+                        <ActionItem icon="scan-outline" label="Escanear" delay={500} />
+                        <ActionItem icon="map-outline" label="Mapa" delay={600} />
+                        <ActionItem icon="stats-chart-outline" label="Impacto" delay={700} />
+                        <ActionItem icon="trophy-outline" label="Ranking" delay={800} />
                     </View>
-                </View>
+                </ScrollView>
+            </SafeAreaView>
 
-                {/* Action Grid */}
-                <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
-                <View style={styles.grid}>
-                    <ActionItem icon="scan-outline" label="Escanear" />
-                    <ActionItem icon="map-outline" label="Mapa" />
-                    <ActionItem icon="stats-chart-outline" label="Impacto" />
-                    <ActionItem icon="trophy-outline" label="Ranking" />
-                </View>
-
-            </ScrollView>
+            {/* Water at bottom */}
             <View style={styles.waterWrapper}>
-                {/* Re-use water but maybe with different opacity/color in the future */}
                 <Water />
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
-
-const ActionItem = ({ icon, label }) => (
-    <View style={styles.actionItem}>
-        <View style={styles.iconBox}>
-            <Ionicons name={icon} size={24} color={COLORS.primary} />
-        </View>
-        <Text style={styles.actionLabel}>{label}</Text>
-    </View>
-);
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: COLORS.background,
+    },
+    safeArea: {
+        flex: 1,
     },
     scrollContent: {
-        padding: SIZES.padding,
-        paddingBottom: 100,
+        padding: SPACING.lg,
+        paddingBottom: rh(120),
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 30,
+        marginBottom: SPACING.xl,
     },
     greeting: {
-        fontSize: SIZES.h2,
-        fontWeight: 'bold',
-        color: COLORS.primary,
+        fontSize: rf(26),
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
     date: {
-        fontSize: SIZES.caption,
-        color: COLORS.textDim,
-        marginTop: 4,
+        fontSize: rf(13),
+        marginTop: rs(4),
     },
     avatar: {
-        width: 45,
-        height: 45,
-        borderRadius: 25,
-        backgroundColor: COLORS.highlight,
+        width: rs(50),
+        height: rs(50),
+        borderRadius: rs(25),
         justifyContent: 'center',
         alignItems: 'center',
         overflow: 'hidden',
     },
     avatarImage: {
-        width: 45,
-        height: 45,
-        borderRadius: 25,
+        width: rs(50),
+        height: rs(50),
+        borderRadius: rs(25),
     },
     avatarInitials: {
-        color: COLORS.primary,
-        fontSize: 16,
-        fontWeight: 'bold',
+        fontSize: rf(18),
+        fontWeight: '700',
     },
-    card: {
-        backgroundColor: COLORS.primary,
-        borderRadius: SIZES.radius,
-        padding: 30,
-        marginBottom: 30,
-        ...SHADOWS.medium,
+
+    // Balance Card
+    balanceContainer: {
+        marginBottom: SPACING.xl,
     },
-    cardLabel: {
-        color: COLORS.accent,
-        fontSize: SIZES.caption,
+    balanceCard: {
+        borderRadius: RADIUS.xl,
+        padding: SPACING.lg,
+        overflow: 'hidden',
+    },
+    cardShine: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '50%',
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        borderTopLeftRadius: RADIUS.xl,
+        borderTopRightRadius: RADIUS.xl,
+    },
+    balanceContent: {
+        zIndex: 1,
+    },
+    balanceLabel: {
+        color: BRAND.oceanLight,
+        fontSize: rf(11),
+        fontWeight: '600',
+        textTransform: 'uppercase',
+        letterSpacing: rs(2),
+    },
+    balanceValue: {
+        color: '#fff',
+        fontSize: rf(36),
+        fontWeight: '800',
+        marginVertical: rs(8),
+        letterSpacing: 1,
+    },
+    balanceRow: {
+        flexDirection: 'row',
+    },
+    badge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(76, 175, 80, 0.15)',
+        paddingVertical: rs(6),
+        paddingHorizontal: rs(12),
+        borderRadius: RADIUS.md,
+        gap: rs(6),
+    },
+    badgeText: {
+        color: BRAND.successLight,
+        fontSize: rf(12),
+        fontWeight: '600',
+    },
+    statsRow: {
+        flexDirection: 'row',
+        marginTop: SPACING.lg,
+        paddingTop: SPACING.md,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    },
+    statItem: {
+        flex: 1,
+        alignItems: 'center',
+    },
+    statValue: {
+        color: '#fff',
+        fontSize: rf(22),
+        fontWeight: '700',
+    },
+    statLabel: {
+        color: BRAND.oceanLight,
+        fontSize: rf(11),
+        marginTop: rs(4),
         textTransform: 'uppercase',
         letterSpacing: 1,
     },
-    cardValue: {
-        color: COLORS.textLight,
-        fontSize: 36,
-        fontWeight: '700',
-        marginVertical: 10,
+    statDivider: {
+        width: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
     },
-    badge: {
-        backgroundColor: 'rgba(255,255,255,0.1)',
-        paddingVertical: 5,
-        paddingHorizontal: 10,
-        borderRadius: 10,
+    cardDecor: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        width: rs(150),
+        overflow: 'hidden',
     },
-    badgeText: {
-        color: COLORS.success,
-        fontSize: 12,
-        fontWeight: '600',
+    decorCircle: {
+        position: 'absolute',
+        borderRadius: rs(100),
+        backgroundColor: 'rgba(255, 255, 255, 0.03)',
     },
+    decorCircle1: {
+        width: rs(200),
+        height: rs(200),
+        top: -rs(50),
+        right: -rs(80),
+    },
+    decorCircle2: {
+        width: rs(120),
+        height: rs(120),
+        bottom: -rs(30),
+        right: -rs(20),
+    },
+
+    // Section
     sectionTitle: {
-        fontSize: SIZES.h3,
-        fontWeight: '600',
-        color: COLORS.primary,
-        marginBottom: 20,
+        fontSize: rf(18),
+        fontWeight: '700',
+        marginBottom: SPACING.md,
     },
+
+    // Grid
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
+        gap: SPACING.md,
     },
     actionItem: {
-        width: '47%',
-        backgroundColor: COLORS.surface,
-        padding: 20,
-        borderRadius: SIZES.radius,
+        width: (SCREEN.width - SPACING.lg * 2 - SPACING.md) / 2,
+    },
+    actionCard: {
+        padding: 0,
+    },
+    actionContent: {
         alignItems: 'center',
-        marginBottom: 20,
-        ...SHADOWS.light,
+        padding: SPACING.lg,
     },
     iconBox: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: COLORS.background,
+        width: rs(52),
+        height: rs(52),
+        borderRadius: rs(16),
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 10,
+        marginBottom: SPACING.sm,
     },
     actionLabel: {
-        color: COLORS.primary,
         fontWeight: '600',
-        fontSize: 14,
+        fontSize: rf(14),
     },
+
+    // Water
     waterWrapper: {
         position: 'absolute',
         bottom: 0,
-        left: 0, right: 0,
-        height: 100,
+        left: 0,
+        right: 0,
+        height: rh(100),
         zIndex: -1,
-        opacity: 0.5,
-    }
+        opacity: 0.4,
+    },
 });
