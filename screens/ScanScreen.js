@@ -768,7 +768,7 @@ export default function ScanScreen() {
                     ]}>
                         {isReadyToCollect
                             ? '¡Listo para escanear!'
-                            : (isScanning ? 'Analizando...' : 'Buscando residuos...')}
+                            : 'Buscando residuos...'}
                     </Text>
                 </Animated.View>
 
