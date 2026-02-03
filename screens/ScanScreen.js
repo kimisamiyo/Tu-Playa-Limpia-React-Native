@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Pressable, Dimensions, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -169,12 +170,256 @@ const SuccessPopup = ({ visible, points, type }) => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
+// PERMISSION REQUEST SCREEN
+// ═══════════════════════════════════════════════════════════════════════════
+const PermissionScreen = ({ onRequestPermission, isDark }) => {
+    const waterGradient = isDark
+        ? [BRAND.oceanDeep, '#002844', BRAND.oceanMid]
+        : ['#1a6b8f', '#2d8ab0', '#4aa3c7'];
+
+    return (
+        <View style={styles.container}>
+            <LinearGradient colors={waterGradient} style={StyleSheet.absoluteFill} />
+            <FloatingBubbles count={12} minSize={4} maxSize={16} zIndex={1} />
+
+            <View style={styles.permissionContainer}>
+                <Animated.View
+                    entering={FadeIn.springify()}
+                    style={[
+                        styles.permissionCard,
+                        { backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.95)' }
+                    ]}
+                >
+                    <View style={[
+                        styles.permissionIconContainer,
+                        { backgroundColor: isDark ? BRAND.oceanMid : '#e0f2fe' }
+                    ]}>
+                        <Ionicons
+                            name="camera"
+                            size={rs(48)}
+                            color={isDark ? BRAND.biolum : '#0d4a6f'}
+                        />
+                    </View>
+
+                    <Text style={[
+                        styles.permissionTitle,
+                        { color: isDark ? '#fff' : '#1a3a4a' }
+                    ]}>
+                        Permiso de Cámara
+                    </Text>
+
+                    <Text style={[
+                        styles.permissionDescription,
+                        { color: isDark ? 'rgba(255,255,255,0.7)' : '#666' }
+                    ]}>
+                        Para escanear basura y ganar puntos, necesitamos acceder a la cámara de tu dispositivo.
+                    </Text>
+
+                    <Pressable
+                        onPress={onRequestPermission}
+                        style={({ pressed }) => [
+                            styles.permissionButton,
+                            {
+                                backgroundColor: isDark ? BRAND.biolum : '#0d4a6f',
+                                opacity: pressed ? 0.8 : 1
+                            }
+                        ]}
+                    >
+                        <Ionicons name="checkmark-circle" size={rs(20)} color="#fff" />
+                        <Text style={styles.permissionButtonText}>Permitir Cámara</Text>
+                    </Pressable>
+                </Animated.View>
+            </View>
+        </View>
+    );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ROBOFLOW API CONFIGURATION - Direct API call, no backend needed
+// ═══════════════════════════════════════════════════════════════════════════
+const ROBOFLOW_API_KEY = 'Ea6ZGPtYBMLo2MM6lh0P';
+const ROBOFLOW_MODEL = 'ocean-waste/2';
+const ROBOFLOW_URL = `https://serverless.roboflow.com/${ROBOFLOW_MODEL}`;
+const SCAN_INTERVAL_MS = 1500; // Scan every 1.5 seconds for real-time detection
+const CONFIDENCE_THRESHOLD = 40; // Minimum confidence % to show detection
+
+// Mapeo de clases detectadas a tipos y puntos
+const CLASS_MAPPING = {
+    'plastic-bottle': { type: 'bottle', label: 'Botella Plástica', points: 15, color: '#22c55e' },
+    'bottle': { type: 'bottle', label: 'Botella', points: 15, color: '#22c55e' },
+    'can': { type: 'can', label: 'Lata', points: 10, color: '#eab308' },
+    'plastic': { type: 'trash', label: 'Plástico', points: 12, color: '#3b82f6' },
+    'trash': { type: 'trash', label: 'Basura', points: 8, color: '#ef4444' },
+    'paper': { type: 'trash', label: 'Papel', points: 5, color: '#a855f7' },
+    'cardboard': { type: 'trash', label: 'Cartón', points: 6, color: '#f97316' },
+    'glass': { type: 'bottle', label: 'Vidrio', points: 10, color: '#06b6d4' },
+    'metal': { type: 'can', label: 'Metal', points: 10, color: '#64748b' },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DETECTION BOX COMPONENT - Shows bounding box around detected objects
+// ═══════════════════════════════════════════════════════════════════════════
+const DetectionBox = ({ prediction, frameSize, imageSize }) => {
+    // Convert Roboflow coordinates (center x,y + width,height) to screen position
+    const scaleX = frameSize / imageSize.width;
+    const scaleY = frameSize / imageSize.height;
+
+    const boxWidth = prediction.width * scaleX;
+    const boxHeight = prediction.height * scaleY;
+    const left = (prediction.x * scaleX) - (boxWidth / 2);
+    const top = (prediction.y * scaleY) - (boxHeight / 2);
+
+    const mapping = CLASS_MAPPING[prediction.class.toLowerCase()] || { label: prediction.class, color: '#22c55e' };
+    const confidence = Math.round(prediction.confidence * 100);
+
+    return (
+        <Animated.View
+            entering={FadeIn.duration(200)}
+            style={[
+                styles.detectionBox,
+                {
+                    left,
+                    top,
+                    width: boxWidth,
+                    height: boxHeight,
+                    borderColor: mapping.color,
+                }
+            ]}
+        >
+            <View style={[styles.detectionLabel, { backgroundColor: mapping.color }]}>
+                <Text style={styles.detectionLabelText}>
+                    {mapping.label} {confidence}%
+                </Text>
+            </View>
+        </Animated.View>
+    );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DETECTION INFO PANEL - Shows friendly summary of detections
+// ═══════════════════════════════════════════════════════════════════════════
+const DetectionPanel = ({ counts, totalPoints, isDark }) => {
+    if (!counts || Object.keys(counts).length === 0) return null;
+
+    return (
+        <Animated.View
+            entering={FadeInUp.springify()}
+            style={[
+                styles.detectionPanel,
+                { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.95)' }
+            ]}
+        >
+            <View style={styles.detectionPanelHeader}>
+                <Ionicons name="checkmark-circle" size={rs(20)} color={isDark ? '#60a5fa' : '#3b82f6'} />
+                <Text style={[styles.detectionPanelTitle, { color: isDark ? '#fff' : '#1a3a4a' }]}>
+                    ¡Detectado!
+                </Text>
+            </View>
+            <View style={styles.detectionCounts}>
+                {Object.entries(counts).map(([className, count]) => {
+                    const mapping = CLASS_MAPPING[className.toLowerCase()] || { label: className, color: '#22c55e' };
+                    return (
+                        <View key={className} style={styles.detectionCountItem}>
+                            <View style={[styles.detectionDot, { backgroundColor: mapping.color }]} />
+                            <Text style={[styles.detectionCountText, { color: isDark ? '#e0e0e0' : '#1a3a4a' }]}>
+                                {count}x {mapping.label}
+                            </Text>
+                        </View>
+                    );
+                })}
+            </View>
+            <View style={[styles.pointsBadge, { backgroundColor: isDark ? BRAND.biolum : '#3b82f6' }]}>
+                <Text style={[styles.pointsBadgeText, { color: isDark ? '#001220' : '#fff' }]}>
+                    +{totalPoints} puntos
+                </Text>
+            </View>
+        </Animated.View>
+    );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LAST SCAN INFO PANEL - Shows detailed info about the last scanned items
+// ═══════════════════════════════════════════════════════════════════════════
+const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
+    if (!scanInfo) return null;
+
+    return (
+        <Animated.View
+            entering={FadeInUp.springify()}
+            exiting={FadeOut}
+            style={[
+                styles.lastScanPanel,
+                { backgroundColor: isDark ? 'rgba(0,18,32,0.95)' : 'rgba(255,255,255,0.98)' }
+            ]}
+        >
+            <View style={styles.lastScanHeader}>
+                <View style={styles.lastScanHeaderLeft}>
+                    <Ionicons name="checkmark-circle" size={rs(18)} color={isDark ? '#60a5fa' : '#2563eb'} />
+                    <Text style={[styles.lastScanTitle, { color: isDark ? '#fff' : '#1a3a4a' }]}>
+                        Último Escaneo
+                    </Text>
+                </View>
+                <Text style={[styles.lastScanTime, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+                    {scanInfo.timestamp}
+                </Text>
+            </View>
+
+            <View style={styles.lastScanItems}>
+                {scanInfo.items.map((item, index) => (
+                    <View key={index} style={styles.lastScanItem}>
+                        <View style={styles.lastScanItemLeft}>
+                            <Text style={[styles.lastScanItemLabel, { color: isDark ? '#e0e0e0' : '#374151' }]}>
+                                {item.count}x {item.label}
+                            </Text>
+                            {item.sizePercent > 0 && (
+                                <Text style={[styles.lastScanItemSize, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+                                    Tamaño: {item.sizePercent}%
+                                </Text>
+                            )}
+                        </View>
+                        <Text style={[styles.lastScanItemPoints, { color: isDark ? '#60a5fa' : '#2563eb' }]}>
+                            +{item.points}
+                        </Text>
+                    </View>
+                ))}
+            </View>
+
+            <View style={[styles.lastScanTotal, { borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+                <Text style={[styles.lastScanTotalLabel, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+                    Total ({scanInfo.totalItems} objetos)
+                </Text>
+                <Text style={[styles.lastScanTotalPoints, { color: isDark ? '#60a5fa' : '#2563eb' }]}>
+                    +{scanInfo.totalPoints} pts
+                </Text>
+            </View>
+
+            <Pressable onPress={onDismiss} style={styles.lastScanDismiss}>
+                <Ionicons name="close-circle" size={rs(20)} color={isDark ? '#6b7280' : '#9ca3af'} />
+            </Pressable>
+        </Animated.View>
+    );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
 // MAIN SCAN SCREEN
 // ═══════════════════════════════════════════════════════════════════════════
 export default function ScanScreen() {
     const { scanItem } = useGame();
     const { colors, isDark } = useTheme();
     const [lastScanned, setLastScanned] = useState(null);
+    const [permission, requestPermission] = useCameraPermissions();
+
+    // AI Scanning states
+    const cameraRef = useRef(null);
+    const scanIntervalRef = useRef(null);
+    const [isScanning, setIsScanning] = useState(false);
+    const [isAutoScanning, setIsAutoScanning] = useState(true);  // Auto-scan enabled by default
+    const [isReadyToCollect, setIsReadyToCollect] = useState(false);  // True when object detected and ready
+    const [detectionResults, setDetectionResults] = useState(null);
+    const [scanError, setScanError] = useState(null);
+    const [predictions, setPredictions] = useState([]);  // Raw predictions with x, y, width, height
+    const [imageSize, setImageSize] = useState({ width: 640, height: 480 });  // Captured image dimensions
+    const [lastScanInfo, setLastScanInfo] = useState(null);  // Detailed info about last scan
 
     const scannerSize = getScannerSize();
 
@@ -198,6 +443,26 @@ export default function ScanScreen() {
         );
     }, [scannerSize]);
 
+    // Continuous scanning effect
+    useEffect(() => {
+        if (permission?.granted && isAutoScanning && cameraRef.current) {
+            console.log('Starting continuous scan...');
+
+            // Start scanning interval
+            scanIntervalRef.current = setInterval(() => {
+                if (!isScanning && cameraRef.current) {
+                    performScan();
+                }
+            }, SCAN_INTERVAL_MS);
+
+            return () => {
+                if (scanIntervalRef.current) {
+                    clearInterval(scanIntervalRef.current);
+                }
+            };
+        }
+    }, [permission?.granted, isAutoScanning]);
+
     const scanLineStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: scanLineY.value }],
     }));
@@ -206,6 +471,186 @@ export default function ScanScreen() {
         opacity: pulseOpacity.value,
     }));
 
+    // Real-time scan function - calls Roboflow API directly
+    const performScan = async () => {
+        if (!cameraRef.current || isScanning) return;
+
+        setIsScanning(true);
+
+        try {
+            // Capture photo from camera
+            const photo = await cameraRef.current.takePictureAsync({
+                quality: 0.5,  // Lower quality for faster upload
+                base64: true,  // Need base64 for Roboflow API
+            });
+
+            if (!photo || !photo.base64) {
+                console.log('No photo captured');
+                return;
+            }
+
+            // Store image size
+            if (photo.width && photo.height) {
+                setImageSize({ width: photo.width, height: photo.height });
+            }
+
+            // Get just the base64 data (remove prefix if present)
+            let base64Data = photo.base64;
+            if (base64Data.startsWith('data:')) {
+                base64Data = base64Data.split(',')[1];
+            }
+
+            // Call Roboflow API directly
+            const response = await fetch(
+                `${ROBOFLOW_URL}?api_key=${ROBOFLOW_API_KEY}&confidence=${CONFIDENCE_THRESHOLD}&overlap=50`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: base64Data,
+                }
+            );
+
+            if (!response.ok) {
+                console.log('Roboflow error:', response.status);
+                return;
+            }
+
+            const data = await response.json();
+            const apiPredictions = data.predictions || [];
+
+            // Update predictions for drawing boxes
+            setPredictions(apiPredictions);
+
+            // Calculate counts
+            const counts = {};
+            for (const pred of apiPredictions) {
+                const cls = pred.class;
+                if (cls) {
+                    counts[cls] = (counts[cls] || 0) + 1;
+                }
+            }
+
+            if (apiPredictions.length > 0) {
+                // Calculate total points with size multiplier
+                let totalPoints = 0;
+                const detectedItems = [];
+
+                for (const pred of apiPredictions) {
+                    const className = pred.class;
+                    const mapping = CLASS_MAPPING[className.toLowerCase()] ||
+                        { type: 'trash', label: className, points: 5, color: '#3b82f6' };
+
+                    // Size multiplier: larger objects = more points
+                    // Calculate area as % of image, multiply points
+                    const area = pred.width * pred.height;
+                    const imageArea = imageSize.width * imageSize.height;
+                    const sizePercent = (area / imageArea) * 100;
+
+                    // Size bonus: 1x for tiny, up to 3x for large objects
+                    let sizeMultiplier = 1;
+                    if (sizePercent > 20) sizeMultiplier = 3;
+                    else if (sizePercent > 10) sizeMultiplier = 2;
+                    else if (sizePercent > 5) sizeMultiplier = 1.5;
+
+                    const itemPoints = Math.round(mapping.points * sizeMultiplier);
+                    totalPoints += itemPoints;
+
+                    // Check if this item type already exists
+                    const existingItem = detectedItems.find(i => i.className === className);
+                    if (existingItem) {
+                        existingItem.count++;
+                        existingItem.points += itemPoints;
+                    } else {
+                        detectedItems.push({
+                            className,
+                            count: 1,
+                            label: mapping.label,
+                            points: itemPoints,
+                            sizePercent: Math.round(sizePercent),
+                        });
+                    }
+                }
+
+                // Calculate counts for panel
+                const counts = {};
+                for (const item of detectedItems) {
+                    counts[item.className] = item.count;
+                }
+
+                setDetectionResults({
+                    items: detectedItems,
+                    totalPoints,
+                    count: apiPredictions.length,
+                    counts,
+                });
+
+                // Mark as ready to collect
+                setIsReadyToCollect(true);
+            } else {
+                // No detections - clear state
+                setPredictions([]);
+                setDetectionResults(null);
+                setIsReadyToCollect(false);
+            }
+
+        } catch (error) {
+            console.log('Scan error:', error.message);
+            // Silent failure for continuous scanning
+        } finally {
+            setIsScanning(false);
+        }
+    };
+
+    // Manual collect - awards points for detected items
+    const handleCollect = () => {
+        if (!isReadyToCollect || !detectionResults || detectionResults.totalPoints <= 0) return;
+
+        const mainType = detectionResults.items[0]?.label || 'Residuo';
+        scanItem('trash');
+
+        // Save detailed scan info for the HUD
+        setLastScanInfo({
+            timestamp: new Date().toLocaleTimeString(),
+            items: detectionResults.items.map(item => ({
+                label: item.label,
+                count: item.count,
+                points: item.points,
+                sizePercent: item.sizePercent || 0,
+            })),
+            totalPoints: detectionResults.totalPoints,
+            totalItems: detectionResults.count,
+        });
+
+        setLastScanned({
+            type: mainType,
+            points: detectionResults.totalPoints,
+            details: detectionResults.items,
+        });
+
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+        // Reset ready state
+        setIsReadyToCollect(false);
+
+        // Clear detection boxes but keep lastScanInfo visible
+        setTimeout(() => {
+            setLastScanned(null);
+            setDetectionResults(null);
+            setPredictions([]);
+        }, 2500);
+    };
+
+    // Toggle auto-scanning
+    const toggleAutoScan = () => {
+        setIsAutoScanning(!isAutoScanning);
+        if (!isAutoScanning) {
+            setPredictions([]);
+            setDetectionResults(null);
+        }
+    };
+
     const handleSimulatedScan = (type) => {
         const points = scanItem(type);
         setLastScanned({ type, points });
@@ -213,40 +658,80 @@ export default function ScanScreen() {
         setTimeout(() => setLastScanned(null), 2500);
     };
 
-    // Visible water colors for both modes
+    const scannerColor = isDark ? BRAND.biolum : '#0d4a6f';
+
+    // Show permission request screen if permission not granted
+    if (!permission) {
+        // Still loading permission status
+        return (
+            <View style={[styles.container, styles.loadingContainer]}>
+                <LinearGradient
+                    colors={isDark ? [BRAND.oceanDeep, '#002844'] : ['#1a6b8f', '#2d8ab0']}
+                    style={StyleSheet.absoluteFill}
+                />
+                <Ionicons name="camera" size={rs(40)} color={isDark ? BRAND.biolum : '#fff'} />
+                <Text style={[styles.loadingText, { color: '#fff' }]}>Cargando...</Text>
+            </View>
+        );
+    }
+
+    if (!permission.granted) {
+        // Permission not granted, show request UI
+        return <PermissionScreen onRequestPermission={requestPermission} isDark={isDark} />;
+    }
+
+    // Permission granted - show camera scanner with original design
     const waterGradient = isDark
         ? [BRAND.oceanDeep, '#002844', BRAND.oceanMid]
         : ['#1a6b8f', '#2d8ab0', '#4aa3c7'];
 
-    const scannerColor = isDark ? BRAND.biolum : '#0d4a6f';
-
     return (
         <View style={styles.container}>
-            {/* Background */}
+            {/* Background - same as original */}
             <LinearGradient colors={waterGradient} style={StyleSheet.absoluteFill} />
 
-            {/* Bubbles */}
+            {/* Bubbles - same as original */}
             <FloatingBubbles count={12} minSize={4} maxSize={16} zIndex={1} />
 
             {/* Scanner overlay */}
             <View style={styles.scannerOverlay}>
-                {/* Scanner Frame with Corner Brackets */}
+                {/* Scanner Frame with Camera inside */}
                 <Animated.View style={[
                     styles.scannerFrame,
                     {
                         width: scannerSize,
                         height: scannerSize,
                         borderColor: isDark ? 'rgba(168,197,212,0.3)' : 'rgba(13,74,111,0.2)',
+                        overflow: 'hidden', // Clip camera to frame
                     },
                     pulseStyle
                 ]}>
-                    {/* 4 Corner Brackets */}
-                    <CornerBracket position="topLeft" color={scannerColor} size={rs(32)} />
-                    <CornerBracket position="topRight" color={scannerColor} size={rs(32)} />
-                    <CornerBracket position="bottomLeft" color={scannerColor} size={rs(32)} />
-                    <CornerBracket position="bottomRight" color={scannerColor} size={rs(32)} />
+                    {/* Camera View - Only visible inside scanner frame */}
+                    <CameraView
+                        ref={cameraRef}
+                        style={styles.cameraInFrame}
+                        facing="back"
+                    />
 
-                    {/* Scan line */}
+                    {/* 4 Corner Brackets - on top of camera */}
+                    <View style={styles.cornerOverlay}>
+                        <CornerBracket position="topLeft" color={scannerColor} size={rs(32)} />
+                        <CornerBracket position="topRight" color={scannerColor} size={rs(32)} />
+                        <CornerBracket position="bottomLeft" color={scannerColor} size={rs(32)} />
+                        <CornerBracket position="bottomRight" color={scannerColor} size={rs(32)} />
+                    </View>
+
+                    {/* Detection Boxes - drawn over detected objects */}
+                    {predictions.map((pred, index) => (
+                        <DetectionBox
+                            key={pred.detection_id || index}
+                            prediction={pred}
+                            frameSize={scannerSize}
+                            imageSize={imageSize}
+                        />
+                    ))}
+
+                    {/* Scan line - on top of camera */}
                     <Animated.View style={[styles.scanLine, scanLineStyle]}>
                         <LinearGradient
                             colors={[
@@ -261,24 +746,57 @@ export default function ScanScreen() {
                     </Animated.View>
                 </Animated.View>
 
-                {/* Instructions */}
+                {/* Status indicator - shows ready state */}
                 <Animated.View
                     entering={FadeIn.delay(400)}
                     style={[
                         styles.instructionBox,
-                        { backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.95)' }
+                        {
+                            backgroundColor: isReadyToCollect
+                                ? (isDark ? 'rgba(59,130,246,0.9)' : 'rgba(37,99,235,0.95)')
+                                : (isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.8)')
+                        }
                     ]}
                 >
                     <Ionicons
-                        name="camera-outline"
+                        name={isReadyToCollect ? "checkmark-circle" : "scan-outline"}
                         size={rs(16)}
-                        color={isDark ? '#a8d4e6' : '#0d4a6f'}
+                        color={isReadyToCollect ? '#fff' : (isDark ? '#9ca3af' : '#6b7280')}
                     />
-                    <Text style={[styles.scanText, { color: isDark ? '#a8d4e6' : '#0d4a6f' }]}>
-                        Apunta la cámara hacia la basura
+                    <Text style={[
+                        styles.scanText,
+                        { color: isReadyToCollect ? '#fff' : (isDark ? '#9ca3af' : '#6b7280') }
+                    ]}>
+                        {isReadyToCollect
+                            ? '¡Listo para escanear!'
+                            : (isScanning ? 'Analizando...' : 'Buscando residuos...')}
                     </Text>
                 </Animated.View>
             </View>
+
+            {/* Error Message */}
+            {scanError && (
+                <Animated.View
+                    entering={FadeIn.springify()}
+                    style={[styles.errorBox, { backgroundColor: 'rgba(239,68,68,0.9)' }]}
+                >
+                    <Ionicons name="alert-circle" size={rs(18)} color="#fff" />
+                    <Text style={styles.errorText}>{scanError}</Text>
+                </Animated.View>
+            )}
+
+            {/* Scanning Indicator */}
+            {isScanning && (
+                <Animated.View
+                    entering={FadeIn.springify()}
+                    style={[styles.scanningBox, { backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)' }]}
+                >
+                    <ActivityIndicator size="small" color={isDark ? BRAND.biolum : '#0d4a6f'} />
+                    <Text style={[styles.scanningText, { color: isDark ? '#fff' : '#1a3a4a' }]}>
+                        Analizando imagen...
+                    </Text>
+                </Animated.View>
+            )}
 
             {/* Success popup */}
             <SuccessPopup
@@ -287,43 +805,102 @@ export default function ScanScreen() {
                 type={lastScanned?.type}
             />
 
-            {/* Controls area */}
+            {/* Detection Panel - Friendly info display */}
+            {detectionResults && (
+                <DetectionPanel
+                    counts={detectionResults.counts}
+                    totalPoints={detectionResults.totalPoints}
+                    isDark={isDark}
+                />
+            )}
+
+            {/* Last Scan Info Panel - Shows after scanning */}
+            <LastScanInfoPanel
+                scanInfo={lastScanInfo}
+                isDark={isDark}
+                onDismiss={() => setLastScanInfo(null)}
+            />
+
+            {/* Controls area - with extra margin to avoid navbar */}
             <SafeAreaView edges={['bottom']} style={styles.controlsArea}>
                 <LinearGradient
                     colors={isDark
                         ? ['transparent', 'rgba(0,18,32,0.95)']
                         : ['transparent', 'rgba(13,74,111,0.95)']
                     }
-                    style={styles.controlsGradient}
+                    style={[styles.controlsGradient, { paddingBottom: rs(20) }]}
                 >
-                    <Animated.Text
-                        entering={FadeInDown.delay(200)}
-                        style={styles.debugTitle}
-                    >
-                        SIMULACIÓN DE DETECCIÓN
-                    </Animated.Text>
-                    <View style={styles.buttonRow}>
-                        <ScanButton
-                            icon="water-outline"
-                            color="#22c55e"
-                            label="Botella"
-                            onPress={() => handleSimulatedScan('bottle')}
-                            delay={300}
-                        />
-                        <ScanButton
-                            icon="beer-outline"
-                            color="#eab308"
-                            label="Lata"
-                            onPress={() => handleSimulatedScan('can')}
-                            delay={400}
-                        />
-                        <ScanButton
-                            icon="trash-outline"
-                            color="#ef4444"
-                            label="Basura"
+                    {/* Status indicator */}
+                    <Animated.View entering={FadeIn.delay(100)} style={styles.statusRow}>
+                        <View style={[
+                            styles.statusDot,
+                            { backgroundColor: isReadyToCollect ? '#3b82f6' : (isAutoScanning ? '#60a5fa' : '#6b7280') }
+                        ]} />
+                        <Text style={styles.statusText}>
+                            {isReadyToCollect
+                                ? '¡Residuo detectado! Listo para escanear'
+                                : (isScanning ? 'Analizando...' : (isAutoScanning ? 'Buscando residuos...' : 'Pausado'))}
+                        </Text>
+                    </Animated.View>
+
+                    {/* Main Collect Button - Only enabled when ready to collect */}
+                    <Animated.View entering={FadeInUp.delay(100).springify()}>
+                        <Pressable
+                            onPress={handleCollect}
+                            disabled={!isReadyToCollect}
+                            style={({ pressed }) => [
+                                styles.aiScanButton,
+                                {
+                                    backgroundColor: isReadyToCollect
+                                        ? (isDark ? '#3b82f6' : '#2563eb')
+                                        : 'rgba(100,100,100,0.3)',
+                                    opacity: pressed ? 0.8 : 1,
+                                    transform: [{ scale: pressed ? 0.95 : 1 }],
+                                }
+                            ]}
+                        >
+                            <Ionicons
+                                name="scan"
+                                size={rs(32)}
+                                color="#fff"
+                            />
+                            <Text style={[styles.aiScanButtonText, { color: '#fff' }]}>
+                                {isReadyToCollect
+                                    ? `ESCANEAR +${detectionResults?.totalPoints || 0}`
+                                    : 'ESPERANDO...'}
+                            </Text>
+                        </Pressable>
+                    </Animated.View>
+
+                    {/* Toggle auto-scan and test button row */}
+                    <View style={styles.controlButtonRow}>
+                        <Pressable
+                            onPress={toggleAutoScan}
+                            style={({ pressed }) => [
+                                styles.toggleButton,
+                                { opacity: pressed ? 0.7 : 1 }
+                            ]}
+                        >
+                            <Ionicons
+                                name={isAutoScanning ? "pause" : "play"}
+                                size={rs(18)}
+                                color="#fff"
+                            />
+                            <Text style={styles.toggleButtonText}>
+                                {isAutoScanning ? 'Pausar' : 'Activar'}
+                            </Text>
+                        </Pressable>
+
+                        <Pressable
                             onPress={() => handleSimulatedScan('trash')}
-                            delay={500}
-                        />
+                            style={({ pressed }) => [
+                                styles.discreteTestButton,
+                                { opacity: pressed ? 0.5 : 0.4 }
+                            ]}
+                        >
+                            <Ionicons name="add-circle-outline" size={rs(14)} color="#fff" />
+                            <Text style={styles.discreteTestText}>+10 test</Text>
+                        </Pressable>
                     </View>
                 </LinearGradient>
             </SafeAreaView>
@@ -444,5 +1021,344 @@ const styles = StyleSheet.create({
         fontSize: rf(10),
         marginTop: rs(2),
         letterSpacing: 1,
+    },
+    // Loading screen styles
+    loadingContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    loadingText: {
+        marginTop: SPACING.md,
+        fontSize: rf(14),
+        fontWeight: '500',
+    },
+    // Permission screen styles
+    permissionContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: SPACING.xl,
+        zIndex: 10,
+    },
+    permissionCard: {
+        width: '100%',
+        maxWidth: rs(320),
+        padding: SPACING.xl,
+        borderRadius: RADIUS.xl,
+        alignItems: 'center',
+    },
+    permissionIconContainer: {
+        width: rs(80),
+        height: rs(80),
+        borderRadius: rs(40),
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: SPACING.lg,
+    },
+    permissionTitle: {
+        fontSize: rf(20),
+        fontWeight: '700',
+        marginBottom: SPACING.sm,
+        textAlign: 'center',
+    },
+    permissionDescription: {
+        fontSize: rf(14),
+        textAlign: 'center',
+        marginBottom: SPACING.xl,
+        lineHeight: rf(20),
+    },
+    permissionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: rs(8),
+        paddingVertical: rs(14),
+        paddingHorizontal: rs(24),
+        borderRadius: RADIUS.lg,
+    },
+    permissionButtonText: {
+        color: '#fff',
+        fontSize: rf(15),
+        fontWeight: '600',
+    },
+    // Camera overlay styles
+    cameraOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        zIndex: 2,
+    },
+    overlaySection: {
+        width: '100%',
+    },
+    middleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    sideOverlay: {
+        flex: 1,
+    },
+    instructionContainer: {
+        position: 'absolute',
+        top: '65%',
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        zIndex: 10,
+    },
+    // Camera inside scanner frame
+    cameraInFrame: {
+        ...StyleSheet.absoluteFillObject,
+        borderRadius: RADIUS.md,
+    },
+    cornerOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        zIndex: 2,
+    },
+    // AI Scan button styles
+    aiScanButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: rs(12),
+        alignSelf: 'center',
+        paddingVertical: rs(16),
+        paddingHorizontal: rs(40),
+        borderRadius: rs(30),
+        marginBottom: SPACING.lg,
+        minWidth: rs(180),
+        minHeight: rs(60),
+    },
+    aiScanButtonText: {
+        fontSize: rf(16),
+        fontWeight: '700',
+        letterSpacing: 2,
+    },
+    // Error and scanning indicators
+    errorBox: {
+        position: 'absolute',
+        top: rh(80),
+        alignSelf: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: rs(8),
+        paddingVertical: rs(12),
+        paddingHorizontal: rs(20),
+        borderRadius: RADIUS.lg,
+        zIndex: 100,
+    },
+    errorText: {
+        color: '#fff',
+        fontSize: rf(13),
+        fontWeight: '600',
+    },
+    scanningBox: {
+        position: 'absolute',
+        top: rh(80),
+        alignSelf: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: rs(10),
+        paddingVertical: rs(12),
+        paddingHorizontal: rs(20),
+        borderRadius: RADIUS.lg,
+        zIndex: 100,
+    },
+    scanningText: {
+        fontSize: rf(13),
+        fontWeight: '600',
+    },
+    // Detection Box styles
+    detectionBox: {
+        position: 'absolute',
+        borderWidth: 2,
+        borderRadius: 4,
+        zIndex: 10,
+    },
+    detectionLabel: {
+        position: 'absolute',
+        top: -22,
+        left: -2,
+        paddingHorizontal: rs(6),
+        paddingVertical: rs(2),
+        borderRadius: 4,
+    },
+    detectionLabelText: {
+        color: '#fff',
+        fontSize: rf(10),
+        fontWeight: '700',
+    },
+    // Detection Panel styles
+    detectionPanel: {
+        position: 'absolute',
+        top: rh(120),
+        alignSelf: 'center',
+        paddingVertical: rs(12),
+        paddingHorizontal: rs(16),
+        borderRadius: RADIUS.lg,
+        zIndex: 90,
+        minWidth: rs(180),
+    },
+    detectionPanelHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: rs(6),
+        marginBottom: rs(8),
+    },
+    detectionPanelTitle: {
+        fontSize: rf(15),
+        fontWeight: '700',
+    },
+    detectionCounts: {
+        gap: rs(4),
+        marginBottom: rs(10),
+    },
+    detectionCountItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: rs(6),
+    },
+    detectionDot: {
+        width: rs(8),
+        height: rs(8),
+        borderRadius: rs(4),
+    },
+    detectionCountText: {
+        fontSize: rf(13),
+    },
+    pointsBadge: {
+        alignSelf: 'center',
+        paddingVertical: rs(6),
+        paddingHorizontal: rs(16),
+        borderRadius: rs(20),
+    },
+    pointsBadgeText: {
+        fontSize: rf(14),
+        fontWeight: '700',
+    },
+    // Discrete test button
+    discreteTestButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: rs(4),
+        alignSelf: 'center',
+        marginTop: rs(8),
+    },
+    discreteTestText: {
+        color: 'rgba(255,255,255,0.6)',
+        fontSize: rf(11),
+    },
+    // Status indicator
+    statusRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: rs(6),
+        marginBottom: rs(12),
+    },
+    statusDot: {
+        width: rs(8),
+        height: rs(8),
+        borderRadius: rs(4),
+    },
+    statusText: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: rf(12),
+    },
+    // Control button row
+    controlButtonRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: rs(20),
+        marginTop: rs(12),
+    },
+    toggleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: rs(6),
+        paddingVertical: rs(8),
+        paddingHorizontal: rs(16),
+        borderRadius: rs(20),
+        backgroundColor: 'rgba(255,255,255,0.15)',
+    },
+    toggleButtonText: {
+        color: '#fff',
+        fontSize: rf(12),
+        fontWeight: '600',
+    },
+    // Last Scan Info Panel styles
+    lastScanPanel: {
+        position: 'absolute',
+        top: rs(100),
+        left: rs(16),
+        right: rs(16),
+        borderRadius: RADIUS.md,
+        padding: rs(12),
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    lastScanHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: rs(10),
+    },
+    lastScanHeaderLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: rs(6),
+    },
+    lastScanTitle: {
+        fontSize: rf(14),
+        fontWeight: '700',
+    },
+    lastScanTime: {
+        fontSize: rf(11),
+    },
+    lastScanItems: {
+        gap: rs(6),
+    },
+    lastScanItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: rs(4),
+    },
+    lastScanItemLeft: {
+        flex: 1,
+    },
+    lastScanItemLabel: {
+        fontSize: rf(13),
+        fontWeight: '500',
+    },
+    lastScanItemSize: {
+        fontSize: rf(10),
+        marginTop: rs(2),
+    },
+    lastScanItemPoints: {
+        fontSize: rf(14),
+        fontWeight: '700',
+    },
+    lastScanTotal: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: rs(10),
+        paddingTop: rs(10),
+        borderTopWidth: 1,
+    },
+    lastScanTotalLabel: {
+        fontSize: rf(12),
+    },
+    lastScanTotalPoints: {
+        fontSize: rf(16),
+        fontWeight: '800',
+    },
+    lastScanDismiss: {
+        position: 'absolute',
+        top: rs(8),
+        right: rs(8),
+        padding: rs(4),
     },
 });
