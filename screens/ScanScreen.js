@@ -412,14 +412,29 @@ export default function ScanScreen() {
     // AI Scanning states
     const cameraRef = useRef(null);
     const scanIntervalRef = useRef(null);
-    const [isScanning, setIsScanning] = useState(false);
-    const [isAutoScanning, setIsAutoScanning] = useState(true);  // Auto-scan enabled by default
-    const [isReadyToCollect, setIsReadyToCollect] = useState(false);  // True when object detected and ready
+    const isScanningRef = useRef(false);
+    const isReadyToCollectRef = useRef(false);
+
+    const [isScanning, setIsScanningState] = useState(false);
+    const [isAutoScanning, setIsAutoScanning] = useState(true);
+    const [isReadyToCollect, setIsReadyToCollectState] = useState(false);
+
+    // Helper to update both ref and state
+    const setIsScanning = (val) => {
+        isScanningRef.current = val;
+        setIsScanningState(val);
+    };
+
+    const setIsReadyToCollect = (val) => {
+        isReadyToCollectRef.current = val;
+        setIsReadyToCollectState(val);
+    };
+
     const [detectionResults, setDetectionResults] = useState(null);
     const [scanError, setScanError] = useState(null);
-    const [predictions, setPredictions] = useState([]);  // Raw predictions with x, y, width, height
-    const [imageSize, setImageSize] = useState({ width: 640, height: 480 });  // Captured image dimensions
-    const [lastScanInfo, setLastScanInfo] = useState(null);  // Detailed info about last scan
+    const [predictions, setPredictions] = useState([]);
+    const [imageSize, setImageSize] = useState({ width: 640, height: 480 });
+    const [lastScanInfo, setLastScanInfo] = useState(null);
 
     const scannerSize = getScannerSize();
 
@@ -443,14 +458,19 @@ export default function ScanScreen() {
         );
     }, [scannerSize]);
 
-    // Continuous scanning effect
+    // Continuous scanning effect with locking logic
     useEffect(() => {
         if (permission?.granted && isAutoScanning && cameraRef.current) {
-            console.log('Starting continuous scan...');
+            console.log('Starting continuous scan loop...');
 
-            // Start scanning interval
+            // Clear existing interval
+            if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
+
+            // Start locked scanning interval
             scanIntervalRef.current = setInterval(() => {
-                if (!isScanning && cameraRef.current) {
+                // VERIFICATION LOGIC: Continues scanning to verify object presence
+                // Only skip if currently processing a frame (isScanningRef)
+                if (!isScanningRef.current && cameraRef.current) {
                     performScan();
                 }
             }, SCAN_INTERVAL_MS);
@@ -475,6 +495,7 @@ export default function ScanScreen() {
     const performScan = async () => {
         if (!cameraRef.current || isScanning) return;
 
+        // If locked, we are verifying. If not locked, we are searching.
         setIsScanning(true);
 
         try {
@@ -518,21 +539,44 @@ export default function ScanScreen() {
             }
 
             const data = await response.json();
-            const apiPredictions = data.predictions || [];
+            let apiPredictions = data.predictions || [];
+
+            // FILTER: Only keep objects fully inside the frame (with margin)
+            const margin = 10; // pixels margin from edge
+            const imgW = photo.width;
+            const imgH = photo.height;
+
+            apiPredictions = apiPredictions.filter(p => {
+                const x = p.x;
+                const y = p.y;
+                const w = p.width;
+                const h = p.height;
+
+                const minX = x - w / 2;
+                const maxX = x + w / 2;
+                const minY = y - h / 2;
+                const maxY = y + h / 2;
+
+                // Check if touches borders
+                const safelyInside = minX > margin && maxX < (imgW - margin) &&
+                    minY > margin && maxY < (imgH - margin);
+                return safelyInside;
+            });
 
             // Update predictions for drawing boxes
             setPredictions(apiPredictions);
 
-            // Calculate counts
-            const counts = {};
-            for (const pred of apiPredictions) {
-                const cls = pred.class;
-                if (cls) {
-                    counts[cls] = (counts[cls] || 0) + 1;
-                }
-            }
-
             if (apiPredictions.length > 0) {
+                // ... same calculation logic ...
+                // Calculate counts
+                const counts = {};
+                for (const pred of apiPredictions) {
+                    const cls = pred.class;
+                    if (cls) {
+                        counts[cls] = (counts[cls] || 0) + 1;
+                    }
+                }
+
                 // Calculate total points with size multiplier
                 let totalPoints = 0;
                 const detectedItems = [];
@@ -543,12 +587,10 @@ export default function ScanScreen() {
                         { type: 'trash', label: className, points: 5, color: '#3b82f6' };
 
                     // Size multiplier: larger objects = more points
-                    // Calculate area as % of image, multiply points
                     const area = pred.width * pred.height;
                     const imageArea = imageSize.width * imageSize.height;
                     const sizePercent = (area / imageArea) * 100;
 
-                    // Size bonus: 1x for tiny, up to 3x for large objects
                     let sizeMultiplier = 1;
                     if (sizePercent > 20) sizeMultiplier = 3;
                     else if (sizePercent > 10) sizeMultiplier = 2;
@@ -574,25 +616,28 @@ export default function ScanScreen() {
                 }
 
                 // Calculate counts for panel
-                const counts = {};
+                const finalCounts = {};
                 for (const item of detectedItems) {
-                    counts[item.className] = item.count;
+                    finalCounts[item.className] = item.count;
                 }
 
                 setDetectionResults({
                     items: detectedItems,
                     totalPoints,
                     count: apiPredictions.length,
-                    counts,
+                    counts: finalCounts,
                 });
 
-                // Mark as ready to collect
+                // Mark as ready to collect (LOCK)
                 setIsReadyToCollect(true);
             } else {
-                // No detections - clear state
-                setPredictions([]);
-                setDetectionResults(null);
-                setIsReadyToCollect(false);
+                // No valid detections found (or object left the screen) -> UNLOCK
+                if (isReadyToCollectRef.current) {
+                    // Only clear if we were locked, to avoid flickering
+                    setPredictions([]);
+                    setDetectionResults(null);
+                    setIsReadyToCollect(false);
+                }
             }
 
         } catch (error) {
@@ -695,6 +740,38 @@ export default function ScanScreen() {
 
             {/* Scanner overlay */}
             <View style={styles.scannerOverlay}>
+                {/* Status indicator - MOVED ABOVE SCANNER */}
+                <Animated.View
+                    entering={FadeIn.delay(400)}
+                    style={styles.instructionBox}
+                >
+                    {isReadyToCollect ? (
+                        <Ionicons
+                            name="checkmark-circle"
+                            size={rs(20)}
+                            color='#60a5fa'
+                        />
+                    ) : (
+                        <ActivityIndicator
+                            size="small"
+                            color={isDark ? 'rgba(255,255,255,0.8)' : '#fff'}
+                        />
+                    )}
+                    <Text style={[
+                        styles.scanText,
+                        {
+                            color: isReadyToCollect ? '#60a5fa' : (isDark ? 'rgba(255,255,255,0.8)' : '#fff'),
+                            textShadowColor: 'rgba(0,0,0,0.8)',
+                            textShadowOffset: { width: 0, height: 1 },
+                            textShadowRadius: 3
+                        }
+                    ]}>
+                        {isReadyToCollect
+                            ? '¡Listo para escanear!'
+                            : (isScanning ? 'Analizando...' : 'Buscando residuos...')}
+                    </Text>
+                </Animated.View>
+
                 {/* Scanner Frame with Camera inside */}
                 <Animated.View style={[
                     styles.scannerFrame,
@@ -703,6 +780,7 @@ export default function ScanScreen() {
                         height: scannerSize,
                         borderColor: isDark ? 'rgba(168,197,212,0.3)' : 'rgba(13,74,111,0.2)',
                         overflow: 'hidden', // Clip camera to frame
+                        marginTop: rs(20), // Spacing from text
                     },
                     pulseStyle
                 ]}>
@@ -745,33 +823,6 @@ export default function ScanScreen() {
                         />
                     </Animated.View>
                 </Animated.View>
-
-                {/* Status indicator - shows ready state */}
-                <Animated.View
-                    entering={FadeIn.delay(400)}
-                    style={[
-                        styles.instructionBox,
-                        {
-                            backgroundColor: isReadyToCollect
-                                ? (isDark ? 'rgba(59,130,246,0.9)' : 'rgba(37,99,235,0.95)')
-                                : (isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.8)')
-                        }
-                    ]}
-                >
-                    <Ionicons
-                        name={isReadyToCollect ? "checkmark-circle" : "scan-outline"}
-                        size={rs(16)}
-                        color={isReadyToCollect ? '#fff' : (isDark ? '#9ca3af' : '#6b7280')}
-                    />
-                    <Text style={[
-                        styles.scanText,
-                        { color: isReadyToCollect ? '#fff' : (isDark ? '#9ca3af' : '#6b7280') }
-                    ]}>
-                        {isReadyToCollect
-                            ? '¡Listo para escanear!'
-                            : (isScanning ? 'Analizando...' : 'Buscando residuos...')}
-                    </Text>
-                </Animated.View>
             </View>
 
             {/* Error Message */}
@@ -785,18 +836,7 @@ export default function ScanScreen() {
                 </Animated.View>
             )}
 
-            {/* Scanning Indicator */}
-            {isScanning && (
-                <Animated.View
-                    entering={FadeIn.springify()}
-                    style={[styles.scanningBox, { backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)' }]}
-                >
-                    <ActivityIndicator size="small" color={isDark ? BRAND.biolum : '#0d4a6f'} />
-                    <Text style={[styles.scanningText, { color: isDark ? '#fff' : '#1a3a4a' }]}>
-                        Analizando imagen...
-                    </Text>
-                </Animated.View>
-            )}
+
 
             {/* Success popup */}
             <SuccessPopup
@@ -828,7 +868,7 @@ export default function ScanScreen() {
                         ? ['transparent', 'rgba(0,18,32,0.95)']
                         : ['transparent', 'rgba(13,74,111,0.95)']
                     }
-                    style={[styles.controlsGradient, { paddingBottom: rs(20) }]}
+                    style={[styles.controlsGradient, { paddingBottom: rs(110) }]}
                 >
                     {/* Status indicator */}
                     <Animated.View entering={FadeIn.delay(100)} style={styles.statusRow}>
@@ -914,7 +954,8 @@ const styles = StyleSheet.create({
     },
     scannerOverlay: {
         ...StyleSheet.absoluteFillObject,
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
+        paddingTop: rh(15),
         alignItems: 'center',
         zIndex: 2,
     },
@@ -941,15 +982,15 @@ const styles = StyleSheet.create({
     instructionBox: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: SPACING.xl,
+        marginTop: SPACING.xxl,
         gap: rs(8),
-        paddingVertical: rs(10),
-        paddingHorizontal: rs(16),
-        borderRadius: RADIUS.lg,
+        alignSelf: 'center',
+        justifyContent: 'center',
     },
     scanText: {
-        fontSize: rf(13),
-        fontWeight: '600',
+        fontSize: rf(16),
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
     controlsArea: {
         position: 'absolute',
