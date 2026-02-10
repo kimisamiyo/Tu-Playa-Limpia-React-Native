@@ -82,10 +82,16 @@ export function LanguageProvider({ children }) {
         }
     }, []);
 
-    // Translation function
-    const t = useCallback((key) => {
+    const t = useCallback((key, params) => {
         const lang = language || LANGUAGES.ES;
-        return translations[lang]?.[key] || translations[LANGUAGES.ES]?.[key] || key;
+        let text = translations[lang]?.[key] || translations[LANGUAGES.ES]?.[key] || key;
+
+        if (params && typeof text === 'string') {
+            Object.keys(params).forEach(param => {
+                text = text.replace(new RegExp(`\\{${param}\\}`, 'g'), params[param]);
+            });
+        }
+        return text;
     }, [language]);
 
     const value = useMemo(() => ({
