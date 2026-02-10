@@ -63,6 +63,10 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
     const [firstPin, setFirstPin] = useState('');
     const [statusText, setStatusText] = useState('');
 
+    // Visibility State
+    const [showPassword, setShowPassword] = useState(false);
+    const [showPin, setShowPin] = useState(false);
+
     // Registration fields
     const [regUsername, setRegUsername] = useState('');
     const [regPassword, setRegPassword] = useState('');
@@ -487,20 +491,25 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                         <View style={styles.formIconRow}>
                             <Ionicons name="lock-closed-outline" size={rs(24)} color={colors.accent} />
                         </View>
-                        <TextInput
-                            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
-                            placeholder={t('auth_password_placeholder')}
-                            placeholderTextColor={colors.textMuted}
-                            secureTextEntry
-                            value={regPassword}
-                            onChangeText={setRegPassword}
-                            autoFocus
-                        />
+                        <View style={styles.passwordContainer}>
+                            <TextInput
+                                style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                placeholder={t('auth_password_placeholder')}
+                                placeholderTextColor={colors.textMuted}
+                                secureTextEntry={!showPassword}
+                                value={regPassword}
+                                onChangeText={setRegPassword}
+                                autoFocus
+                            />
+                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
+                            </TouchableOpacity>
+                        </View>
                         <TextInput
                             style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
                             placeholder={t('auth_password_confirm_placeholder')}
                             placeholderTextColor={colors.textMuted}
-                            secureTextEntry
+                            secureTextEntry={!showPassword}
                             value={regPasswordConfirm}
                             onChangeText={setRegPasswordConfirm}
                         />
@@ -549,14 +558,19 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                         </TouchableOpacity>
 
                         {/* File password */}
-                        <TextInput
-                            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
-                            placeholder={t('auth_file_password_placeholder')}
-                            placeholderTextColor={colors.textMuted}
-                            secureTextEntry
-                            value={importFilePassword}
-                            onChangeText={setImportFilePassword}
-                        />
+                        <View style={styles.passwordContainer}>
+                            <TextInput
+                                style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                placeholder={t('auth_file_password_placeholder')}
+                                placeholderTextColor={colors.textMuted}
+                                secureTextEntry={!showPassword}
+                                value={importFilePassword}
+                                onChangeText={setImportFilePassword}
+                            />
+                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
+                            </TouchableOpacity>
+                        </View>
 
                         {/* New session password */}
                         <View style={styles.sectionDivider}>
@@ -565,19 +579,25 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                             <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
                         </View>
 
-                        <TextInput
-                            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
-                            placeholder={t('auth_new_password_placeholder')}
-                            placeholderTextColor={colors.textMuted}
-                            secureTextEntry
-                            value={importNewPassword}
-                            onChangeText={setImportNewPassword}
-                        />
+                        <View style={styles.passwordContainer}>
+                            <TextInput
+                                style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                placeholder={t('auth_new_password_placeholder')}
+                                placeholderTextColor={colors.textMuted}
+                                secureTextEntry={!showPassword}
+                                value={importNewPassword}
+                                onChangeText={setImportNewPassword}
+                            />
+                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
+                            </TouchableOpacity>
+                        </View>
+
                         <TextInput
                             style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
                             placeholder={t('auth_password_confirm_placeholder')}
                             placeholderTextColor={colors.textMuted}
-                            secureTextEntry
+                            secureTextEntry={!showPassword}
                             value={importNewPasswordConfirm}
                             onChangeText={setImportNewPasswordConfirm}
                         />
@@ -771,6 +791,22 @@ const styles = StyleSheet.create({
     input: {
         borderWidth: 1, borderRadius: RADIUS.md, padding: SPACING.md,
         fontSize: rf(15), marginBottom: SPACING.sm,
+    },
+    passwordContainer: {
+        position: 'relative',
+        marginBottom: SPACING.sm,
+        justifyContent: 'center', // Center vertically
+    },
+    passwordInput: {
+        marginBottom: 0,
+        paddingRight: rs(48), // Space for eye icon (16 padding + 24 icon + 8 buffer)
+    },
+    eyeIcon: {
+        position: 'absolute',
+        right: 0,
+        height: '100%', // Full height of container
+        justifyContent: 'center', // Vertical center
+        paddingHorizontal: SPACING.md, // Click target size
     },
     hintText: { fontSize: rf(11), marginBottom: SPACING.sm, textAlign: 'center' },
     errorText: { fontSize: rf(12), color: BRAND.info, marginBottom: SPACING.sm, textAlign: 'center', fontWeight: '600' },

@@ -55,6 +55,9 @@ export default function ProfileScreen({ navigation }) {
     const [exportError, setExportError] = useState('');
     const [isExporting, setIsExporting] = useState(false);
 
+    // Visibility State
+    const [showPassword, setShowPassword] = useState(false);
+
     // ── Milestone Checks ──
     useEffect(() => {
         const checkMilestones = async () => {
@@ -637,14 +640,19 @@ export default function ProfileScreen({ navigation }) {
                         {exportStep === 'verify_session' ? (
                             <View style={styles.exportStep}>
                                 <Text style={[styles.inputLabel, { color: colors.text }]}>{t('export_step_verify')}</Text>
-                                <TextInput
-                                    style={[styles.exportInput, { color: colors.text, borderColor: colors.border }]}
-                                    secureTextEntry
-                                    placeholder={t('export_step_verify_placeholder')}
-                                    placeholderTextColor={colors.textMuted}
-                                    value={sessionPassword}
-                                    onChangeText={setSessionPassword}
-                                />
+                                <View style={styles.passwordContainer}>
+                                    <TextInput
+                                        style={[styles.exportInput, styles.passwordInput, { color: colors.text, borderColor: colors.border }]}
+                                        secureTextEntry={!showPassword}
+                                        placeholder={t('export_step_verify_placeholder')}
+                                        placeholderTextColor={colors.textMuted}
+                                        value={sessionPassword}
+                                        onChangeText={setSessionPassword}
+                                    />
+                                    <ScalePressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                        <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
+                                    </ScalePressable>
+                                </View>
                                 <ScalePressable
                                     style={[styles.actionButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.oceanDark }]}
                                     onPress={handleExportProfile}
@@ -666,24 +674,34 @@ export default function ProfileScreen({ navigation }) {
                                 </View>
 
                                 <Text style={[styles.inputLabel, { color: colors.text }]}>{t('export_step_create_label')}</Text>
-                                <TextInput
-                                    style={[styles.exportInput, { color: colors.text, borderColor: colors.border }]}
-                                    secureTextEntry
-                                    placeholder={t('export_step_create_placeholder')}
-                                    placeholderTextColor={colors.textMuted}
-                                    value={filePassword}
-                                    onChangeText={setFilePassword}
-                                />
+                                <View style={styles.passwordContainer}>
+                                    <TextInput
+                                        style={[styles.exportInput, styles.passwordInput, { color: colors.text, borderColor: colors.border }]}
+                                        secureTextEntry={!showPassword}
+                                        placeholder={t('export_step_create_placeholder')}
+                                        placeholderTextColor={colors.textMuted}
+                                        value={filePassword}
+                                        onChangeText={setFilePassword}
+                                    />
+                                    <ScalePressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                        <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
+                                    </ScalePressable>
+                                </View>
 
                                 <Text style={[styles.inputLabel, { color: colors.text }]}>{t('export_step_confirm_label')}</Text>
-                                <TextInput
-                                    style={[styles.exportInput, { color: colors.text, borderColor: colors.border }]}
-                                    secureTextEntry
-                                    placeholder={t('export_step_confirm_placeholder')}
-                                    placeholderTextColor={colors.textMuted}
-                                    value={filePasswordConfirm}
-                                    onChangeText={setFilePasswordConfirm}
-                                />
+                                <View style={styles.passwordContainer}>
+                                    <TextInput
+                                        style={[styles.exportInput, styles.passwordInput, { color: colors.text, borderColor: colors.border }]}
+                                        secureTextEntry={!showPassword}
+                                        placeholder={t('export_step_confirm_placeholder')}
+                                        placeholderTextColor={colors.textMuted}
+                                        value={filePasswordConfirm}
+                                        onChangeText={setFilePasswordConfirm}
+                                    />
+                                    <ScalePressable onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                        <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.textSecondary} />
+                                    </ScalePressable>
+                                </View>
 
                                 <ScalePressable
                                     style={[styles.actionButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.oceanDark }]}
@@ -1013,6 +1031,21 @@ const styles = StyleSheet.create({
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md },
     modalDesc: { fontSize: rf(13), marginBottom: SPACING.xl, lineHeight: rf(20) },
     exportStep: { gap: SPACING.md },
+    passwordContainer: {
+        position: 'relative',
+        marginBottom: SPACING.sm,
+        justifyContent: 'center',
+    },
+    passwordInput: {
+        paddingRight: rs(48),
+    },
+    eyeIcon: {
+        position: 'absolute',
+        right: 0,
+        height: '100%',
+        justifyContent: 'center',
+        paddingHorizontal: SPACING.md,
+    },
     exportInput: {
         borderWidth: 1,
         borderRadius: RADIUS.md,
