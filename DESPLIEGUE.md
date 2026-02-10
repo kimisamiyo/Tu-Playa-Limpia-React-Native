@@ -13,9 +13,11 @@ La forma más rápida de tener un enlace `tu-proyecto.vercel.app` para mostrar t
 1.  Abre tu terminal en la carpeta del proyecto.
 2.  Instala las dependencias web (por si acaso):
     `npx expo install react-dom react-native-web @expo/metro-runtime`
-3.  Crea la carpeta de distribución web:
-    `npx expo export --platform web`
-    *   Esto creará una carpeta `dist` con tu página web lista.
+3.  **¡Importante!** Limpia el caché para aplicar los cambios de configuración:
+    `npx expo start -c` (Cierra esto con Ctrl+C una vez que inicie)
+4.  Crea la carpeta de distribución web con el comando optimizado:
+    `npm run build:web`
+    *   Esto ejecutará la exportación y arreglará automáticamente los errores de fuentes e íconos.
 
 ### Paso B: Subir a Vercel (Gratis y con HTTPS)
 1.  Ve a [Vercel.com](https://vercel.com) y crea una cuenta.

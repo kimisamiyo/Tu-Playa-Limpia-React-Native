@@ -11,7 +11,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 import { useFonts } from 'expo-font';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons, FontAwesome, Feather } from '@expo/vector-icons';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Inner App component — reads auth state from context
@@ -22,9 +22,13 @@ function AppContent() {
 
   const [fontsLoaded] = useFonts({
     ...Ionicons.font,
+    ...MaterialCommunityIcons.font,
+    ...FontAwesome.font,
+    ...Feather.font,
   });
 
-  if (isLoading) return null; // Wait for auth to initialize
+  // Only wait for Auth to initialize. If fonts fail, icons will pop in later.
+  if (isLoading) return null;
 
   return (
     <>

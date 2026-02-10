@@ -200,13 +200,13 @@ export const GameProvider = ({ children }) => {
     }, [nfts.length]);
 
     const SCORING = {
-        bottle: 10,
-        can: 5,
-        trash: 2
+        bottle: 5,
+        can: 3,
+        trash: 1
     };
 
-    const scanItem = (type) => {
-        const value = SCORING[type] || 0;
+    const scanItem = (type, customPoints = null) => {
+        const value = customPoints !== null ? customPoints : (SCORING[type] || 0);
         let unlockedNFT = null;
         setPoints(prev => prev + value);
         setScannedItems(prev => ({
