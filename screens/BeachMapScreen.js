@@ -27,7 +27,41 @@ const BLUE_GREY_LIGHT = "#cfd8dc";
 const BLUE_GREY_BG = "rgba(96, 125, 139, 0.15)";
 
 // ═══════════════════════════════════════════════════════════════════════════
-// LIMA BEACHES DATABASE
+// BEACH IMAGES MAPPING
+// ═══════════════════════════════════════════════════════════════════════════
+const BEACH_IMAGES = {
+  "PE-LIM-MIRAMAR.webp": require("./Beach/public/PE-LIM-MIRAMAR.webp"),
+  "PE-LIM-LASCONCHITAS.webp": require("./Beach/public/PE-LIM-LASCONCHITAS.webp"),
+  "PE-LIM-PLAYAHERMOSA.webp": require("./Beach/public/PE-LIM-PLAYAHERMOSA.webp"),
+  "PE-LIM-PLAYACHICA.webp": require("./Beach/public/PE-LIM-PLAYACHICA.webp"),
+  "PE-LIM-PLAYAGRANDE.webp": require("./Beach/public/PE-LIM-PLAYAGRANDE.webp"),
+  "PE-LIM-PUNTAROQUITAS.webp": require("./Beach/public/PE-LIM-PUNTAROQUITAS.webp"),
+  "PE-LIM-LAPAMPILLA.webp": require("./Beach/public/PE-LIM-LAPAMPILLA.webp"),
+  "PE-LIM-WAIKIKI.webp": require("./Beach/public/PE-LIM-WAIKIKI.webp"),
+  "PE-LIM-MAKAHA.webp": require("./Beach/public/PE-LIM-MAKAHA.webp"),
+  "PE-LIM-REDONDO.webp": require("./Beach/public/PE-LIM-REDONDO.webp"),
+  "PE-LIM-LAESTRELLA.webp": require("./Beach/public/PE-LIM-LAESTRELLA.webp"),
+  "PE-LIM-LASCASCADAS.webp": require("./Beach/public/PE-LIM-LASCASCADAS.webp"),
+  "PE-LIM-BARRANQUITO.webp": require("./Beach/public/PE-LIM-BARRANQUITO.webp"),
+  "PE-LIM-LOSPAVOS.webp": require("./Beach/public/PE-LIM-LOSPAVOS.webp"),
+  "PE-LIM-LOSYUYOS.webp": require("./Beach/public/PE-LIM-LOSYUYOS.webp"),
+  "PE-LIM-LASSOMBRILLAS.webp": require("./Beach/public/PE-LIM-LASSOMBRILLAS.webp"),
+  "PE-LIM-AGUADULCE.webp": require("./Beach/public/PE-LIM-AGUADULCE.webp"),
+  "PE-LIM-PESCADORES.webp": require("./Beach/public/PE-LIM-PESCADORES.webp"),
+  "PE-LIM-LAHERRADURA.webp": require("./Beach/public/PE-LIM-LAHERRADURA.webp"),
+  "PE-LIM-LACHIRA.webp": require("./Beach/public/PE-LIM-LACHIRA.webp"),
+  "PE-LIM-PLAYAVENECIA.webp": require("./Beach/public/PE-LIM-PLAYAVENECIA.webp"),
+  "PE-LIM-BARLOVENTO.webp": require("./Beach/public/PE-LIM-BARLOVENTO.webp"),
+  "PE-LIM-SANPEDRO.webp": require("./Beach/public/PE-LIM-SANPEDRO.webp"),
+  "PE-LIM-ARICA.webp": require("./Beach/public/PE-LIM-ARICA.webp"),
+  "PE-LIM-LOSPULPUS.webp": require("./Beach/public/PE-LIM-LOSPULPUS.webp"),
+  "PE-LIM-ELSILENCIO.webp": require("./Beach/public/PE-LIM-ELSILENCIO.webp"),
+  "PE-LIM-PLAYACABALLEROS.webp": require("./Beach/public/PE-LIM-PLAYACABALLEROS.webp"),
+  "PE-LIM-PLAYASENORITAS.webp": require("./Beach/public/PE-LIM-PLAYASENORITAS.webp"),
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LIMA BEACHES DATABASE (Solo playas con imágenes disponibles)
 // ═══════════════════════════════════════════════════════════════════════════
 const LIMA_BEACHES = [
   {
@@ -35,10 +69,9 @@ const LIMA_BEACHES = [
     name: "Playa Miramar",
     zone: "Lima Norte",
     district: "Ancón",
-    lat: -11.7695,
-    lng: -77.1758,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/12098668774628945837_0",
+    lat: -11.7658365,
+    lng: -77.1718652,
+    image: "PE-LIM-MIRAMAR.webp",
     clean: true,
     people: 0,
   },
@@ -49,608 +82,293 @@ const LIMA_BEACHES = [
     district: "Ancón",
     lat: -11.7588,
     lng: -77.1732,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/9350125998810273840_0",
+    image: "PE-LIM-LASCONCHITAS.webp",
     clean: true,
     people: 0,
   },
   {
     id: 3,
-    name: "Playa Pocitos",
-    zone: "Lima Norte",
-    district: "Ancón",
-    lat: -11.7725,
-    lng: -77.1789,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/12098668774628945837_0",
-    clean: false,
-    people: 0,
-  },
-  {
-    id: 4,
     name: "Playa Hermosa",
     zone: "Lima Norte",
     district: "Ancón",
     lat: -11.7772,
     lng: -77.1803,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/2991879153895291309_0",
+    image: "PE-LIM-PLAYAHERMOSA.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 5,
+    id: 4,
     name: "Playa Chica",
     zone: "Lima Norte",
     district: "Santa Rosa",
     lat: -11.8015,
     lng: -77.1688,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/4234238059033332624_0",
+    image: "PE-LIM-PLAYACHICA.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 6,
+    id: 5,
     name: "Playa Grande",
     zone: "Lima Norte",
     district: "Santa Rosa",
     lat: -11.8082,
     lng: -77.1655,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/4234238059033332624_0",
+    image: "PE-LIM-PLAYAGRANDE.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 7,
-    name: "Los Delfines",
-    zone: "Lima Centro",
-    district: "Miraflores",
-    lat: -12.1192,
-    lng: -77.0435,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/15442054068016348752_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 8,
+    id: 6,
     name: "Punta Roquitas",
     zone: "Lima Centro",
     district: "Miraflores",
     lat: -12.1215,
     lng: -77.0418,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/4415167619125315981_0",
+    image: "PE-LIM-PUNTAROQUITAS.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 9,
+    id: 7,
     name: "La Pampilla",
     zone: "Lima Centro",
     district: "Miraflores",
     lat: -12.1234,
     lng: -77.0402,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/5425523489229387305_0",
+    image: "PE-LIM-LAPAMPILLA.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 10,
+    id: 8,
     name: "Waikiki",
     zone: "Lima Centro",
     district: "Miraflores",
     lat: -12.1275,
     lng: -77.0377,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/13528375338114968724_0",
+    image: "PE-LIM-WAIKIKI.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 11,
+    id: 9,
     name: "Makaha",
     zone: "Lima Centro",
     district: "Miraflores",
     lat: -12.1287,
     lng: -77.0369,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/9106905456784631900_0",
+    image: "PE-LIM-MAKAHA.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 12,
+    id: 10,
     name: "Redondo",
     zone: "Lima Centro",
     district: "Miraflores",
     lat: -12.1315,
     lng: -77.0352,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/8755651127993604943_0",
+    image: "PE-LIM-REDONDO.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 13,
+    id: 11,
     name: "La Estrella",
     zone: "Lima Centro",
     district: "Miraflores",
     lat: -12.1342,
     lng: -77.0335,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/9304157753602949464_0",
+    image: "PE-LIM-LAESTRELLA.webp",
     clean: false,
     people: 0,
   },
   {
-    id: 14,
+    id: 12,
     name: "Las Cascadas",
     zone: "Lima Centro",
     district: "Barranco",
     lat: -12.1438,
     lng: -77.0289,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/1514262505119911213_0",
+    image: "PE-LIM-LASCASCADAS.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 15,
+    id: 13,
     name: "Barranquito",
     zone: "Lima Centro",
     district: "Barranco",
     lat: -12.1472,
     lng: -77.0275,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/1514262505119911213_0",
+    image: "PE-LIM-BARRANQUITO.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 16,
+    id: 14,
     name: "Los Pavos",
     zone: "Lima Centro",
     district: "Barranco",
     lat: -12.1505,
     lng: -77.0263,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/4581299634875604549_0",
+    image: "PE-LIM-LOSPAVOS.webp",
     clean: false,
     people: 0,
   },
   {
-    id: 17,
+    id: 15,
     name: "Los Yuyos",
     zone: "Lima Centro",
     district: "Barranco",
     lat: -12.1528,
     lng: -77.0255,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/4581299634875604549_0",
+    image: "PE-LIM-LOSYUYOS.webp",
     clean: false,
     people: 0,
   },
   {
-    id: 18,
+    id: 16,
     name: "Las Sombrillas",
     zone: "Lima Centro",
     district: "Barranco",
     lat: -12.1569,
     lng: -77.0258,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/4581299634875604549_0",
+    image: "PE-LIM-LASSOMBRILLAS.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 19,
+    id: 17,
     name: "Agua Dulce",
     zone: "Lima Centro",
     district: "Chorrillos",
     lat: -12.1612,
     lng: -77.0266,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/10147769838552140328_0",
+    image: "PE-LIM-AGUADULCE.webp",
     clean: false,
     people: 0,
   },
   {
-    id: 20,
+    id: 18,
     name: "Pescadores",
     zone: "Lima Centro",
     district: "Chorrillos",
     lat: -12.1645,
     lng: -77.0278,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/10147769838552140328_0",
+    image: "PE-LIM-PESCADORES.webp",
     clean: false,
     people: 0,
   },
   {
-    id: 21,
+    id: 19,
     name: "La Herradura",
     zone: "Lima Centro",
     district: "Chorrillos",
     lat: -12.1744,
     lng: -77.0336,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/4415167619125315497_0",
+    image: "PE-LIM-LAHERRADURA.webp",
     clean: false,
     people: 0,
   },
   {
-    id: 22,
+    id: 20,
     name: "La Chira",
     zone: "Lima Centro",
     district: "Chorrillos",
     lat: -12.1885,
     lng: -77.0405,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/4415167619125315497_0",
+    image: "PE-LIM-LACHIRA.webp",
     clean: false,
     people: 0,
   },
   {
-    id: 23,
+    id: 21,
     name: "Playa Venecia",
     zone: "Lima Sur",
     district: "Villa El Salvador",
     lat: -12.2355,
     lng: -76.9758,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/16251957852010507805_0",
+    image: "PE-LIM-PLAYAVENECIA.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 24,
+    id: 22,
     name: "Barlovento",
     zone: "Lima Sur",
     district: "Villa El Salvador",
     lat: -12.2452,
     lng: -76.9655,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/16251957852010507805_0",
+    image: "PE-LIM-BARLOVENTO.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 25,
+    id: 23,
     name: "San Pedro",
     zone: "Lima Sur",
     district: "Lurín",
     lat: -12.2685,
     lng: -76.9248,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/15442054068016347587_0",
+    image: "PE-LIM-SANPEDRO.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 26,
+    id: 24,
     name: "Arica",
     zone: "Lima Sur",
     district: "Lurín",
     lat: -12.2785,
     lng: -76.9125,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/4234238059033329921_0",
+    image: "PE-LIM-ARICA.webp",
     clean: false,
     people: 0,
   },
   {
-    id: 27,
+    id: 25,
     name: "Los Pulpos",
     zone: "Lima Sur",
     district: "Lurín",
     lat: -12.2882,
     lng: -76.9015,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/9556956261350643755_0",
+    image: "PE-LIM-LOSPULPUS.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 28,
+    id: 26,
     name: "El Silencio",
     zone: "Sur Chico",
     district: "Punta Hermosa",
     lat: -12.3153,
     lng: -76.8364,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/12170764564398274593_0",
+    image: "PE-LIM-ELSILENCIO.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 29,
+    id: 27,
     name: "Caballeros",
     zone: "Sur Chico",
     district: "Punta Hermosa",
     lat: -12.3297,
     lng: -76.8319,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/9048603210385633278_0",
+    image: "PE-LIM-PLAYACABALLEROS.webp",
     clean: true,
     people: 0,
   },
   {
-    id: 30,
+    id: 28,
     name: "Señoritas",
     zone: "Sur Chico",
     district: "Punta Hermosa",
     lat: -12.3315,
     lng: -76.8292,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/5540709583569388708_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 31,
-    name: "Playa Norte (Isla)",
-    zone: "Sur Chico",
-    district: "Punta Hermosa",
-    lat: -12.3335,
-    lng: -76.8242,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/12170764564398274593_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 32,
-    name: "Playa Blanca",
-    zone: "Sur Chico",
-    district: "Punta Hermosa",
-    lat: -12.3365,
-    lng: -76.8215,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/12170764564398274593_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 33,
-    name: "Kontiki",
-    zone: "Sur Chico",
-    district: "Punta Hermosa",
-    lat: -12.3392,
-    lng: -76.8188,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/12170764564398274593_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 34,
-    name: "Punta Rocas",
-    zone: "Sur Chico",
-    district: "Punta Negra",
-    lat: -12.3619,
-    lng: -76.8047,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/8490164425596468136_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 35,
-    name: "Punta Negra",
-    zone: "Sur Chico",
-    district: "Punta Negra",
-    lat: -12.3665,
-    lng: -76.7985,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/16197627442249995180_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 36,
-    name: "San Bartolo Norte",
-    zone: "Sur Chico",
-    district: "San Bartolo",
-    lat: -12.3885,
-    lng: -76.7825,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/9304157753602950553_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 37,
-    name: "San Bartolo Sur",
-    zone: "Sur Chico",
-    district: "San Bartolo",
-    lat: -12.3945,
-    lng: -76.7788,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/9304157753602950553_0",
-    clean: false,
-    people: 0,
-  },
-  {
-    id: 38,
-    name: "Santa María",
-    zone: "Sur Chico",
-    district: "Santa María",
-    lat: -12.4045,
-    lng: -76.7715,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/1514262505119909208_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 39,
-    name: "Embajadores",
-    zone: "Sur Chico",
-    district: "Santa María",
-    lat: -12.4095,
-    lng: -76.7758,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/12269554642538269264_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 40,
-    name: "Naplo",
-    zone: "Sur Grande",
-    district: "Pucusana",
-    lat: -12.4792,
-    lng: -76.7885,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/10147769838552140237_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 41,
-    name: "Pucusana",
-    zone: "Sur Grande",
-    district: "Pucusana",
-    lat: -12.4815,
-    lng: -76.7962,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/10147769838552140237_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 42,
-    name: "Las Ninfas",
-    zone: "Sur Grande",
-    district: "Pucusana",
-    lat: -12.4845,
-    lng: -76.7988,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/10147769838552140237_0",
-    clean: false,
-    people: 0,
-  },
-  {
-    id: 43,
-    name: "Chilca (Yaya)",
-    zone: "Sur Grande",
-    district: "Chilca",
-    lat: -12.5055,
-    lng: -76.7455,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/10147769838552140237_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 44,
-    name: "Puerto Viejo",
-    zone: "Sur Grande",
-    district: "San Antonio",
-    lat: -12.5694,
-    lng: -76.7111,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/13080852119667066337_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 45,
-    name: "León Dormido",
-    zone: "Sur Grande",
-    district: "San Antonio",
-    lat: -12.6316,
-    lng: -76.6685,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/7654971804938497510_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 46,
-    name: "Bujama",
-    zone: "Sur Grande",
-    district: "Mala",
-    lat: -12.7058,
-    lng: -76.6345,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/16251957852010504646_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 47,
-    name: "Totoritas",
-    zone: "Sur Grande",
-    district: "Mala",
-    lat: -12.7215,
-    lng: -76.6288,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/16251957852010504646_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 48,
-    name: "Asia (Boulevard)",
-    zone: "Sur Grande",
-    district: "Asia",
-    lat: -12.7792,
-    lng: -76.6083,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/15442054068016346422_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 49,
-    name: "Cayma",
-    zone: "Sur Grande",
-    district: "Asia",
-    lat: -12.7955,
-    lng: -76.5985,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/15442054068016346422_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 50,
-    name: "Sarapampa",
-    zone: "Sur Grande",
-    district: "Asia",
-    lat: -12.8355,
-    lng: -76.5815,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/15442054068016346422_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 51,
-    name: "Chepeconde",
-    zone: "Sur Grande",
-    district: "Cerro Azul",
-    lat: -12.9285,
-    lng: -76.5385,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/5425523489229387646_0",
-    clean: true,
-    people: 0,
-  },
-  {
-    id: 52,
-    name: "Cerro Azul",
-    zone: "Sur Grande",
-    district: "Cerro Azul",
-    lat: -13.0268,
-    lng: -76.4837,
-    image:
-      "http://googleusercontent.com/image_collection/image_retrieval/5425523489229387646_0",
+    image: "PE-LIM-PLAYASENORITAS.webp",
     clean: true,
     people: 0,
   },
@@ -674,20 +392,44 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 // BEACH CARD COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 const BeachCard = ({ beach, isDark, onPress }) => {
-  const cardBg = isDark ? "rgba(13, 58, 77, 0.6)" : "#ffffff";
+  const [isPressed, setIsPressed] = useState(false);
+  const cardBg = isDark ? "rgba(13, 58, 77, 0.7)" : "#ffffff";
   const textColor = isDark ? "#ffffff" : "#000000";
   const subTextColor = isDark ? "rgba(170, 222, 243, 0.8)" : "#666666";
   const statusBg = beach.clean ? BLUE_GREY_BG : "rgba(245, 158, 11, 0.15)";
   const statusColor = beach.clean ? BLUE_GREY : "#f59e0b";
 
+  const cardShadow = isDark
+    ? {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.5,
+        shadowRadius: 12,
+        elevation: 12,
+      }
+    : {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 8,
+      };
+
   return (
     <TouchableOpacity
-      style={[styles.beachCard, { backgroundColor: cardBg }]}
+      style={[
+        styles.beachCard,
+        { backgroundColor: cardBg },
+        cardShadow,
+        isPressed && styles.beachCardPressed,
+      ]}
       onPress={() => onPress(beach)}
-      activeOpacity={0.7}
+      onPressIn={() => setIsPressed(true)}
+      onPressOut={() => setIsPressed(false)}
+      activeOpacity={0.95}
     >
       <Image
-        source={require("../public/un-atractivo-valioso.jpg")}
+        source={BEACH_IMAGES[beach.image]}
         style={styles.beachCardImage}
         resizeMode="cover"
       />
@@ -877,6 +619,17 @@ export default function BeachMapScreen() {
         renderItem={({ item }) => (
           <BeachCard beach={item} isDark={isDark} onPress={handleBeachPress} />
         )}
+        // Optimizaciones de rendimiento
+        initialNumToRender={6}
+        maxToRenderPerBatch={4}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS === "android"}
+        updateCellsBatchingPeriod={50}
+        getItemLayout={(data, index) => ({
+          length: rs(220) + SPACING.md,
+          offset: (rs(220) + SPACING.md) * index,
+          index,
+        })}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Ionicons name="beach-outline" size={rs(64)} color={subTextColor} />
@@ -947,16 +700,25 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: SPACING.md,
     height: rs(220),
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    transform: [{ scale: 1 }],
+  },
+  beachCardPressed: {
+    transform: [{ scale: 0.98 }],
+    opacity: 0.9,
   },
   beachCardImage: {
     width: "100%",
     height: "100%",
     position: "absolute",
+    backgroundColor: "rgba(0, 0, 0, 0.1)",
   },
   beachCardGradient: {
     flex: 1,
     justifyContent: "flex-end",
     padding: SPACING.md,
+    paddingBottom: SPACING.lg,
   },
   beachCardContent: {
     gap: SPACING.sm,
@@ -969,10 +731,16 @@ const styles = StyleSheet.create({
   beachCardTitle: {
     fontSize: rf(18),
     fontWeight: "700",
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
   beachCardSubtitle: {
     fontSize: rf(12),
     marginTop: rs(2),
+    textShadowColor: "rgba(0, 0, 0, 0.3)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   mapIconBtn: {
     width: rs(36),
@@ -980,6 +748,11 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   beachCardStats: {
     flexDirection: "row",
@@ -992,12 +765,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
-    borderRadius: RADIUS.sm,
+    borderRadius: RADIUS.md,
     gap: rs(6),
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.15)",
   },
   beachCardStatText: {
     fontSize: rf(11),
     fontWeight: "600",
+    textShadowColor: "rgba(0, 0, 0, 0.2)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   emptyState: {
     alignItems: "center",

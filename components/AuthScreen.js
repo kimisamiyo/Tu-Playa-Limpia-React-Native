@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as Haptics from 'expo-haptics';
@@ -24,6 +24,7 @@ import PinDisplay from './PinDisplay';
 import PinPad from './PinPad';
 import LivingWater from './LivingWater';
 import FloatingBubbles from './premium/FloatingBubbles';
+import EmailVerificationModal from './EmailVerificationModal';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PREMIUM AUTH SCREEN - Glassmorphism PIN entry with biometrics
@@ -33,6 +34,7 @@ export default function AuthScreen({ onAuthenticated }) {
     const { colors, isDark } = useTheme();
     const { user } = useGame();
     const [pin, setPin] = useState('');
+    const [showEmailModal, setShowEmailModal] = useState(false);
     const shake = useSharedValue(0);
     const contentOpacity = useSharedValue(0);
     const contentY = useSharedValue(rs(30));
@@ -163,9 +165,29 @@ export default function AuthScreen({ onAuthenticated }) {
                             onBiometricPress={authenticate}
                             onDeletePress={handleDelete}
                         />
+                        
+                        {/* Botón de verificación por email */}
+                        <TouchableOpacity
+                            style={styles.emailButton}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setShowEmailModal(true);
+                            }}
+                        >
+                            <Text style={[styles.emailButtonText, { color: colors.accent }]}>
+                                📧 Verificar con Email
+                            </Text>
+                        </TouchableOpacity>
                     </View>
                 </Animated.View>
             </SafeAreaView>
+            
+            {/* Modal de verificación por email */}
+            <EmailVerificationModal
+                visible={showEmailModal}
+                onClose={() => setShowEmailModal(false)}
+                onVerified={onAuthenticated}
+            />
         </View>
     );
 }
@@ -222,5 +244,15 @@ const styles = StyleSheet.create({
         flex: 3.5,
         justifyContent: 'center',
         paddingBottom: rh(20),
+    },
+    emailButton: {
+        marginTop: rs(16),
+        padding: rs(12),
+        alignItems: 'center',
+    },
+    emailButtonText: {
+        fontSize: rf(14),
+        fontWeight: '600',
+        textDecorationLine: 'underline',
     },
 });
