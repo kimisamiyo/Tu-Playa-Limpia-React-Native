@@ -19,10 +19,12 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGame } from '../context/GameContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { BRAND } from '../constants/theme';
 import { rs, rf, rh, rw, SPACING, RADIUS, SCREEN } from '../constants/responsive';
 import { SPRING } from '../constants/animations';
 import FloatingBubbles from '../components/premium/FloatingBubbles';
+import CelebrationModal from '../components/CelebrationModal';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const { width, height } = Dimensions.get('window');
@@ -115,6 +117,21 @@ const ScanButton = ({ icon, color, label, onPress, delay }) => {
         transform: [{ scale: scale.value }],
     }));
 
+    // Button Background: Gradient for Dark Mode, Solid for Light Mode
+    const ButtonBackground = isDark ? LinearGradient : View;
+    const buttonProps = isDark ? {
+        colors: [BRAND.oceanDeep, '#002844'], // Matching background gradient
+        style: [styles.scanButtonInner, { borderColor: color }]
+    } : {
+        style: [
+            styles.scanButtonInner,
+            {
+                borderColor: color,
+                backgroundColor: 'rgba(255,255,255,0.95)',
+            }
+        ]
+    };
+
     return (
         <AnimatedPressable
             onPressIn={handlePressIn}
@@ -123,15 +140,9 @@ const ScanButton = ({ icon, color, label, onPress, delay }) => {
             style={[styles.scanButton, buttonStyle]}
         >
             <Animated.View entering={FadeInUp.delay(delay).springify()}>
-                <View style={[
-                    styles.scanButtonInner,
-                    {
-                        borderColor: color,
-                        backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.95)',
-                    }
-                ]}>
+                <ButtonBackground {...buttonProps}>
                     <Ionicons name={icon} size={rs(24)} color={color} />
-                </View>
+                </ButtonBackground>
                 <Text style={[styles.scanButtonLabel, { color: isDark ? '#fff' : '#1a3a4a' }]}>
                     {label}
                 </Text>
@@ -205,14 +216,14 @@ const PermissionScreen = ({ onRequestPermission, isDark }) => {
                         styles.permissionTitle,
                         { color: isDark ? '#fff' : '#1a3a4a' }
                     ]}>
-                        Permiso de Cámara
+                        {t('scan_camera_permission')}
                     </Text>
 
                     <Text style={[
                         styles.permissionDescription,
                         { color: isDark ? 'rgba(255,255,255,0.7)' : '#666' }
                     ]}>
-                        Para escanear basura y ganar puntos, necesitamos acceder a la cámara de tu dispositivo.
+                        {t('scan_camera_permission_desc')}
                     </Text>
 
                     <Pressable
@@ -406,6 +417,7 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
 export default function ScanScreen() {
     const { scanItem } = useGame();
     const { colors, isDark } = useTheme();
+    const { t } = useLanguage();
     const [lastScanned, setLastScanned] = useState(null);
     const [permission, requestPermission] = useCameraPermissions();
 
@@ -435,6 +447,8 @@ export default function ScanScreen() {
     const [predictions, setPredictions] = useState([]);
     const [imageSize, setImageSize] = useState({ width: 640, height: 480 });
     const [lastScanInfo, setLastScanInfo] = useState(null);
+    const [showCelebration, setShowCelebration] = useState(false);
+    const [celebrationMessage, setCelebrationMessage] = useState('');
 
     const scannerSize = getScannerSize();
 
@@ -653,7 +667,12 @@ export default function ScanScreen() {
         if (!isReadyToCollect || !detectionResults || detectionResults.totalPoints <= 0) return;
 
         const mainType = detectionResults.items[0]?.label || 'Residuo';
-        scanItem('trash');
+        const { unlockedNFT } = scanItem('trash');
+
+        if (unlockedNFT) {
+            setCelebrationMessage(`${t('celebration_thanks')}\n\n${t('celebration_nft_unlocked')}\n${unlockedNFT.title}\n\n${t('celebration_see_rewards')}`);
+            setShowCelebration(true);
+        }
 
         // Save detailed scan info for the HUD
         setLastScanInfo({
@@ -697,8 +716,13 @@ export default function ScanScreen() {
     };
 
     const handleSimulatedScan = (type) => {
-        const points = scanItem(type);
-        setLastScanned({ type, points });
+        const { value, unlockedNFT } = scanItem(type);
+        setLastScanned({ type, points: value });
+
+        if (unlockedNFT) {
+            setCelebrationMessage(`${t('celebration_thanks')}\n\n${t('celebration_nft_unlocked')}\n${unlockedNFT.title}\n\n${t('celebration_see_rewards')}`);
+            setShowCelebration(true);
+        }
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setTimeout(() => setLastScanned(null), 2500);
     };
@@ -738,6 +762,12 @@ export default function ScanScreen() {
             {/* Bubbles - same as original */}
             <FloatingBubbles count={12} minSize={4} maxSize={16} zIndex={1} />
 
+            <CelebrationModal
+                visible={showCelebration}
+                onClose={() => setShowCelebration(false)}
+                message={celebrationMessage}
+            />
+
             {/* Scanner overlay */}
             <View style={styles.scannerOverlay}>
                 {/* Status indicator - MOVED ABOVE SCANNER */}
@@ -767,8 +797,8 @@ export default function ScanScreen() {
                         }
                     ]}>
                         {isReadyToCollect
-                            ? '¡Listo para escanear!'
-                            : 'Buscando residuos...'}
+                            ? t('scan_waste_found')
+                            : t('scan_searching')}
                     </Text>
                 </Animated.View>
 
@@ -879,7 +909,7 @@ export default function ScanScreen() {
                         <Text style={styles.statusText}>
                             {isReadyToCollect
                                 ? '¡Residuo detectado! Listo para escanear'
-                                : (isScanning ? 'Analizando...' : (isAutoScanning ? 'Buscando residuos...' : 'Pausado'))}
+                                : (isScanning ? t('scan_analyzing') : (isAutoScanning ? t('scan_searching') : t('scan_paused')))}
                         </Text>
                     </Animated.View>
 
@@ -906,8 +936,8 @@ export default function ScanScreen() {
                             />
                             <Text style={[styles.aiScanButtonText, { color: '#fff' }]}>
                                 {isReadyToCollect
-                                    ? `ESCANEAR +${detectionResults?.totalPoints || 0}`
-                                    : 'ESPERANDO...'}
+                                    ? `${t('scan_button')} +${detectionResults?.totalPoints || 0}`
+                                    : t('scan_paused')}
                             </Text>
                         </Pressable>
                     </Animated.View>

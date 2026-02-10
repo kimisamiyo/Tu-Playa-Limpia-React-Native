@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { COLORS, SHADOWS } from '../constants/theme';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -81,6 +82,7 @@ function CarouselCard({ index, totalCards, rotation, colorRGB }) {
 }
 
 export default function NFTCarouselCelebration({ visible, onClose, nfts, userName }) {
+    const { t } = useLanguage();
     const rotation = useSharedValue(0);
     const cardCount = Math.min(nfts?.length || 8, 10); // Max 10 cards in carousel
 
@@ -131,9 +133,9 @@ export default function NFTCarouselCelebration({ visible, onClose, nfts, userNam
 
                 {/* Congratulation Message */}
                 <View style={styles.messageContainer}>
-                    <Text style={styles.congrats}>¡FELICIDADES!</Text>
+                    <Text style={styles.congrats}>{t('carousel_congrats')}</Text>
                     <Text style={styles.userName}>{userName || 'Ocean Guardian'}</Text>
-                    <Text style={styles.achievement}>Has alcanzado {cardCount} NFTs</Text>
+                    <Text style={styles.achievement}>{t('carousel_achievement', { count: cardCount })}</Text>
                 </View>
 
                 {/* 3D Carousel */}
@@ -153,19 +155,19 @@ export default function NFTCarouselCelebration({ visible, onClose, nfts, userNam
                 <View style={styles.proudContainer}>
                     {/* Level Up Badge */}
                     <View style={styles.levelUpBadge}>
-                        <Text style={styles.levelUpText}>¡NIVEL 2 DESBLOQUEADO!</Text>
+                        <Text style={styles.levelUpText}>{t('carousel_level_up')}</Text>
                     </View>
 
                     <Text style={styles.proudText}>
-                        Estamos muy orgullosos de ti por ayudar al planeta
+                        {t('carousel_proud')}
                     </Text>
                     <Text style={styles.subProudText}>
-                        Cada NFT representa tu compromiso con el medio ambiente
+                        {t('carousel_sub_proud')}
                     </Text>
 
                     {/* Unlock Announcement */}
                     <View style={styles.unlockAnnouncement}>
-                        <Text style={styles.unlockText}>¡Promociones Especiales Desbloqueadas!</Text>
+                        <Text style={styles.unlockText}>{t('carousel_promos_unlocked')}</Text>
                     </View>
                 </View>
 
@@ -175,7 +177,7 @@ export default function NFTCarouselCelebration({ visible, onClose, nfts, userNam
                         colors={[COLORS.secondary, COLORS.primary]}
                         style={styles.closeGradient}
                     >
-                        <Text style={styles.closeText}>CONTINUAR</Text>
+                        <Text style={styles.closeText}>{t('celebration_continue')}</Text>
                     </LinearGradient>
                 </TouchableOpacity>
             </View>

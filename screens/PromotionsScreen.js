@@ -13,12 +13,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useGame } from '../context/GameContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { BRAND } from '../constants/theme';
 import { rs, rf, rh, SPACING, RADIUS, SCREEN } from '../constants/responsive';
 import { SPRING } from '../constants/animations';
 import LivingWater from '../components/LivingWater';
 import FloatingBubbles from '../components/premium/FloatingBubbles';
-import GlassCard from '../components/premium/GlassCard';
+
+import AstronautCard from '../components/premium/AstronautCard';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -28,8 +30,8 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const PROMOTIONS = [
     {
         id: 1,
-        title: '20% Descuento en Eco-Tienda',
-        description: 'Válido en productos sostenibles',
+        titleKey: 'promo_eco_title',
+        descKey: 'promo_eco_desc',
         discount: '20%',
         validUntil: '31/03/2026',
         partner: 'EcoStore',
@@ -38,9 +40,9 @@ const PROMOTIONS = [
     },
     {
         id: 2,
-        title: 'Tour Gratis de Limpieza',
-        description: 'Únete a nuestro próximo evento',
-        discount: 'GRATIS',
+        titleKey: 'promo_clean_title',
+        descKey: 'promo_clean_desc',
+        discountKey: 'promo_free',
         validUntil: '15/02/2026',
         partner: 'Clean Ocean Co.',
         icon: 'water',
@@ -48,8 +50,8 @@ const PROMOTIONS = [
     },
     {
         id: 3,
-        title: '2x1 en Snorkel Experience',
-        description: 'Descubre la vida marina',
+        titleKey: 'promo_snorkel_title',
+        descKey: 'promo_snorkel_desc',
         discount: '2x1',
         validUntil: '28/02/2026',
         partner: 'AquaAdventures',
@@ -58,9 +60,9 @@ const PROMOTIONS = [
     },
     {
         id: 4,
-        title: 'Café Sostenible Gratis',
-        description: 'Un café por cada 5 NFTs',
-        discount: 'GRATIS',
+        titleKey: 'promo_coffee_title',
+        descKey: 'promo_coffee_desc',
+        discountKey: 'promo_free',
         validUntil: '30/04/2026',
         partner: 'Green Café',
         icon: 'cafe',
@@ -71,7 +73,7 @@ const PROMOTIONS = [
 // ═══════════════════════════════════════════════════════════════════════════
 // PROMOTION CARD
 // ═══════════════════════════════════════════════════════════════════════════
-const PromotionCard = ({ promo, index }) => {
+const PromotionCard = ({ promo, index, t }) => {
     const { colors, shadows } = useTheme();
     const scale = useSharedValue(1);
 
@@ -116,23 +118,25 @@ const PromotionCard = ({ promo, index }) => {
 
                     {/* Discount badge */}
                     <View style={styles.discountBadge}>
-                        <Text style={styles.discountText}>{promo.discount}</Text>
+                        <Text style={styles.discountText}>
+                            {promo.discountKey ? t(promo.discountKey) : promo.discount}
+                        </Text>
                     </View>
 
                     {/* Content */}
                     <View style={styles.promoContent}>
                         <Text style={styles.partnerName}>{promo.partner}</Text>
-                        <Text style={styles.promoTitle}>{promo.title}</Text>
-                        <Text style={styles.promoDesc}>{promo.description}</Text>
+                        <Text style={styles.promoTitle}>{t(promo.titleKey)}</Text>
+                        <Text style={styles.promoDesc}>{t(promo.descKey)}</Text>
                         <View style={styles.validRow}>
                             <Ionicons name="calendar-outline" size={rs(12)} color="rgba(255,255,255,0.7)" />
-                            <Text style={styles.validUntil}>Válido hasta: {promo.validUntil}</Text>
+                            <Text style={styles.validUntil}>{promo.validUntil}</Text>
                         </View>
                     </View>
 
                     {/* Use button */}
                     <TouchableOpacity style={styles.useButton} activeOpacity={0.8}>
-                        <Text style={styles.useButtonText}>CANJEAR</Text>
+                        <Text style={styles.useButtonText}>{t('promos_redeem')}</Text>
                     </TouchableOpacity>
                 </LinearGradient>
             </Animated.View>
@@ -146,6 +150,7 @@ const PromotionCard = ({ promo, index }) => {
 export default function PromotionsScreen() {
     const { user, level, nfts } = useGame();
     const { colors, isDark } = useTheme();
+    const { t } = useLanguage();
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -169,50 +174,33 @@ export default function PromotionsScreen() {
                     {/* Header */}
                     <Animated.View entering={FadeInDown.delay(100).springify()}>
                         <Text style={[styles.headerTitle, { color: colors.text }]}>
-                            Promociones Especiales
+                            {t('promos_title')}
                         </Text>
                         <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-                            Exclusivo para Nivel {level}+ con {nfts.length} NFTs
+                            {t('promos_exclusive')} {level}+ {t('promos_with_nfts')} {nfts.length} NFTs
                         </Text>
                     </Animated.View>
 
-                    {/* Stats banner */}
-                    <Animated.View entering={FadeInDown.delay(200).springify()}>
-                        <GlassCard variant="elevated" style={styles.statsBanner}>
-                            <View style={styles.statsRow}>
-                                <View style={styles.statItem}>
-                                    <Ionicons name="ticket" size={rs(20)} color={colors.accent} />
-                                    <Text style={[styles.statValue, { color: colors.text }]}>
-                                        {PROMOTIONS.length}
-                                    </Text>
-                                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                                        Disponibles
-                                    </Text>
-                                </View>
-                                <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-                                <View style={styles.statItem}>
-                                    <Ionicons name="checkmark-circle" size={rs(20)} color={BRAND.success} />
-                                    <Text style={[styles.statValue, { color: colors.text }]}>0</Text>
-                                    <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                                        Canjeadas
-                                    </Text>
-                                </View>
-                            </View>
-                        </GlassCard>
-                    </Animated.View>
 
-                    {/* Promotions List */}
-                    <View style={styles.promosList}>
-                        {PROMOTIONS.map((promo, index) => (
-                            <PromotionCard key={promo.id} promo={promo} index={index} />
-                        ))}
-                    </View>
+
+                    {/* Promotions List or Coming Soon */}
+                    {level >= 2 ? (
+                        <View style={{ paddingVertical: SPACING.xl }}>
+                            <AstronautCard />
+                        </View>
+                    ) : (
+                        <View style={styles.promosList}>
+                            {PROMOTIONS.map((promo, index) => (
+                                <PromotionCard key={promo.id} promo={promo} index={index} t={t} />
+                            ))}
+                        </View>
+                    )}
 
                     {/* Footer hint */}
                     <Animated.View entering={FadeInUp.delay(600).springify()} style={styles.footer}>
                         <Ionicons name="information-circle-outline" size={rs(16)} color={colors.textMuted} />
                         <Text style={[styles.footerText, { color: colors.textMuted }]}>
-                            Nuevas promociones cada semana. Sigue escaneando para desbloquear más.
+                            {t('promos_footer')}
                         </Text>
                     </Animated.View>
                 </ScrollView>
@@ -241,34 +229,7 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.lg,
     },
 
-    // Stats
-    statsBanner: {
-        marginBottom: SPACING.xl,
-        padding: SPACING.lg,
-    },
-    statsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-    },
-    statItem: {
-        alignItems: 'center',
-        flex: 1,
-    },
-    statValue: {
-        fontSize: rf(20),
-        fontWeight: '700',
-        marginTop: rs(4),
-    },
-    statLabel: {
-        fontSize: rf(10),
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-    },
-    statDivider: {
-        width: 1,
-        height: '80%',
-        alignSelf: 'center',
-    },
+
 
     // Promos
     promosList: {

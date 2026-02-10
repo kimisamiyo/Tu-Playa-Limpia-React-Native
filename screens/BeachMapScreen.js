@@ -17,6 +17,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
 import { BRAND } from "../constants/theme";
 import { rs, rf, SPACING, RADIUS } from "../constants/responsive";
+import { useGame } from '../context/GameContext';
+import { useLanguage } from '../context/LanguageContext';
+import CelebrationModal from '../components/CelebrationModal';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -665,8 +668,8 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
@@ -756,8 +759,12 @@ const BeachCard = ({ beach, isDark, onPress }) => {
 // ═══════════════════════════════════════════════════════════════════════════
 export default function BeachMapScreen() {
   const { colors, shadows, isDark } = useTheme();
+  const { unlockRegionNFT } = useGame();
+  const { t } = useLanguage();
   const [search, setSearch] = useState("");
   const [selectedZone, setSelectedZone] = useState("Todas");
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [lastUnlockedNFT, setLastUnlockedNFT] = useState(null);
 
   const zones = [
     "Todas",
@@ -786,24 +793,33 @@ export default function BeachMapScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
+    const newNFT = unlockRegionNFT(beach.name, beach.image);
+    if (newNFT) {
+      setLastUnlockedNFT(newNFT);
+      setShowCelebration(true);
+    }
+    // Open map as requested
+    const url = `https://www.google.com/maps/search/?api=1&query=${beach.lat},${beach.lng}`;
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Linking.openURL(url);
   };
 
   return (
-    <SafeAreaView
-      style={[
-        styles.container,
-        { backgroundColor: isDark ? BRAND.oceanDeep : "#f0f0f0" },
-      ]}
-      edges={["top"]}
-    >
-      {/* HEADER */}
-      <View style={[styles.header, shadows.md, { backgroundColor: headerBg }]}>
-        <Text style={[styles.headerTitle, { color: textColor }]}>
-          Playas de Perú
-        </Text>
-        <Text style={[styles.headerSubtitle, { color: subTextColor }]}>
-          {filteredBeaches.length} playas disponibles
-        </Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <CelebrationModal
+        visible={showCelebration}
+        onClose={() => setShowCelebration(false)}
+        message={lastUnlockedNFT ? `${t('celebration_thanks')}\n\n${t('celebration_nft_unlocked')}\n${lastUnlockedNFT.title}\n\n${t('celebration_see_rewards')}` : t('celebration_thanks')}
+      />
+
+      <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor: headerBg, zIndex: 10 }]}>
+        {/* HEADER */}
+        <View style={[styles.header, shadows.md, { backgroundColor: headerBg }]}>
+          <Text style={[styles.headerTitle, { color: textColor }]}>Playas de Perú</Text>
+          <Text style={[styles.headerSubtitle, { color: subTextColor }]}>
+            {filteredBeaches.length} playas disponibles
+          </Text>
+        </View>
 
         {/* SEARCH BAR */}
         <View style={[styles.searchBar, { backgroundColor: inputBg }]}>
@@ -815,23 +831,26 @@ export default function BeachMapScreen() {
             value={search}
             onChangeText={setSearch}
           />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch("")}>
-              <Ionicons
-                name="close-circle"
-                size={rs(18)}
-                color={subTextColor}
-              />
-            </TouchableOpacity>
-          )}
-        </View>
+          {
+            search.length > 0 && (
+              <TouchableOpacity onPress={() => setSearch("")}>
+                <Ionicons
+                  name="close-circle"
+                  size={rs(18)}
+                  color={subTextColor}
+                />
+              </TouchableOpacity>
+            )
+          }
+        </View >
 
         {/* ZONE FILTERS */}
-        <FlatList
+        < FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
           data={zones}
-          keyExtractor={(item) => item}
+          keyExtractor={(item) => item
+          }
           contentContainerStyle={styles.zoneFilters}
           renderItem={({ item }) => {
             const isSelected = selectedZone === item;
@@ -866,30 +885,31 @@ export default function BeachMapScreen() {
             );
           }}
         />
-      </View>
 
-      {/* BEACH CARDS LIST */}
-      <FlatList
-        data={filteredBeaches}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.beachList}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <BeachCard beach={item} isDark={isDark} onPress={handleBeachPress} />
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="beach-outline" size={rs(64)} color={subTextColor} />
-            <Text style={[styles.emptyText, { color: textColor }]}>
-              No se encontraron playas
-            </Text>
-            <Text style={[styles.emptySubtext, { color: subTextColor }]}>
-              Intenta con otros términos de búsqueda
-            </Text>
-          </View>
-        }
-      />
-    </SafeAreaView>
+
+        {/* BEACH CARDS LIST */}
+        < FlatList
+          data={filteredBeaches}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.beachList}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <BeachCard beach={item} isDark={isDark} onPress={handleBeachPress} />
+          )}
+          ListEmptyComponent={
+            < View style={styles.emptyState} >
+              <Ionicons name="beach-outline" size={rs(64)} color={subTextColor} />
+              <Text style={[styles.emptyText, { color: textColor }]}>
+                {t('map_no_beaches')}
+              </Text>
+              <Text style={[styles.emptySubtext, { color: subTextColor }]}>
+                Intenta con otros términos de búsqueda
+              </Text>
+            </View >
+          }
+        />
+      </SafeAreaView >
+    </View >
   );
 }
 

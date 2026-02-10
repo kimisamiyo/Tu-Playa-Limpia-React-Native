@@ -11,7 +11,21 @@ import Animated, {
     interpolate,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SIZES, COLORS, SHADOWS } from '../constants/theme';
+import { COLORS } from '../constants/theme';
+
+// Local SHADOWS definition since it's not exported directly from theme
+const SHADOWS = {
+    medium: {
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    }
+};
 
 const { width } = Dimensions.get('window');
 

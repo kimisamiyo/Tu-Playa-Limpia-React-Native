@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useGame } from '../context/GameContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { BRAND } from '../constants/theme';
 import { rs, rh, SPACING, RADIUS, HEIGHT } from '../constants/responsive';
 
@@ -27,6 +28,7 @@ const Stack = createNativeStackNavigator();
 // ═══════════════════════════════════════════════════════════════════════════
 function LockedPromotionsScreen() {
     const { colors, isDark } = useTheme();
+    const { t } = useLanguage();
 
     return (
         <View style={[styles.lockedContainer, { backgroundColor: colors.background }]}>
@@ -41,13 +43,13 @@ function LockedPromotionsScreen() {
             <View style={styles.lockContent}>
                 <Ionicons name="lock-closed" size={rs(60)} color={colors.textMuted} />
                 <Text style={[styles.lockTitle, { color: colors.text }]}>
-                    Promociones Bloqueadas
+                    {t('promos_locked_title')}
                 </Text>
                 <Text style={[styles.lockDesc, { color: colors.textSecondary }]}>
-                    Alcanza Nivel 2 (8 NFTs) para desbloquear
+                    {t('promos_locked_desc')}
                 </Text>
                 <Text style={[styles.lockHint, { color: colors.accent }]}>
-                    ¡Sigue escaneando y canjeando recompensas!
+                    {t('promos_locked_hint')}
                 </Text>
             </View>
 
@@ -180,12 +182,22 @@ function TabNavigator() {
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN NAVIGATOR
 // ═══════════════════════════════════════════════════════════════════════════
-export default function AppNavigator({ isAuthenticated, onAuthSuccess }) {
+export default function AppNavigator({ isAuthenticated, isFirstTime, onRegister, onLogin, onImport, username }) {
     if (!isAuthenticated) {
         return (
             <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade_from_bottom' }}>
                 <Stack.Screen name="Auth">
-                    {props => <AuthScreen {...props} onAuthenticated={onAuthSuccess} />}
+                    {props => (
+                        <AuthScreen
+                            {...props}
+                            onAuthenticated={() => { }} // Auth context handles this
+                            isFirstTime={isFirstTime}
+                            onRegister={onRegister}
+                            onLogin={onLogin}
+                            onImport={onImport}
+                            username={username}
+                        />
+                    )}
                 </Stack.Screen>
             </Stack.Navigator>
         );
@@ -204,7 +216,6 @@ export default function AppNavigator({ isAuthenticated, onAuthSuccess }) {
 }
 
 const styles = StyleSheet.create({
-    // Premium Floating Tab Bar
     tabBar: {
         position: 'absolute',
         bottom: rh(25),
@@ -216,80 +227,26 @@ const styles = StyleSheet.create({
         borderTopWidth: 1,
         paddingBottom: 0,
         paddingTop: 0,
-        elevation: 0, // Remove Android default elevation
+        elevation: 0,
     },
 
-    tabIconContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    lockBadge: {
-        position: 'absolute',
-        top: rs(-4),
-        right: rs(-8),
-    },
+    tabIconContainer: { alignItems: 'center', justifyContent: 'center' },
+    lockBadge: { position: 'absolute', top: rs(-4), right: rs(-8) },
 
-    // Locked Screen
-    lockedContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    lockedOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,0.3)',
-    },
-    lockContent: {
-        alignItems: 'center',
-        zIndex: 10,
-        padding: SPACING.xl,
-    },
-    lockTitle: {
-        fontSize: rs(22),
-        fontWeight: '700',
-        marginTop: SPACING.lg,
-        marginBottom: SPACING.sm,
-    },
-    lockDesc: {
-        fontSize: rs(14),
-        textAlign: 'center',
-    },
-    lockHint: {
-        fontSize: rs(12),
-        textAlign: 'center',
-        marginTop: SPACING.md,
-        fontWeight: '600',
-    },
+    lockedContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    lockedOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)' },
+    lockContent: { alignItems: 'center', zIndex: 10, padding: SPACING.xl },
+    lockTitle: { fontSize: rs(22), fontWeight: '700', marginTop: SPACING.lg, marginBottom: SPACING.sm },
+    lockDesc: { fontSize: rs(14), textAlign: 'center' },
+    lockHint: { fontSize: rs(12), textAlign: 'center', marginTop: SPACING.md, fontWeight: '600' },
     previewContainer: {
-        position: 'absolute',
-        bottom: rh(120),
-        left: SPACING.lg,
-        right: SPACING.lg,
-        opacity: 0.4,
+        position: 'absolute', bottom: rh(120), left: SPACING.lg, right: SPACING.lg, opacity: 0.4,
     },
-    previewCard: {
-        borderRadius: RADIUS.lg,
-        padding: SPACING.md,
-        marginBottom: SPACING.sm,
-        height: rh(70),
-    },
+    previewCard: { borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.sm, height: rh(70) },
     previewBadge: {
-        position: 'absolute',
-        top: SPACING.sm,
-        right: SPACING.sm,
-        width: rs(40),
-        height: rs(18),
-        borderRadius: RADIUS.sm,
+        position: 'absolute', top: SPACING.sm, right: SPACING.sm,
+        width: rs(40), height: rs(18), borderRadius: RADIUS.sm,
     },
-    previewLine: {
-        width: '60%',
-        height: rs(12),
-        borderRadius: RADIUS.xs,
-        marginBottom: SPACING.xs,
-    },
-    previewLineShort: {
-        width: '40%',
-        height: rs(10),
-        borderRadius: RADIUS.xs,
-    },
+    previewLine: { width: '60%', height: rs(12), borderRadius: RADIUS.xs, marginBottom: SPACING.xs },
+    previewLineShort: { width: '40%', height: rs(10), borderRadius: RADIUS.xs },
 });

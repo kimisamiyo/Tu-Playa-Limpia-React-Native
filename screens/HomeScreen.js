@@ -24,6 +24,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { useGame } from '../context/GameContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { rs, rf, rh, SPACING, RADIUS, SCREEN } from '../constants/responsive';
 import { SPRING, SCALE } from '../constants/animations';
 import { BRAND, GRADIENTS } from '../constants/theme';
@@ -86,14 +87,11 @@ const ActionItem = ({ icon, label, delay = 0, onPress }) => {
 const BalanceCard = () => {
     const { colors, shadows, isDark } = useTheme();
     const { points, nfts } = useGame();
+    const { t } = useLanguage();
     const balanceScale = useSharedValue(1);
 
-    // Pulse animation on load
     useEffect(() => {
-        balanceScale.value = withDelay(
-            500,
-            withSpring(1.02, SPRING.bouncy)
-        );
+        balanceScale.value = withDelay(500, withSpring(1.02, SPRING.bouncy));
         setTimeout(() => {
             balanceScale.value = withSpring(1, SPRING.gentle);
         }, 1000);
@@ -117,36 +115,28 @@ const BalanceCard = () => {
                 end={{ x: 1, y: 1 }}
                 style={[styles.balanceCard, shadows.xl]}
             >
-                {/* Shine overlay */}
                 <View style={styles.cardShine} />
-
-                {/* Content */}
                 <View style={styles.balanceContent}>
-                    <Text style={styles.balanceLabel}>BALANCE TOTAL</Text>
-                    <Text style={styles.balanceValue}>1,240.50 TPL</Text>
-
+                    <Text style={styles.balanceLabel}>{t('home_total_balance')}</Text>
+                    <Text style={styles.balanceValue}>{points} TPL</Text>
                     <View style={styles.balanceRow}>
                         <View style={styles.badge}>
                             <Ionicons name="trending-up" size={rs(14)} color={BRAND.success} />
-                            <Text style={styles.badgeText}>+12% esta semana</Text>
+                            <Text style={styles.badgeText}>{t('home_this_week')}</Text>
                         </View>
                     </View>
-
-                    {/* Stats row */}
                     <View style={styles.statsRow}>
                         <View style={styles.statItem}>
                             <Text style={styles.statValue}>{nfts.length}</Text>
-                            <Text style={styles.statLabel}>NFTs</Text>
+                            <Text style={styles.statLabel}>{t('home_nfts')}</Text>
                         </View>
                         <View style={styles.statDivider} />
                         <View style={styles.statItem}>
                             <Text style={styles.statValue}>{points}</Text>
-                            <Text style={styles.statLabel}>Puntos</Text>
+                            <Text style={styles.statLabel}>{t('home_points')}</Text>
                         </View>
                     </View>
                 </View>
-
-                {/* Decorative elements */}
                 <View style={styles.cardDecor}>
                     <View style={[styles.decorCircle, styles.decorCircle1]} />
                     <View style={[styles.decorCircle, styles.decorCircle2]} />
@@ -163,23 +153,21 @@ export default function HomeScreen() {
     const navigation = useNavigation();
     const { user, points, nfts, level } = useGame();
     const { colors, shadows, isDark } = useTheme();
+    const { t, language } = useLanguage();
 
-    // Get current date in Spanish
+    // Localized date
     const today = new Date();
-    const options = { day: 'numeric', month: 'long', year: 'numeric' };
-    const dateString = today.toLocaleDateString('es-ES', options);
+    const localeMap = { es: 'es-ES', en: 'en-US', zh: 'zh-CN', hi: 'hi-IN', ar: 'ar-SA', fr: 'fr-FR', pt: 'pt-BR' };
+    const dateString = today.toLocaleDateString(localeMap[language] || 'es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            {/* Background gradient for dark mode */}
             {isDark && (
                 <LinearGradient
                     colors={[BRAND.oceanDeep, BRAND.oceanDark]}
                     style={StyleSheet.absoluteFill}
                 />
             )}
-
-            {/* Ambient bubbles - both modes */}
             <FloatingBubbles count={8} minSize={4} maxSize={14} zIndex={0} />
 
             <SafeAreaView style={styles.safeArea}>
@@ -194,7 +182,7 @@ export default function HomeScreen() {
                     >
                         <View>
                             <Text style={[styles.greeting, { color: colors.text }]}>
-                                Hola, {user.name.split(' ')[0]}
+                                {t('home_greeting')}, {user.name.split(' ')[0]}
                             </Text>
                             <Text style={[styles.date, { color: colors.textMuted }]}>
                                 {dateString}
@@ -221,26 +209,45 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                     </Animated.View>
 
-                    {/* Main Balance Card */}
+                    {/* Balance Card */}
                     <BalanceCard />
 
-                    {/* Action Grid */}
+                    {/* Quick Actions */}
                     <Animated.View entering={FadeInUp.delay(400).springify()}>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                            Acciones Rápidas
+                            {t('home_quick_actions')}
                         </Text>
                     </Animated.View>
 
                     <View style={styles.grid}>
-                        <ActionItem icon="scan-outline" label="Escanear" delay={500} />
-                        <ActionItem icon="map-outline" label="Mapa" delay={600} />
-                        <ActionItem icon="stats-chart-outline" label="Impacto" delay={700} />
-                        <ActionItem icon="trophy-outline" label="Ranking" delay={800} />
+                        <ActionItem
+                            icon="scan-outline"
+                            label={t('home_scan')}
+                            delay={500}
+                            onPress={() => navigation.navigate('Escanear')}
+                        />
+                        <ActionItem
+                            icon="map-outline"
+                            label={t('home_map')}
+                            delay={600}
+                            onPress={() => navigation.navigate('Mapa')}
+                        />
+                        <ActionItem
+                            icon="stats-chart-outline"
+                            label={t('home_impact')}
+                            delay={700}
+                            onPress={() => navigation.navigate('Premios')}
+                        />
+                        <ActionItem
+                            icon="trophy-outline"
+                            label={t('home_ranking')}
+                            delay={800}
+                            onPress={() => navigation.navigate('Premios')}
+                        />
                     </View>
                 </ScrollView>
             </SafeAreaView>
 
-            {/* Water at bottom */}
             <View style={styles.waterWrapper}>
                 <Water />
             </View>
@@ -249,200 +256,73 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    safeArea: {
-        flex: 1,
-    },
-    scrollContent: {
-        padding: SPACING.lg,
-        paddingBottom: rh(120),
-    },
+    container: { flex: 1 },
+    safeArea: { flex: 1 },
+    scrollContent: { padding: SPACING.lg, paddingBottom: rh(120) },
     header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: SPACING.xl,
+        flexDirection: 'row', justifyContent: 'space-between',
+        alignItems: 'center', marginBottom: SPACING.xl,
     },
-    greeting: {
-        fontSize: rf(26),
-        fontWeight: '700',
-        letterSpacing: 0.5,
-    },
-    date: {
-        fontSize: rf(13),
-        marginTop: rs(4),
-    },
+    greeting: { fontSize: rf(26), fontWeight: '700', letterSpacing: 0.5 },
+    date: { fontSize: rf(13), marginTop: rs(4) },
     avatar: {
-        width: rs(50),
-        height: rs(50),
-        borderRadius: rs(25),
-        justifyContent: 'center',
-        alignItems: 'center',
-        overflow: 'hidden',
+        width: rs(50), height: rs(50), borderRadius: rs(25),
+        justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
     },
-    avatarImage: {
-        width: rs(50),
-        height: rs(50),
-        borderRadius: rs(25),
-    },
-    avatarInitials: {
-        fontSize: rf(18),
-        fontWeight: '700',
-    },
+    avatarImage: { width: rs(50), height: rs(50), borderRadius: rs(25) },
+    avatarInitials: { fontSize: rf(18), fontWeight: '700' },
 
-    // Balance Card
-    balanceContainer: {
-        marginBottom: SPACING.xl,
-    },
-    balanceCard: {
-        borderRadius: RADIUS.xl,
-        padding: SPACING.lg,
-        overflow: 'hidden',
-    },
+    balanceContainer: { marginBottom: SPACING.xl },
+    balanceCard: { borderRadius: RADIUS.xl, padding: SPACING.lg, overflow: 'hidden' },
     cardShine: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '50%',
+        position: 'absolute', top: 0, left: 0, right: 0, height: '50%',
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        borderTopLeftRadius: RADIUS.xl,
-        borderTopRightRadius: RADIUS.xl,
+        borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl,
     },
-    balanceContent: {
-        zIndex: 1,
-    },
+    balanceContent: { zIndex: 1 },
     balanceLabel: {
-        color: BRAND.oceanLight,
-        fontSize: rf(11),
-        fontWeight: '600',
-        textTransform: 'uppercase',
-        letterSpacing: rs(2),
+        color: BRAND.oceanLight, fontSize: rf(11), fontWeight: '600',
+        textTransform: 'uppercase', letterSpacing: rs(2),
     },
-    balanceValue: {
-        color: '#fff',
-        fontSize: rf(36),
-        fontWeight: '800',
-        marginVertical: rs(8),
-        letterSpacing: 1,
-    },
-    balanceRow: {
-        flexDirection: 'row',
-    },
+    balanceValue: { color: '#fff', fontSize: rf(36), fontWeight: '800', marginVertical: rs(8), letterSpacing: 1 },
+    balanceRow: { flexDirection: 'row' },
     badge: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        flexDirection: 'row', alignItems: 'center',
         backgroundColor: 'rgba(76, 175, 80, 0.15)',
-        paddingVertical: rs(6),
-        paddingHorizontal: rs(12),
-        borderRadius: RADIUS.md,
-        gap: rs(6),
+        paddingVertical: rs(6), paddingHorizontal: rs(12),
+        borderRadius: RADIUS.md, gap: rs(6),
     },
-    badgeText: {
-        color: BRAND.successLight,
-        fontSize: rf(12),
-        fontWeight: '600',
-    },
+    badgeText: { color: BRAND.successLight, fontSize: rf(12), fontWeight: '600' },
     statsRow: {
-        flexDirection: 'row',
-        marginTop: SPACING.lg,
-        paddingTop: SPACING.md,
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(255, 255, 255, 0.1)',
+        flexDirection: 'row', marginTop: SPACING.lg, paddingTop: SPACING.md,
+        borderTopWidth: 1, borderTopColor: 'rgba(255, 255, 255, 0.1)',
     },
-    statItem: {
-        flex: 1,
-        alignItems: 'center',
-    },
-    statValue: {
-        color: '#fff',
-        fontSize: rf(22),
-        fontWeight: '700',
-    },
+    statItem: { flex: 1, alignItems: 'center' },
+    statValue: { color: '#fff', fontSize: rf(22), fontWeight: '700' },
     statLabel: {
-        color: BRAND.oceanLight,
-        fontSize: rf(11),
-        marginTop: rs(4),
-        textTransform: 'uppercase',
-        letterSpacing: 1,
+        color: BRAND.oceanLight, fontSize: rf(11), marginTop: rs(4),
+        textTransform: 'uppercase', letterSpacing: 1,
     },
-    statDivider: {
-        width: 1,
-        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    },
-    cardDecor: {
-        position: 'absolute',
-        top: 0,
-        right: 0,
-        bottom: 0,
-        width: rs(150),
-        overflow: 'hidden',
-    },
-    decorCircle: {
-        position: 'absolute',
-        borderRadius: rs(100),
-        backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    },
-    decorCircle1: {
-        width: rs(200),
-        height: rs(200),
-        top: -rs(50),
-        right: -rs(80),
-    },
-    decorCircle2: {
-        width: rs(120),
-        height: rs(120),
-        bottom: -rs(30),
-        right: -rs(20),
-    },
+    statDivider: { width: 1, backgroundColor: 'rgba(255, 255, 255, 0.15)' },
+    cardDecor: { position: 'absolute', top: 0, right: 0, bottom: 0, width: rs(150), overflow: 'hidden' },
+    decorCircle: { position: 'absolute', borderRadius: rs(100), backgroundColor: 'rgba(255, 255, 255, 0.03)' },
+    decorCircle1: { width: rs(200), height: rs(200), top: -rs(50), right: -rs(80) },
+    decorCircle2: { width: rs(120), height: rs(120), bottom: -rs(30), right: -rs(20) },
 
-    // Section
-    sectionTitle: {
-        fontSize: rf(18),
-        fontWeight: '700',
-        marginBottom: SPACING.md,
-    },
+    sectionTitle: { fontSize: rf(18), fontWeight: '700', marginBottom: SPACING.md },
 
-    // Grid
-    grid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        gap: SPACING.md,
-    },
-    actionItem: {
-        width: (SCREEN.width - SPACING.lg * 2 - SPACING.md) / 2,
-    },
-    actionCard: {
-        padding: 0,
-    },
-    actionContent: {
-        alignItems: 'center',
-        padding: SPACING.lg,
-    },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: SPACING.md },
+    actionItem: { width: (SCREEN.width - SPACING.lg * 2 - SPACING.md) / 2 },
+    actionCard: { padding: 0 },
+    actionContent: { alignItems: 'center', padding: SPACING.lg },
     iconBox: {
-        width: rs(52),
-        height: rs(52),
-        borderRadius: rs(16),
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: SPACING.sm,
+        width: rs(52), height: rs(52), borderRadius: rs(16),
+        justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.sm,
     },
-    actionLabel: {
-        fontWeight: '600',
-        fontSize: rf(14),
-    },
+    actionLabel: { fontWeight: '600', fontSize: rf(14) },
 
-    // Water
     waterWrapper: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: rh(100),
-        zIndex: -1,
-        opacity: 0.4,
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        height: rh(100), zIndex: -1, opacity: 0.4,
     },
 });

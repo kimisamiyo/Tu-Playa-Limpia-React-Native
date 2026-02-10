@@ -1,5 +1,5 @@
 import os, hashlib, requests
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 
@@ -29,33 +29,42 @@ async def health():
     return {"status": "ok", "model": MODEL_ID}
 
 @app.post("/scan")
-async def scan(file: UploadFile = File(...)):
-    logger.info(f"Received file: {file.filename}, content_type: {file.content_type}")
+async def scan(request: Request):
+    # Leer el cuerpo raw (tal cual lo manda el frontend)
+    body_bytes = await request.body()
     
-    img = await file.read()
-    if not img:
+    if not body_bytes:
         logger.error("Empty image received")
         raise HTTPException(400, "Imagen vacía")
     
-    logger.info(f"Image size: {len(img)} bytes")
+    logger.info(f"Received request body size: {len(body_bytes)} bytes")
     
-    # Detectar el tipo de contenido
-    content_type = file.content_type or "image/jpeg"
-    if "png" in content_type.lower():
-        mime_type = "image/png"
-        filename = "image.png"
-    else:
-        mime_type = "image/jpeg"
-        filename = "image.jpg"
+    # El frontend manda datos base64 crudos. 
+    # Roboflow acepta eso tal cual.
+    img = body_bytes
     
-    logger.info(f"Sending to Roboflow with mime: {mime_type}")
+    # Determinar mime type (default jpeg si no se puede adivinar fácil)
+    # En este caso, lo tratamos como bytes crudos para reenviar a Roboflow.
+    # Roboflow infiere el tipo o acepta base64 puro.
+    
+    # Header del request original
+    content_type = request.headers.get("content-type", "")
+    logger.info(f"Incoming Content-Type: {content_type}")
+    
+    logger.info(f"Sending to Roboflow...")
+    
+    # Log de envío
+    logger.info(f"Sending to Roboflow directly (proxy pass-through)")
     
     try:
         url = f"https://serverless.roboflow.com/{MODEL_ID}"
+        
+        # Enviamos el body tal cual arrivó (base64 string)
         r = requests.post(
             url,
             params={"api_key": API_KEY, "confidence": CONF, "overlap": OVER},
-            files={"file": (filename, img, mime_type)},
+            data=img,  # Usamos 'data' para enviar el body raw, no 'files'
+            headers={"Content-Type": "application/x-www-form-urlencoded"}, # Replicamos header
             timeout=30,
         )
         

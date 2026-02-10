@@ -6,9 +6,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, {
+    FadeInDown, FadeInUp,
+    useSharedValue, useAnimatedStyle,
+    withRepeat, withTiming, withSequence, withDelay,
+    Easing,
+} from 'react-native-reanimated';
 import { useGame } from '../context/GameContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { BRAND, GRADIENTS } from '../constants/theme';
 import { rs, rf, rh, SPACING, RADIUS, SCREEN } from '../constants/responsive';
 import NFTMiniCard from '../components/NFTMiniCard';
@@ -17,13 +23,14 @@ import Scoreboard from '../components/Scoreboard';
 import FloatingBubbles from '../components/premium/FloatingBubbles';
 import GlassCard from '../components/premium/GlassCard';
 import AnimatedButton from '../components/premium/AnimatedButton';
+import EarthCard from '../components/premium/EarthCard';
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CELEBRATION MODAL (No emojis - using icons)
+// CELEBRATION MODAL
 // ═══════════════════════════════════════════════════════════════════════════
 const CelebrationModal = ({ visible, onClose, nft }) => {
     const { colors, shadows, isDark } = useTheme();
-
+    const { t } = useLanguage();
     if (!nft) return null;
 
     return (
@@ -33,25 +40,23 @@ const CelebrationModal = ({ visible, onClose, nft }) => {
                     entering={FadeInUp.springify()}
                     style={[styles.celebrationContent, { backgroundColor: colors.surface }, shadows.xl]}
                 >
-                    {/* Icon badge instead of emoji */}
                     <LinearGradient
                         colors={[BRAND.sandGold, '#fbbf24']}
                         style={styles.celebrationIconBg}
                     >
                         <Ionicons name="sparkles" size={rs(36)} color="#fff" />
                     </LinearGradient>
-
                     <Text style={[styles.celebrationTitle, { color: colors.text }]}>
-                        ¡Nuevo NFT Desbloqueado!
+                        {t('rewards_nft_unlocked')}
                     </Text>
                     <Text style={[styles.celebrationSubtitle, { color: colors.textSecondary }]}>
-                        Has canjeado tu recompensa ecológica
+                        {t('rewards_nft_redeemed')}
                     </Text>
                     <View style={styles.celebrationNFT}>
                         <NFTMiniCard nft={nft} size="large" />
                     </View>
                     <AnimatedButton
-                        title="Continuar"
+                        title={t('rewards_continue')}
                         onPress={onClose}
                         variant="primary"
                         fullWidth
@@ -67,7 +72,7 @@ const CelebrationModal = ({ visible, onClose, nft }) => {
 // ═══════════════════════════════════════════════════════════════════════════
 const NFTDetailModal = ({ visible, onClose, nft }) => {
     const { colors, shadows, isDark } = useTheme();
-
+    const { t } = useLanguage();
     if (!nft) return null;
 
     return (
@@ -77,37 +82,40 @@ const NFTDetailModal = ({ visible, onClose, nft }) => {
                     <TouchableOpacity style={styles.detailClose} onPress={onClose}>
                         <Ionicons name="close-circle" size={rs(36)} color={colors.textSecondary} />
                     </TouchableOpacity>
-
                     <Animated.View entering={FadeInUp.delay(100).springify()} style={styles.detailContent}>
                         <NFTMiniCard nft={nft} size="large" static />
-
                         <View style={styles.detailInfo}>
                             <Text style={[styles.detailTitle, { color: colors.text }]}>{nft.title}</Text>
-
                             <View style={styles.detailRow}>
                                 <Ionicons name="finger-print" size={rs(16)} color={colors.textMuted} />
                                 <Text style={[styles.detailHash, { color: colors.textMuted }]} numberOfLines={1}>
                                     {nft.hash?.slice(0, 18)}...{nft.hash?.slice(-8)}
                                 </Text>
                             </View>
-
                             <View style={styles.detailStats}>
                                 <GlassCard variant="flat" style={styles.detailStat}>
-                                    <Text style={[styles.detailStatLabel, { color: colors.textSecondary }]}>Creado</Text>
+                                    <Text style={[styles.detailStatLabel, { color: colors.textSecondary }]}>{t('rewards_created')}</Text>
                                     <Text style={[styles.detailStatValue, { color: colors.text }]}>{nft.date}</Text>
                                 </GlassCard>
                                 <GlassCard variant="flat" style={styles.detailStat}>
-                                    <Text style={[styles.detailStatLabel, { color: colors.textSecondary }]}>Bloqueado hasta</Text>
+                                    <Text style={[styles.detailStatLabel, { color: colors.textSecondary }]}>{t('rewards_locked_until')}</Text>
                                     <Text style={[styles.detailStatValue, { color: colors.text }]}>{nft.lockedUntil}</Text>
                                 </GlassCard>
                             </View>
-
                             <View style={styles.detailRow}>
                                 <Ionicons name="person-circle" size={rs(18)} color={colors.accent} />
                                 <Text style={[styles.detailOwner, { color: colors.text }]}>
-                                    Propietario: {nft.owner}
+                                    {t('rewards_owner')}: {nft.owner}
                                 </Text>
                             </View>
+                            {nft.acquisition && (
+                                <View style={[styles.detailRow, { marginTop: SPACING.sm }]}>
+                                    <Ionicons name="sparkles" size={rs(16)} color={BRAND.sandGold} />
+                                    <Text style={[styles.detailOwner, { color: colors.textSecondary, fontStyle: 'italic' }]}>
+                                        {nft.acquisition}
+                                    </Text>
+                                </View>
+                            )}
                         </View>
                     </Animated.View>
                 </SafeAreaView>
@@ -117,80 +125,76 @@ const NFTDetailModal = ({ visible, onClose, nft }) => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
+// PREMIUM "COMING SOON" PLACEHOLDER — Animated & Smooth
+// Replaces the old redeem section with a beautiful blockchain-themed banner
+// ═══════════════════════════════════════════════════════════════════════════
+
+
+// ═══════════════════════════════════════════════════════════════════════════
 // MAIN REWARDS SCREEN
 // ═══════════════════════════════════════════════════════════════════════════
 export default function RewardsScreen() {
-    const { points, nfts, unlockNFT } = useGame();
+    const { points, nfts, unlockNFT, markNFTSeen } = useGame();
     const { colors, shadows, isDark } = useTheme();
+    const { t } = useLanguage();
     const [showCelebration, setShowCelebration] = useState(false);
     const [showDetail, setShowDetail] = useState(false);
     const [selectedNFT, setSelectedNFT] = useState(null);
     const [lastUnlockedNFT, setLastUnlockedNFT] = useState(null);
 
-    const REDEEM_COST = 50;
-    const canRedeem = points >= REDEEM_COST;
-
-    const handleRedeem = () => {
-        if (!canRedeem) return;
-
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-        const newNFT = {
-            title: `Eco Guardian #${nfts.length + 1}`,
-            rarity: ['Común', 'Raro', 'Épico'][Math.floor(Math.random() * 3)],
-        };
-
-        unlockNFT(newNFT);
-        setLastUnlockedNFT({ ...newNFT, id: Date.now().toString() });
-        setShowCelebration(true);
-    };
-
     const handleNFTPress = (nft) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        if (nft.isNew) {
+            markNFTSeen(nft.id);
+        }
         setSelectedNFT(nft);
         setShowDetail(true);
     };
 
-    // Responsive grid - dynamic columns based on screen width
-    const getNumColumns = () => {
-        if (SCREEN.width >= 1024) return 6;      // Large tablet
-        if (SCREEN.width >= 768) return 5;       // Tablet
-        if (SCREEN.width >= 600) return 4;       // Large phone/small tablet
-        return 3;                                 // Phone
-    };
-    const numColumns = getNumColumns();
+    const numColumns = 3;
     const cardGap = SPACING.sm;
-    const cardWidth = (SCREEN.width - SPACING.lg * 2 - cardGap * (numColumns - 1)) / numColumns;
+    // Calculate width for 3 columns with padding and gaps
+    // Screen width - horizontal padding (lg=24 * 2) - gaps between columns ((3-1) * sm=8)
+    const availableWidth = SCREEN.width - (SPACING.lg * 2) - (cardGap * (numColumns - 1));
+    const cardWidth = availableWidth / numColumns;
+    const cardHeight = cardWidth * 1.4;
 
     const renderNFT = useCallback(({ item, index }) => {
-        // Check if this NFT is the newly unlocked one
         const isNew = lastUnlockedNFT?.id === item.id;
-
         return (
             <Animated.View
                 entering={FadeInUp.delay(index * 60).springify()}
                 style={{
-                    width: cardWidth,
                     marginBottom: cardGap,
-                    marginRight: (index + 1) % numColumns === 0 ? 0 : cardGap,
+                    width: cardWidth,
                 }}
             >
-                <NFTMiniCard
-                    nft={item}
-                    onPress={() => handleNFTPress(item)}
-                    isNew={isNew}
-                />
+                <TouchableOpacity onPress={() => handleNFTPress(item)} activeOpacity={0.9}>
+                    <EarthCard
+                        title={item.title}
+                        rarity={item.rarity}
+                        // Description and date are hidden in compact mode within EarthCard but passed anyway
+                        description={item.description}
+                        date={item.date}
+                        attributes={item.attributes}
+                        image={item.image}
+                        width={cardWidth}
+                        height={cardHeight}
+                        compact={true}
+                        isNew={item.isNew}
+                    />
+                </TouchableOpacity>
             </Animated.View>
         );
-    }, [cardWidth, lastUnlockedNFT]);
+    }, [lastUnlockedNFT, cardWidth, cardHeight]);
 
     const ListHeader = () => (
         <>
             {/* Header */}
             <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Mis Recompensas</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>{t('rewards_title')}</Text>
                 <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
-                    {nfts.length} NFTs en tu colección
+                    {nfts.length} {t('rewards_collection_count')}
                 </Text>
             </Animated.View>
 
@@ -199,37 +203,10 @@ export default function RewardsScreen() {
                 <Scoreboard />
             </Animated.View>
 
-            {/* Redeem Section */}
-            <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.redeemSection}>
-                <GlassCard variant="elevated" style={styles.redeemCard}>
-                    <View style={styles.redeemRow}>
-                        <View>
-                            <Text style={[styles.redeemTitle, { color: colors.text }]}>Canjear NFT</Text>
-                            <Text style={[styles.redeemCost, { color: colors.textSecondary }]}>
-                                Costo: {REDEEM_COST} puntos
-                            </Text>
-                        </View>
-                        <AnimatedButton
-                            title="Canjear"
-                            onPress={handleRedeem}
-                            variant={canRedeem ? 'primary' : 'ghost'}
-                            disabled={!canRedeem}
-                            size="sm"
-                            icon={<Ionicons name="diamond-outline" size={rs(16)} color="#fff" />}
-                        />
-                    </View>
-                    {!canRedeem && (
-                        <Text style={[styles.redeemHint, { color: colors.textMuted }]}>
-                            Necesitas {REDEEM_COST - points} puntos más
-                        </Text>
-                    )}
-                </GlassCard>
-            </Animated.View>
-
             {/* Collection Title */}
             {nfts.length > 0 && (
                 <Animated.View entering={FadeInUp.delay(400).springify()}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Tu Colección</Text>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('rewards_your_collection')}</Text>
                 </Animated.View>
             )}
         </>
@@ -239,9 +216,9 @@ export default function RewardsScreen() {
         <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.emptyContainer}>
             <GlassCard variant="flat" style={styles.emptyCard}>
                 <Ionicons name="diamond-outline" size={rs(48)} color={colors.textMuted} />
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>Sin NFTs aún</Text>
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('rewards_no_nfts')}</Text>
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                    Escanea basura y acumula puntos para desbloquear tus primeros NFTs ecológicos
+                    {t('rewards_no_nfts_desc')}
                 </Text>
             </GlassCard>
         </Animated.View>
@@ -249,14 +226,12 @@ export default function RewardsScreen() {
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            {/* Background */}
             {isDark && (
                 <LinearGradient
                     colors={[BRAND.oceanDeep, BRAND.oceanDark]}
                     style={StyleSheet.absoluteFill}
                 />
             )}
-            {/* Bubbles - both modes */}
             <FloatingBubbles count={10} minSize={4} maxSize={14} zIndex={0} />
             <View style={styles.bgWater}><LivingWater /></View>
 
@@ -268,13 +243,12 @@ export default function RewardsScreen() {
                     numColumns={numColumns}
                     ListHeaderComponent={ListHeader}
                     ListEmptyComponent={EmptyState}
-                    columnWrapperStyle={nfts.length > 0 ? styles.row : undefined}
+                    columnWrapperStyle={numColumns > 1 ? styles.row : undefined}
                     contentContainerStyle={styles.listContent}
                     showsVerticalScrollIndicator={false}
                 />
             </SafeAreaView>
 
-            {/* Modals */}
             <CelebrationModal
                 visible={showCelebration}
                 onClose={() => setShowCelebration(false)}
@@ -293,31 +267,19 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     bgWater: { ...StyleSheet.absoluteFillObject, opacity: 0.2 },
     safeArea: { flex: 1 },
-    listContent: {
-        padding: SPACING.lg,
-        paddingBottom: rh(120),
-    },
-    row: { justifyContent: 'space-between' },
+    listContent: { padding: SPACING.lg, paddingBottom: rh(120) },
+    row: { justifyContent: 'flex-start', gap: SPACING.sm }, // Changed to flex-start with gap for equal spacing
 
     // Header
     header: { marginBottom: SPACING.lg },
     headerTitle: { fontSize: rf(26), fontWeight: '700' },
     headerSubtitle: { fontSize: rf(14), marginTop: rs(4) },
 
-    // Redeem
-    redeemSection: { marginBottom: SPACING.xl },
-    redeemCard: { padding: SPACING.lg },
-    redeemRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    redeemTitle: { fontSize: rf(16), fontWeight: '700' },
-    redeemCost: { fontSize: rf(12), marginTop: rs(2) },
-    redeemHint: { fontSize: rf(11), marginTop: SPACING.sm },
-
     // Section
-    sectionTitle: {
-        fontSize: rf(18),
-        fontWeight: '700',
-        marginBottom: SPACING.md,
-    },
+    sectionTitle: { fontSize: rf(18), fontWeight: '700', marginBottom: SPACING.md },
+
+    // ═══ COMING SOON Styles ═══
+
 
     // Empty State
     emptyContainer: { marginTop: SPACING.xl },
@@ -326,28 +288,9 @@ const styles = StyleSheet.create({
     emptyText: { fontSize: rf(13), textAlign: 'center', marginTop: SPACING.sm, lineHeight: rf(20) },
 
     // Celebration Modal
-    celebrationOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: SPACING.xl,
-    },
-    celebrationContent: {
-        width: '100%',
-        maxWidth: rs(340),
-        borderRadius: RADIUS.xl,
-        padding: SPACING.xl,
-        alignItems: 'center',
-    },
-    celebrationIconBg: {
-        width: rs(72),
-        height: rs(72),
-        borderRadius: rs(36),
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: SPACING.lg,
-    },
+    celebrationOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center', padding: SPACING.xl },
+    celebrationContent: { width: '100%', maxWidth: rs(340), borderRadius: RADIUS.xl, padding: SPACING.xl, alignItems: 'center' },
+    celebrationIconBg: { width: rs(72), height: rs(72), borderRadius: rs(36), justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.lg },
     celebrationTitle: { fontSize: rf(22), fontWeight: '700', textAlign: 'center' },
     celebrationSubtitle: { fontSize: rf(14), textAlign: 'center', marginTop: SPACING.xs },
     celebrationNFT: { marginVertical: SPACING.xl },
@@ -359,13 +302,7 @@ const styles = StyleSheet.create({
     detailContent: { flex: 1, alignItems: 'center', paddingHorizontal: SPACING.xl },
     detailInfo: { marginTop: SPACING.xl, width: '100%' },
     detailTitle: { fontSize: rf(24), fontWeight: '700', textAlign: 'center' },
-    detailRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: SPACING.md,
-        gap: SPACING.xs,
-    },
+    detailRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: SPACING.md, gap: SPACING.xs },
     detailHash: { fontSize: rf(11), fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
     detailStats: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.lg },
     detailStat: { flex: 1, padding: SPACING.md, alignItems: 'center' },
