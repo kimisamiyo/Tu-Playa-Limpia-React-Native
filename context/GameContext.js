@@ -313,10 +313,7 @@ export const GameProvider = ({ children }) => {
             ...generatedData, // Apply generated attributes and description first
             ...nftData, // Override if header provides specific data
         };
-        // Append acquisition to description if present
-        if (newNFT.acquisition) {
-            newNFT.description = `${newNFT.description}\n\n[${newNFT.acquisition}]`;
-        }
+
         setNfts(prev => [newNFT, ...prev]);
         return newNFT;
     };

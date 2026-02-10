@@ -112,7 +112,10 @@ const NFTDetailModal = ({ visible, onClose, nft }) => {
                                 <View style={[styles.detailRow, { marginTop: SPACING.sm }]}>
                                     <Ionicons name="sparkles" size={rs(16)} color={BRAND.sandGold} />
                                     <Text style={[styles.detailOwner, { color: colors.textSecondary, fontStyle: 'italic' }]}>
-                                        {nft.acquisition}
+                                        {nft.acquisition.includes(':')
+                                            ? `${t(nft.acquisition.split(':')[0])} ${nft.acquisition.split(':')[1]}`
+                                            : t(nft.acquisition)
+                                        }
                                     </Text>
                                 </View>
                             )}
