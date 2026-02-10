@@ -381,7 +381,20 @@ export default function CustomSplash({ onAnimationFinish }) {
             });
         }, DURATION.splash);
 
-        return () => clearTimeout(fadeOutTimer);
+        // SAFETY FALLBACK FOR WEB:
+        // If Reanimated callback fails (common on web), Force finish after duration + buffer
+        const safetyTimer = setTimeout(() => {
+            if (onAnimationFinish) {
+                // Ensure we don't double-call if the animation worked, 
+                // but CustomSplash (parent) usually handles idempotency by unmounting
+                onAnimationFinish();
+            }
+        }, DURATION.splash + 1000);
+
+        return () => {
+            clearTimeout(fadeOutTimer);
+            clearTimeout(safetyTimer);
+        };
     }, []);
 
     const containerStyle = useAnimatedStyle(() => ({

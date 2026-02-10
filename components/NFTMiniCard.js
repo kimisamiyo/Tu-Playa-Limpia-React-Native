@@ -16,6 +16,7 @@ import { useTheme } from '../context/ThemeContext';
 import { BRAND } from '../constants/theme';
 import { rs, rf, SPACING, RADIUS } from '../constants/responsive';
 import { SPRING } from '../constants/animations';
+import { useLanguage } from '../context/LanguageContext';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // UNIQUE GENERATIVE NFT ART - Beach/Ocean themed
@@ -185,6 +186,7 @@ const GenerativeArt = ({ pattern, size, isDark }) => {
 // ═══════════════════════════════════════════════════════════════════════════
 export default function NFTMiniCard({ nft, onPress, size = 'default', isNew = false }) {
     const { colors, shadows, isDark } = useTheme();
+    const { t } = useLanguage();
 
     // Shimmer only runs if isNew
     const shimmer = useSharedValue(0);
@@ -266,7 +268,7 @@ export default function NFTMiniCard({ nft, onPress, size = 'default', isNew = fa
                 {/* NEW badge */}
                 {isNew && (
                     <View style={[styles.newBadge, { backgroundColor: BRAND.success }]}>
-                        <Text style={styles.newBadgeText}>NUEVO</Text>
+                        <Text style={styles.newBadgeText}>{t('nft_badge_new')}</Text>
                     </View>
                 )}
 

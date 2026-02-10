@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -15,14 +15,18 @@ import Animated, {
     FadeIn,
     FadeInDown,
     FadeInUp,
+    FadeInLeft,
+    FadeOutDown,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGame } from '../context/GameContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { BRAND } from '../constants/theme';
 import { rs, rf, rh, rw, SPACING, RADIUS, SCREEN } from '../constants/responsive';
 import { SPRING } from '../constants/animations';
 import FloatingBubbles from '../components/premium/FloatingBubbles';
+import CelebrationModal from '../components/CelebrationModal';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const { width, height } = Dimensions.get('window');
@@ -115,6 +119,21 @@ const ScanButton = ({ icon, color, label, onPress, delay }) => {
         transform: [{ scale: scale.value }],
     }));
 
+    // Button Background: Gradient for Dark Mode, Solid for Light Mode
+    const ButtonBackground = isDark ? LinearGradient : View;
+    const buttonProps = isDark ? {
+        colors: [BRAND.oceanDeep, '#002844'], // Matching background gradient
+        style: [styles.scanButtonInner, { borderColor: color }]
+    } : {
+        style: [
+            styles.scanButtonInner,
+            {
+                borderColor: color,
+                backgroundColor: 'rgba(255,255,255,0.95)',
+            }
+        ]
+    };
+
     return (
         <AnimatedPressable
             onPressIn={handlePressIn}
@@ -123,15 +142,9 @@ const ScanButton = ({ icon, color, label, onPress, delay }) => {
             style={[styles.scanButton, buttonStyle]}
         >
             <Animated.View entering={FadeInUp.delay(delay).springify()}>
-                <View style={[
-                    styles.scanButtonInner,
-                    {
-                        borderColor: color,
-                        backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.95)',
-                    }
-                ]}>
+                <ButtonBackground {...buttonProps}>
                     <Ionicons name={icon} size={rs(24)} color={color} />
-                </View>
+                </ButtonBackground>
                 <Text style={[styles.scanButtonLabel, { color: isDark ? '#fff' : '#1a3a4a' }]}>
                     {label}
                 </Text>
@@ -145,8 +158,11 @@ const ScanButton = ({ icon, color, label, onPress, delay }) => {
 // ═══════════════════════════════════════════════════════════════════════════
 const SuccessPopup = ({ visible, points, type }) => {
     const { colors, shadows, isDark } = useTheme();
+    const { t } = useLanguage();
 
     if (!visible) return null;
+
+    const translatedType = type ? t(`scan_type_${type.toLowerCase()}`, type) : type;
 
     return (
         <Animated.View
@@ -160,9 +176,9 @@ const SuccessPopup = ({ visible, points, type }) => {
                 <Ionicons name="checkmark" size={rs(26)} color="#fff" />
             </LinearGradient>
             <View style={styles.successContent}>
-                <Text style={[styles.successPoints, { color: colors.text }]}>+{points} PTS</Text>
+                <Text style={[styles.successPoints, { color: colors.text }]}>+{points} TPL</Text>
                 <Text style={[styles.successType, { color: colors.textSecondary }]}>
-                    {type?.toUpperCase()} DETECTADO
+                    {t('scan_detected', { type: translatedType?.toUpperCase() })}
                 </Text>
             </View>
         </Animated.View>
@@ -173,6 +189,7 @@ const SuccessPopup = ({ visible, points, type }) => {
 // PERMISSION REQUEST SCREEN
 // ═══════════════════════════════════════════════════════════════════════════
 const PermissionScreen = ({ onRequestPermission, isDark }) => {
+    const { t } = useLanguage();
     const waterGradient = isDark
         ? [BRAND.oceanDeep, '#002844', BRAND.oceanMid]
         : ['#1a6b8f', '#2d8ab0', '#4aa3c7'];
@@ -205,14 +222,14 @@ const PermissionScreen = ({ onRequestPermission, isDark }) => {
                         styles.permissionTitle,
                         { color: isDark ? '#fff' : '#1a3a4a' }
                     ]}>
-                        Permiso de Cámara
+                        {t('scan_camera_permission')}
                     </Text>
 
                     <Text style={[
                         styles.permissionDescription,
                         { color: isDark ? 'rgba(255,255,255,0.7)' : '#666' }
                     ]}>
-                        Para escanear basura y ganar puntos, necesitamos acceder a la cámara de tu dispositivo.
+                        {t('scan_camera_permission_desc')}
                     </Text>
 
                     <Pressable
@@ -226,7 +243,7 @@ const PermissionScreen = ({ onRequestPermission, isDark }) => {
                         ]}
                     >
                         <Ionicons name="checkmark-circle" size={rs(20)} color="#fff" />
-                        <Text style={styles.permissionButtonText}>Permitir Cámara</Text>
+                        <Text style={styles.permissionButtonText}>{t('scan_permission_allow')}</Text>
                     </Pressable>
                 </Animated.View>
             </View>
@@ -244,22 +261,24 @@ const SCAN_INTERVAL_MS = 1500; // Scan every 1.5 seconds for real-time detection
 const CONFIDENCE_THRESHOLD = 40; // Minimum confidence % to show detection
 
 // Mapeo de clases detectadas a tipos y puntos
+// Mapeo de clases detectadas a tipos y puntos
 const CLASS_MAPPING = {
-    'plastic-bottle': { type: 'bottle', label: 'Botella Plástica', points: 15, color: '#22c55e' },
-    'bottle': { type: 'bottle', label: 'Botella', points: 15, color: '#22c55e' },
-    'can': { type: 'can', label: 'Lata', points: 10, color: '#eab308' },
-    'plastic': { type: 'trash', label: 'Plástico', points: 12, color: '#3b82f6' },
-    'trash': { type: 'trash', label: 'Basura', points: 8, color: '#ef4444' },
-    'paper': { type: 'trash', label: 'Papel', points: 5, color: '#a855f7' },
-    'cardboard': { type: 'trash', label: 'Cartón', points: 6, color: '#f97316' },
-    'glass': { type: 'bottle', label: 'Vidrio', points: 10, color: '#06b6d4' },
-    'metal': { type: 'can', label: 'Metal', points: 10, color: '#64748b' },
+    'plastic-bottle': { type: 'bottle', labelKey: 'scan_label_plastic_bottle', points: 5, color: '#22c55e' },
+    'bottle': { type: 'bottle', labelKey: 'scan_label_bottle', points: 5, color: '#22c55e' },
+    'can': { type: 'can', labelKey: 'scan_label_can', points: 3, color: '#eab308' },
+    'plastic': { type: 'trash', labelKey: 'scan_label_plastic', points: 1, color: '#3b82f6' },
+    'trash': { type: 'trash', labelKey: 'scan_label_trash', points: 1, color: '#ef4444' },
+    'paper': { type: 'trash', labelKey: 'scan_label_paper', points: 1, color: '#a855f7' },
+    'cardboard': { type: 'trash', labelKey: 'scan_label_cardboard', points: 1, color: '#f97316' },
+    'glass': { type: 'bottle', labelKey: 'scan_label_glass', points: 5, color: '#06b6d4' },
+    'metal': { type: 'can', labelKey: 'scan_label_metal', points: 3, color: '#64748b' },
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DETECTION BOX COMPONENT - Shows bounding box around detected objects
 // ═══════════════════════════════════════════════════════════════════════════
 const DetectionBox = ({ prediction, frameSize, imageSize }) => {
+    const { t } = useLanguage();
     // Convert Roboflow coordinates (center x,y + width,height) to screen position
     const scaleX = frameSize / imageSize.width;
     const scaleY = frameSize / imageSize.height;
@@ -270,6 +289,7 @@ const DetectionBox = ({ prediction, frameSize, imageSize }) => {
     const top = (prediction.y * scaleY) - (boxHeight / 2);
 
     const mapping = CLASS_MAPPING[prediction.class.toLowerCase()] || { label: prediction.class, color: '#22c55e' };
+    const label = mapping.labelKey ? t(mapping.labelKey) : (mapping.label || prediction.class);
     const confidence = Math.round(prediction.confidence * 100);
 
     return (
@@ -288,7 +308,7 @@ const DetectionBox = ({ prediction, frameSize, imageSize }) => {
         >
             <View style={[styles.detectionLabel, { backgroundColor: mapping.color }]}>
                 <Text style={styles.detectionLabelText}>
-                    {mapping.label} {confidence}%
+                    {label} {confidence}%
                 </Text>
             </View>
         </Animated.View>
@@ -299,6 +319,7 @@ const DetectionBox = ({ prediction, frameSize, imageSize }) => {
 // DETECTION INFO PANEL - Shows friendly summary of detections
 // ═══════════════════════════════════════════════════════════════════════════
 const DetectionPanel = ({ counts, totalPoints, isDark }) => {
+    const { t } = useLanguage();
     if (!counts || Object.keys(counts).length === 0) return null;
 
     return (
@@ -312,17 +333,18 @@ const DetectionPanel = ({ counts, totalPoints, isDark }) => {
             <View style={styles.detectionPanelHeader}>
                 <Ionicons name="checkmark-circle" size={rs(20)} color={isDark ? '#60a5fa' : '#3b82f6'} />
                 <Text style={[styles.detectionPanelTitle, { color: isDark ? '#fff' : '#1a3a4a' }]}>
-                    ¡Detectado!
+                    {t('scan_waste_found')}
                 </Text>
             </View>
             <View style={styles.detectionCounts}>
                 {Object.entries(counts).map(([className, count]) => {
                     const mapping = CLASS_MAPPING[className.toLowerCase()] || { label: className, color: '#22c55e' };
+                    const label = mapping.labelKey ? t(mapping.labelKey) : (mapping.label || className);
                     return (
                         <View key={className} style={styles.detectionCountItem}>
                             <View style={[styles.detectionDot, { backgroundColor: mapping.color }]} />
                             <Text style={[styles.detectionCountText, { color: isDark ? '#e0e0e0' : '#1a3a4a' }]}>
-                                {count}x {mapping.label}
+                                {count}x {label}
                             </Text>
                         </View>
                     );
@@ -330,7 +352,7 @@ const DetectionPanel = ({ counts, totalPoints, isDark }) => {
             </View>
             <View style={[styles.pointsBadge, { backgroundColor: isDark ? BRAND.biolum : '#3b82f6' }]}>
                 <Text style={[styles.pointsBadgeText, { color: isDark ? '#001220' : '#fff' }]}>
-                    +{totalPoints} puntos
+                    +{totalPoints} TPL
                 </Text>
             </View>
         </Animated.View>
@@ -341,27 +363,55 @@ const DetectionPanel = ({ counts, totalPoints, isDark }) => {
 // LAST SCAN INFO PANEL - Shows detailed info about the last scanned items
 // ═══════════════════════════════════════════════════════════════════════════
 const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
+    const { t } = useLanguage();
+    const { width } = useWindowDimensions();
+    const isDesktop = width > 768; // Simple breakpoint for desktop/web
+
+    // Auto-dismiss on mobile only
+    useEffect(() => {
+        if (!isDesktop && scanInfo) {
+            const timer = setTimeout(() => {
+                onDismiss();
+            }, 5000); // 5 seconds as requested
+            return () => clearTimeout(timer);
+        }
+    }, [scanInfo, isDesktop, onDismiss]);
+
     if (!scanInfo) return null;
 
     return (
         <Animated.View
-            entering={FadeInUp.springify()}
-            exiting={FadeOut}
+            entering={isDesktop ? FadeInLeft.springify() : FadeInUp.springify()}
             style={[
                 styles.lastScanPanel,
-                { backgroundColor: isDark ? 'rgba(0,18,32,0.95)' : 'rgba(255,255,255,0.98)' }
+                {
+                    backgroundColor: isDark ? 'rgba(0,18,32,0.95)' : 'rgba(255,255,255,0.98)',
+                    // Responsive positioning
+                    ...(isDesktop ? {
+                        top: 100,
+                        left: 20,
+                        right: undefined,
+                        width: 300,
+                        bottom: 100, // Stretch vertically or fixed height? User said "mini list"
+                        maxHeight: 500, // Limit height on large screens
+                    } : {
+                        top: rs(87), // Reverted to original position
+                        left: rs(16),
+                        right: rs(16),
+                        // Mobile: Reverted to original styles (no sticker look, just clean panel)
+                        backgroundColor: isDark ? 'rgba(0,18,32,0.95)' : 'rgba(255,255,255,0.98)',
+                    })
+                }
             ]}
         >
             <View style={styles.lastScanHeader}>
                 <View style={styles.lastScanHeaderLeft}>
                     <Ionicons name="checkmark-circle" size={rs(18)} color={isDark ? '#60a5fa' : '#2563eb'} />
                     <Text style={[styles.lastScanTitle, { color: isDark ? '#fff' : '#1a3a4a' }]}>
-                        Último Escaneo
+                        {t('scan_last_scan')}
                     </Text>
                 </View>
-                <Text style={[styles.lastScanTime, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
-                    {scanInfo.timestamp}
-                </Text>
+                {/* Timestamp removed for privacy */}
             </View>
 
             <View style={styles.lastScanItems}>
@@ -369,13 +419,14 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
                     <View key={index} style={styles.lastScanItem}>
                         <View style={styles.lastScanItemLeft}>
                             <Text style={[styles.lastScanItemLabel, { color: isDark ? '#e0e0e0' : '#374151' }]}>
-                                {item.count}x {item.label}
+                                {item.count}x {item.labelKey ? t(item.labelKey) : item.label}
                             </Text>
-                            {item.sizePercent > 0 && (
-                                <Text style={[styles.lastScanItemSize, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
-                                    Tamaño: {item.sizePercent}%
-                                </Text>
-                            )}
+                            {/* Display Dimensions instead of just %, or both */}
+                            <Text style={[styles.lastScanItemSize, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+                                {item.width > 0 && item.height > 0
+                                    ? `${t('scan_width')}: ${item.width}px | ${t('scan_height')}: ${item.height}px`
+                                    : `${t('scan_size')}: ${item.sizePercent}%`}
+                            </Text>
                         </View>
                         <Text style={[styles.lastScanItemPoints, { color: isDark ? '#60a5fa' : '#2563eb' }]}>
                             +{item.points}
@@ -386,10 +437,10 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
 
             <View style={[styles.lastScanTotal, { borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
                 <Text style={[styles.lastScanTotalLabel, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
-                    Total ({scanInfo.totalItems} objetos)
+                    {t('scan_total_objects', { count: scanInfo.totalItems })}
                 </Text>
                 <Text style={[styles.lastScanTotalPoints, { color: isDark ? '#60a5fa' : '#2563eb' }]}>
-                    +{scanInfo.totalPoints} pts
+                    +{scanInfo.totalPoints} TPL
                 </Text>
             </View>
 
@@ -406,6 +457,7 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
 export default function ScanScreen() {
     const { scanItem } = useGame();
     const { colors, isDark } = useTheme();
+    const { t } = useLanguage();
     const [lastScanned, setLastScanned] = useState(null);
     const [permission, requestPermission] = useCameraPermissions();
 
@@ -435,6 +487,8 @@ export default function ScanScreen() {
     const [predictions, setPredictions] = useState([]);
     const [imageSize, setImageSize] = useState({ width: 640, height: 480 });
     const [lastScanInfo, setLastScanInfo] = useState(null);
+    const [showCelebration, setShowCelebration] = useState(false);
+    const [celebrationMessage, setCelebrationMessage] = useState('');
 
     const scannerSize = getScannerSize();
 
@@ -608,9 +662,12 @@ export default function ScanScreen() {
                         detectedItems.push({
                             className,
                             count: 1,
-                            label: mapping.label,
+                            labelKey: mapping.labelKey,
+                            label: mapping.label || className,
                             points: itemPoints,
                             sizePercent: Math.round(sizePercent),
+                            width: Math.round(pred.width),
+                            height: Math.round(pred.height),
                         });
                     }
                 }
@@ -653,7 +710,13 @@ export default function ScanScreen() {
         if (!isReadyToCollect || !detectionResults || detectionResults.totalPoints <= 0) return;
 
         const mainType = detectionResults.items[0]?.label || 'Residuo';
-        scanItem('trash');
+        // Pass the actual calculated points to scanItem
+        const { unlockedNFT } = scanItem('trash', detectionResults.totalPoints);
+
+        if (unlockedNFT) {
+            setCelebrationMessage(`${t('celebration_thanks')}\n\n${t('celebration_nft_unlocked')}\n${unlockedNFT.title}\n\n${t('celebration_see_rewards')}`);
+            setShowCelebration(true);
+        }
 
         // Save detailed scan info for the HUD
         setLastScanInfo({
@@ -663,6 +726,8 @@ export default function ScanScreen() {
                 count: item.count,
                 points: item.points,
                 sizePercent: item.sizePercent || 0,
+                width: item.width || 0,
+                height: item.height || 0,
             })),
             totalPoints: detectionResults.totalPoints,
             totalItems: detectionResults.count,
@@ -696,12 +761,7 @@ export default function ScanScreen() {
         }
     };
 
-    const handleSimulatedScan = (type) => {
-        const points = scanItem(type);
-        setLastScanned({ type, points });
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setTimeout(() => setLastScanned(null), 2500);
-    };
+
 
     const scannerColor = isDark ? BRAND.biolum : '#0d4a6f';
 
@@ -738,40 +798,46 @@ export default function ScanScreen() {
             {/* Bubbles - same as original */}
             <FloatingBubbles count={12} minSize={4} maxSize={16} zIndex={1} />
 
+            <CelebrationModal
+                visible={showCelebration}
+                onClose={() => setShowCelebration(false)}
+                message={celebrationMessage}
+            />
+
+            {/* Status indicator - MOVED OUTSIDE OVERLAY */}
+            <Animated.View
+                entering={FadeIn.delay(400)}
+                style={styles.instructionBox}
+            >
+                {isReadyToCollect ? (
+                    <Ionicons
+                        name="checkmark-circle"
+                        size={rs(20)}
+                        color='#60a5fa'
+                    />
+                ) : (
+                    <ActivityIndicator
+                        size="small"
+                        color={isDark ? 'rgba(255,255,255,0.8)' : '#fff'}
+                    />
+                )}
+                <Text style={[
+                    styles.scanText,
+                    {
+                        color: isReadyToCollect ? '#60a5fa' : (isDark ? 'rgba(255,255,255,0.8)' : '#fff'),
+                        textShadowColor: 'rgba(0,0,0,0.8)',
+                        textShadowOffset: { width: 0, height: 1 },
+                        textShadowRadius: 3
+                    }
+                ]}>
+                    {isReadyToCollect
+                        ? t('scan_waste_found')
+                        : t('scan_searching')}
+                </Text>
+            </Animated.View>
+
             {/* Scanner overlay */}
             <View style={styles.scannerOverlay}>
-                {/* Status indicator - MOVED ABOVE SCANNER */}
-                <Animated.View
-                    entering={FadeIn.delay(400)}
-                    style={styles.instructionBox}
-                >
-                    {isReadyToCollect ? (
-                        <Ionicons
-                            name="checkmark-circle"
-                            size={rs(20)}
-                            color='#60a5fa'
-                        />
-                    ) : (
-                        <ActivityIndicator
-                            size="small"
-                            color={isDark ? 'rgba(255,255,255,0.8)' : '#fff'}
-                        />
-                    )}
-                    <Text style={[
-                        styles.scanText,
-                        {
-                            color: isReadyToCollect ? '#60a5fa' : (isDark ? 'rgba(255,255,255,0.8)' : '#fff'),
-                            textShadowColor: 'rgba(0,0,0,0.8)',
-                            textShadowOffset: { width: 0, height: 1 },
-                            textShadowRadius: 3
-                        }
-                    ]}>
-                        {isReadyToCollect
-                            ? '¡Listo para escanear!'
-                            : 'Buscando residuos...'}
-                    </Text>
-                </Animated.View>
-
                 {/* Scanner Frame with Camera inside */}
                 <Animated.View style={[
                     styles.scannerFrame,
@@ -846,7 +912,7 @@ export default function ScanScreen() {
             />
 
             {/* Detection Panel - Friendly info display */}
-            {detectionResults && (
+            {detectionResults && !lastScanInfo && (
                 <DetectionPanel
                     counts={detectionResults.counts}
                     totalPoints={detectionResults.totalPoints}
@@ -878,8 +944,8 @@ export default function ScanScreen() {
                         ]} />
                         <Text style={styles.statusText}>
                             {isReadyToCollect
-                                ? '¡Residuo detectado! Listo para escanear'
-                                : (isScanning ? 'Analizando...' : (isAutoScanning ? 'Buscando residuos...' : 'Pausado'))}
+                                ? t('scan_waste_found')
+                                : (isScanning ? t('scan_analyzing') : (isAutoScanning ? t('scan_searching') : t('scan_paused')))}
                         </Text>
                     </Animated.View>
 
@@ -906,13 +972,13 @@ export default function ScanScreen() {
                             />
                             <Text style={[styles.aiScanButtonText, { color: '#fff' }]}>
                                 {isReadyToCollect
-                                    ? `ESCANEAR +${detectionResults?.totalPoints || 0}`
-                                    : 'ESPERANDO...'}
+                                    ? `${t('scan_button')} +${detectionResults?.totalPoints || 0} TPL`
+                                    : t('scan_paused')}
                             </Text>
                         </Pressable>
                     </Animated.View>
 
-                    {/* Toggle auto-scan and test button row */}
+                    {/* Toggle auto-scan */}
                     <View style={styles.controlButtonRow}>
                         <Pressable
                             onPress={toggleAutoScan}
@@ -927,19 +993,8 @@ export default function ScanScreen() {
                                 color="#fff"
                             />
                             <Text style={styles.toggleButtonText}>
-                                {isAutoScanning ? 'Pausar' : 'Activar'}
+                                {isAutoScanning ? t('scan_auto_pause') : t('scan_auto_resume')}
                             </Text>
-                        </Pressable>
-
-                        <Pressable
-                            onPress={() => handleSimulatedScan('trash')}
-                            style={({ pressed }) => [
-                                styles.discreteTestButton,
-                                { opacity: pressed ? 0.5 : 0.4 }
-                            ]}
-                        >
-                            <Ionicons name="add-circle-outline" size={rs(14)} color="#fff" />
-                            <Text style={styles.discreteTestText}>+10 test</Text>
                         </Pressable>
                     </View>
                 </LinearGradient>
@@ -955,7 +1010,8 @@ const styles = StyleSheet.create({
     scannerOverlay: {
         ...StyleSheet.absoluteFillObject,
         justifyContent: 'flex-start',
-        paddingTop: rh(15),
+        // Mobile: Push scanner down ensuring it's below the info panel
+        paddingTop: rh(230), // Raised 5px as requested
         alignItems: 'center',
         zIndex: 2,
     },
@@ -980,9 +1036,11 @@ const styles = StyleSheet.create({
         borderRadius: rs(2),
     },
     instructionBox: {
+        position: 'absolute',
+        top: rh(30),
+        zIndex: 20,
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: SPACING.xxl,
         gap: rs(8),
         alignSelf: 'center',
         justifyContent: 'center',
@@ -1175,7 +1233,7 @@ const styles = StyleSheet.create({
     // Error and scanning indicators
     errorBox: {
         position: 'absolute',
-        top: rh(80),
+        top: rh(15), // Moved to very top
         alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'center',
@@ -1192,7 +1250,7 @@ const styles = StyleSheet.create({
     },
     scanningBox: {
         position: 'absolute',
-        top: rh(80),
+        top: rh(15), // Moved to very top
         alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'center',

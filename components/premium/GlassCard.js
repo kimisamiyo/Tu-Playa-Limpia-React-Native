@@ -67,7 +67,7 @@ export default function GlassCard({
                 >
                     <View style={[styles.innerCard, variantStyles]}>
                         {/* Shine overlay */}
-                        <View style={[styles.shineOverlay, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.4)' }]} />
+                        <View pointerEvents="none" style={[styles.shineOverlay, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.4)' }]} />
                         {children}
                     </View>
                 </LinearGradient>
@@ -86,7 +86,7 @@ export default function GlassCard({
             {...props}
         >
             {/* Shine overlay */}
-            <View style={[styles.shineOverlay, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.3)' }]} />
+            <View pointerEvents="none" style={[styles.shineOverlay, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.3)' }]} />
             {children}
         </View>
     );

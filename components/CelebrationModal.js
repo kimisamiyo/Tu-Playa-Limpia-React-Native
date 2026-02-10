@@ -1,18 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Modal, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS } from '../constants/theme';
+import { BRAND } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import AnimatedDog from './AnimatedDog';
 import LiquidButton from './LiquidButton';
 
 const { width, height } = Dimensions.get('window');
 
-export default function CelebrationModal({ visible, onClose, message = "¡MUCHAS GRACIAS!" }) {
+export default function CelebrationModal({ visible, onClose, message }) {
+    const { colors, isDark } = useTheme();
+    const { t } = useLanguage();
     const [isAwake, setIsAwake] = useState(false);
+
+    const displayMessage = message || t('celebration_thanks');
 
     useEffect(() => {
         if (visible) {
-            // Wake up shortly after modal opens
             setTimeout(() => {
                 setIsAwake(true);
             }, 300);
@@ -28,18 +33,35 @@ export default function CelebrationModal({ visible, onClose, message = "¡MUCHAS
             animationType="fade"
         >
             <View style={styles.overlay}>
-                {/* Gradient Backdrop */}
+                {/* Gradient Backdrop - Ocean themed */}
                 <LinearGradient
-                    colors={['rgba(0,51,78,0.95)', 'rgba(0,16,26,0.98)']}
+                    colors={[
+                        isDark ? 'rgba(0,51,78,0.97)' : 'rgba(0,51,78,0.95)',
+                        isDark ? 'rgba(0,18,32,0.99)' : 'rgba(0,18,32,0.97)',
+                    ]}
                     style={StyleSheet.absoluteFill}
                 />
 
                 <View style={styles.contentContainer}>
                     {/* Speech Bubble */}
                     {isAwake && (
-                        <View style={styles.bubble}>
-                            <Text style={styles.bubbleText}>{message}</Text>
-                            <View style={styles.bubbleArrow} />
+                        <View style={[
+                            styles.bubble,
+                            {
+                                backgroundColor: isDark ? '#0a1f2e' : '#ffffff',
+                                borderColor: BRAND.sandGold,
+                            }
+                        ]}>
+                            <Text style={[
+                                styles.bubbleText,
+                                { color: isDark ? BRAND.biolum : BRAND.oceanDark }
+                            ]}>
+                                {displayMessage}
+                            </Text>
+                            <View style={[
+                                styles.bubbleArrow,
+                                { borderTopColor: isDark ? '#0a1f2e' : '#ffffff' }
+                            ]} />
                         </View>
                     )}
 
@@ -49,7 +71,7 @@ export default function CelebrationModal({ visible, onClose, message = "¡MUCHAS
                     <View style={{ height: 40 }} />
 
                     {/* Action */}
-                    <LiquidButton onPress={onClose} label="CONTINUAR" />
+                    <LiquidButton onPress={onClose} label={t('celebration_continue')} />
                 </View>
             </View>
         </Modal>
@@ -67,24 +89,24 @@ const styles = StyleSheet.create({
         width: width * 0.85,
     },
     bubble: {
-        backgroundColor: '#fff',
         paddingHorizontal: 25,
-        paddingVertical: 15,
+        paddingVertical: 18,
         borderRadius: 20,
         marginBottom: 25,
         minWidth: 200,
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 5,
+        borderWidth: 1.5,
+        shadowColor: BRAND.sandGold,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+        elevation: 8,
     },
     bubbleText: {
-        color: COLORS.primary,
         fontWeight: 'bold',
-        fontSize: 18,
+        fontSize: 17,
         textAlign: 'center',
+        lineHeight: 24,
     },
     bubbleArrow: {
         position: 'absolute',
@@ -98,7 +120,5 @@ const styles = StyleSheet.create({
         borderTopWidth: 10,
         borderLeftColor: 'transparent',
         borderRightColor: 'transparent',
-        borderTopColor: '#fff',
     }
 });
-

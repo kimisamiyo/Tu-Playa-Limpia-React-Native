@@ -48,8 +48,9 @@ export const rf = (size) => {
 // Device type detection
 export const isSmallDevice = SCREEN_WIDTH < 375;
 export const isMediumDevice = SCREEN_WIDTH >= 375 && SCREEN_WIDTH < 414;
-export const isLargeDevice = SCREEN_WIDTH >= 414;
-export const isTablet = SCREEN_WIDTH >= 768;
+export const isLargeDevice = SCREEN_WIDTH >= 414 && SCREEN_WIDTH < 768;
+export const isTablet = SCREEN_WIDTH >= 768 && SCREEN_WIDTH < 1024;
+export const isDesktop = SCREEN_WIDTH >= 1024;
 
 // Screen dimensions
 export const SCREEN = {
@@ -59,7 +60,11 @@ export const SCREEN = {
     isMedium: isMediumDevice,
     isLarge: isLargeDevice,
     isTablet: isTablet,
+    isDesktop: isDesktop,
 };
+
+export const SIDEBAR_WIDTH = 250;
+export const CONTENT_MAX_WIDTH = 1200;
 
 // Responsive spacing scale (8px base grid)
 export const SPACING = {

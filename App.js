@@ -1,59 +1,69 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './navigation/AppNavigator';
-import CustomSplash from './components/CustomSplash';
 import { GameProvider } from './context/GameContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
-// Inner App component that can use theme
+import { useFonts } from 'expo-font';
+import { Ionicons, MaterialCommunityIcons, FontAwesome, Feather } from '@expo/vector-icons';
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Inner App component — reads auth state from context
+// ═══════════════════════════════════════════════════════════════════════════
 function AppContent() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isSplashVisible, setIsSplashVisible] = useState(true);
   const { isDark } = useTheme();
+  const { isAuthenticated, isLoading, isFirstTime, register, login, importAccount, username } = useAuth();
 
-  const handleSplashFinish = () => {
-    setIsSplashVisible(false);
-  };
+  const [fontsLoaded] = useFonts({
+    ...Ionicons.font,
+    ...MaterialCommunityIcons.font,
+    ...FontAwesome.font,
+    ...Feather.font,
+  });
 
-  const handleAuthenticated = () => {
-    setIsAuthenticated(true);
-  };
-
-  if (isSplashVisible) {
-    return <CustomSplash onAnimationFinish={handleSplashFinish} />;
-  }
+  // Only wait for Auth to initialize. If fonts fail, icons will pop in later.
+  if (isLoading) return null;
 
   return (
     <>
       <NavigationContainer>
-        <AppNavigator isAuthenticated={isAuthenticated} onAuthSuccess={handleAuthenticated} />
+        <AppNavigator
+          isAuthenticated={isAuthenticated}
+          isFirstTime={isFirstTime}
+          onRegister={register}
+          onLogin={login}
+          onImport={importAccount}
+          username={username}
+        />
         <StatusBar style={isDark ? 'light' : 'dark'} />
       </NavigationContainer>
     </>
   );
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Root App — wraps everything with providers
+// ═══════════════════════════════════════════════════════════════════════════
 export default function App() {
   return (
-    <SafeAreaProvider style={{ flex: 1 }}>
-      <ThemeProvider>
-        <GameProvider>
-          <AppContent />
-        </GameProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider style={{ flex: 1 }}>
+        <ThemeProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <GameProvider>
+                <AppContent />
+              </GameProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
-
