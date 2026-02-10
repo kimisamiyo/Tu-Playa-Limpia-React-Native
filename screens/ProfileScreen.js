@@ -32,12 +32,18 @@ import CelebrationModal from '../components/CelebrationModal';
 // PREMIUM PROFILE SCREEN
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { useWindowDimensions } from 'react-native';
+
 export default function ProfileScreen({ navigation }) {
+    const { width } = useWindowDimensions();
+    const isDesktop = width >= 1024;
     const { user, updateUserProfile, nfts, points, level, scannedItems, unlockNFT } = useGame();
+    // ... existing hooks ...
     const { colors, shadows, isDark, themeMode, setDarkMode, setLightMode, setSystemMode, THEME_MODES } = useTheme();
     const { t, language, setLanguage, LANGUAGES, LANGUAGE_LABELS, isAutoMode } = useLanguage();
     const { verifySessionPassword, exportAccount } = useAuth(); // Import auth methods
 
+    // ... existing state ...
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState(user.name);
     const [showImagePicker, setShowImagePicker] = useState(false);
@@ -305,7 +311,7 @@ export default function ProfileScreen({ navigation }) {
             </View>
 
             <ScrollView
-                contentContainerStyle={styles.scrollContent}
+                contentContainerStyle={[styles.scrollContent, isDesktop && { width: '100%', maxWidth: 800, alignSelf: 'center' }]}
                 showsVerticalScrollIndicator={false}
             >
                 {/* Header */}

@@ -9,6 +9,7 @@ import {
   Platform,
   Linking,
   Image,
+  useWindowDimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -677,6 +678,16 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 // BEACH CARD COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 const BeachCard = ({ beach, isDark, onPress }) => {
+  const { t } = useLanguage();
+
+  const zoneMapping = {
+    "Lima Norte": "map_zone_north",
+    "Lima Centro": "map_zone_center",
+    "Lima Sur": "map_zone_south",
+    "Sur Chico": "map_zone_south_chico",
+    "Sur Grande": "map_zone_south_grande",
+  };
+
   const cardBg = isDark ? "rgba(13, 58, 77, 0.6)" : "#ffffff";
   const textColor = isDark ? "#ffffff" : "#000000";
   const subTextColor = isDark ? "rgba(170, 222, 243, 0.8)" : "#666666";
@@ -712,7 +723,7 @@ const BeachCard = ({ beach, isDark, onPress }) => {
                 {beach.name}
               </Text>
               <Text style={[styles.beachCardSubtitle, { color: subTextColor }]}>
-                {beach.district} · {beach.zone}
+                {beach.district} · {t(zoneMapping[beach.zone] || beach.zone)}
               </Text>
             </View>
             <TouchableOpacity
@@ -736,7 +747,7 @@ const BeachCard = ({ beach, isDark, onPress }) => {
                 color={statusColor}
               />
               <Text style={[styles.beachCardStatText, { color: statusColor }]}>
-                {beach.clean ? "Limpia" : "Sucia"}
+                {beach.clean ? t('map_clean') : t('map_dirty')}
               </Text>
             </View>
             <View
@@ -744,7 +755,7 @@ const BeachCard = ({ beach, isDark, onPress }) => {
             >
               <Ionicons name="people" size={rs(16)} color={BLUE_GREY} />
               <Text style={[styles.beachCardStatText, { color: BLUE_GREY }]}>
-                {beach.people} limpiando
+                {beach.people} {t('map_cleaning_count')}
               </Text>
             </View>
           </View>
@@ -762,25 +773,46 @@ export default function BeachMapScreen() {
   const { unlockRegionNFT } = useGame();
   const { t } = useLanguage();
   const [search, setSearch] = useState("");
-  const [selectedZone, setSelectedZone] = useState("Todas");
+  const [selectedZone, setSelectedZone] = useState("map_all_zones");
   const [showCelebration, setShowCelebration] = useState(false);
   const [lastUnlockedNFT, setLastUnlockedNFT] = useState(null);
 
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 1024;
+  const numColumns = isDesktop ? 4 : 1;
+  // Calculate width: Desktop uses Grid, Mobile uses List (full width)
+  const sidebarOffset = isDesktop ? 250 : 0;
+  const padding = SPACING.lg * 2;
+  const gap = SPACING.md;
+  const availableWidth = width - sidebarOffset - padding - (gap * (numColumns - 1));
+  const cardWidth = isDesktop ? availableWidth / numColumns : '100%';
+
   const zones = [
-    "Todas",
-    "Lima Norte",
-    "Lima Centro",
-    "Lima Sur",
-    "Sur Chico",
-    "Sur Grande",
+    "map_all_zones",
+    "map_zone_north",
+    "map_zone_center",
+    "map_zone_south",
+    "map_zone_south_chico",
+    "map_zone_south_grande",
   ];
+
+  const zoneMapping = {
+    "Lima Norte": "map_zone_north",
+    "Lima Centro": "map_zone_center",
+    "Lima Sur": "map_zone_south",
+    "Sur Chico": "map_zone_south_chico",
+    "Sur Grande": "map_zone_south_grande",
+  };
 
   const filteredBeaches = LIMA_BEACHES.filter((beach) => {
     const matchesSearch =
       beach.name.toLowerCase().includes(search.toLowerCase()) ||
       beach.district.toLowerCase().includes(search.toLowerCase()) ||
-      beach.zone.toLowerCase().includes(search.toLowerCase());
-    const matchesZone = selectedZone === "Todas" || beach.zone === selectedZone;
+      t(zoneMapping[beach.zone] || '').toLowerCase().includes(search.toLowerCase());
+
+    const matchesZone = selectedZone === "map_all_zones" ||
+      zoneMapping[beach.zone] === selectedZone;
+
     return matchesSearch && matchesZone;
   });
 
@@ -815,9 +847,9 @@ export default function BeachMapScreen() {
       <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor: headerBg, zIndex: 10 }]}>
         {/* HEADER */}
         <View style={[styles.header, shadows.md, { backgroundColor: headerBg }]}>
-          <Text style={[styles.headerTitle, { color: textColor }]}>Playas de Perú</Text>
+          <Text style={[styles.headerTitle, { color: textColor }]}>{t('map_title')}</Text>
           <Text style={[styles.headerSubtitle, { color: subTextColor }]}>
-            {filteredBeaches.length} playas disponibles
+            {filteredBeaches.length} {t('map_available')}
           </Text>
         </View>
 
@@ -826,7 +858,7 @@ export default function BeachMapScreen() {
           <Ionicons name="search" size={rs(18)} color={subTextColor} />
           <TextInput
             style={[styles.searchInput, { color: textColor }]}
-            placeholder="Buscar playa, distrito o zona..."
+            placeholder={t('map_search_placeholder')}
             placeholderTextColor={subTextColor}
             value={search}
             onChangeText={setSearch}
@@ -879,7 +911,7 @@ export default function BeachMapScreen() {
                     { color: isSelected ? "#fff" : textColor },
                   ]}
                 >
-                  {item}
+                  {t(item)}
                 </Text>
               </TouchableOpacity>
             );
@@ -888,13 +920,18 @@ export default function BeachMapScreen() {
 
 
         {/* BEACH CARDS LIST */}
-        < FlatList
+        <FlatList
+          key={numColumns}
           data={filteredBeaches}
           keyExtractor={(item) => item.id.toString()}
+          numColumns={numColumns}
           contentContainerStyle={styles.beachList}
+          columnWrapperStyle={numColumns > 1 ? { gap: SPACING.md } : undefined}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <BeachCard beach={item} isDark={isDark} onPress={handleBeachPress} />
+            <View style={{ width: cardWidth }}>
+              <BeachCard beach={item} isDark={isDark} onPress={handleBeachPress} />
+            </View>
           )}
           ListEmptyComponent={
             < View style={styles.emptyState} >
@@ -903,7 +940,7 @@ export default function BeachMapScreen() {
                 {t('map_no_beaches')}
               </Text>
               <Text style={[styles.emptySubtext, { color: subTextColor }]}>
-                Intenta con otros términos de búsqueda
+                {t('map_no_beaches_desc')}
               </Text>
             </View >
           }

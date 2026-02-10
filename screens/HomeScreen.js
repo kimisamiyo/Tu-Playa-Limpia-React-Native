@@ -37,7 +37,7 @@ import GlassCard from '../components/premium/GlassCard';
 // ═══════════════════════════════════════════════════════════════════════════
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const ActionItem = ({ icon, label, delay = 0, onPress }) => {
+const ActionItem = ({ icon, label, delay = 0, onPress, customWidth }) => {
     const { colors, shadows, isDark } = useTheme();
     const scale = useSharedValue(1);
 
@@ -64,7 +64,7 @@ const ActionItem = ({ icon, label, delay = 0, onPress }) => {
             onPressOut={handlePressOut}
             onPress={handlePress}
             entering={FadeInDown.delay(delay).springify()}
-            style={[styles.actionItem, animatedStyle]}
+            style={[styles.actionItem, animatedStyle, customWidth && { width: customWidth }]}
         >
             <GlassCard variant="elevated" style={styles.actionCard}>
                 <View style={styles.actionContent}>
@@ -149,16 +149,25 @@ const BalanceCard = () => {
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN HOME SCREEN
 // ═══════════════════════════════════════════════════════════════════════════
+import { useWindowDimensions } from 'react-native';
+
 export default function HomeScreen() {
     const navigation = useNavigation();
     const { user, points, nfts, level } = useGame();
     const { colors, shadows, isDark } = useTheme();
     const { t, language } = useLanguage();
+    const { width } = useWindowDimensions();
+    const isDesktop = width >= 1024;
 
     // Localized date
     const today = new Date();
     const localeMap = { es: 'es-ES', en: 'en-US', zh: 'zh-CN', hi: 'hi-IN', ar: 'ar-SA', fr: 'fr-FR', pt: 'pt-BR' };
     const dateString = today.toLocaleDateString(localeMap[language] || 'es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    // Responsive styles
+    const actionItemWidth = isDesktop
+        ? (width - 250 - (SPACING.lg * 2) - (SPACING.md * 3)) / 4  // (Screen - Sidebar - Padding - Gaps) / 4 columns
+        : (width - (SPACING.lg * 2) - SPACING.md) / 2;             // Mobile: 2 columns
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -168,7 +177,7 @@ export default function HomeScreen() {
                     style={StyleSheet.absoluteFill}
                 />
             )}
-            <FloatingBubbles count={8} minSize={4} maxSize={14} zIndex={0} />
+            <FloatingBubbles count={isDesktop ? 20 : 8} minSize={4} maxSize={isDesktop ? 20 : 14} zIndex={0} />
 
             <SafeAreaView style={styles.safeArea}>
                 <ScrollView
@@ -181,7 +190,7 @@ export default function HomeScreen() {
                         style={styles.header}
                     >
                         <View>
-                            <Text style={[styles.greeting, { color: colors.text }]}>
+                            <Text style={[styles.greeting, { color: colors.text, fontSize: isDesktop ? rf(32) : rf(26) }]}>
                                 {t('home_greeting')}, {user.name.split(' ')[0]}
                             </Text>
                             <Text style={[styles.date, { color: colors.textMuted }]}>
@@ -209,41 +218,53 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                     </Animated.View>
 
-                    {/* Balance Card */}
-                    <BalanceCard />
+                    {/* Dashboard Layout Content */}
+                    <View style={isDesktop ? styles.desktopRow : styles.mobileCol}>
 
-                    {/* Quick Actions */}
-                    <Animated.View entering={FadeInUp.delay(400).springify()}>
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                            {t('home_quick_actions')}
-                        </Text>
-                    </Animated.View>
+                        {/* Left/Top: Balance Card */}
+                        <View style={isDesktop ? { flex: 0.4, marginRight: SPACING.xl } : { width: '100%' }}>
+                            <BalanceCard />
+                        </View>
 
-                    <View style={styles.grid}>
-                        <ActionItem
-                            icon="scan-outline"
-                            label={t('home_scan')}
-                            delay={500}
-                            onPress={() => navigation.navigate('Escanear')}
-                        />
-                        <ActionItem
-                            icon="map-outline"
-                            label={t('home_map')}
-                            delay={600}
-                            onPress={() => navigation.navigate('Mapa')}
-                        />
-                        <ActionItem
-                            icon="stats-chart-outline"
-                            label={t('home_impact')}
-                            delay={700}
-                            onPress={() => navigation.navigate('Premios')}
-                        />
-                        <ActionItem
-                            icon="trophy-outline"
-                            label={t('home_ranking')}
-                            delay={800}
-                            onPress={() => navigation.navigate('Premios')}
-                        />
+                        {/* Right/Bottom: Quick Actions */}
+                        <View style={isDesktop ? { flex: 0.6 } : { width: '100%' }}>
+                            <Animated.View entering={FadeInUp.delay(400).springify()}>
+                                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                                    {t('home_quick_actions')}
+                                </Text>
+                            </Animated.View>
+
+                            <View style={styles.grid}>
+                                <ActionItem
+                                    icon="scan-outline"
+                                    label={t('home_scan')}
+                                    delay={500}
+                                    onPress={() => navigation.navigate('Escanear')}
+                                    customWidth={actionItemWidth}
+                                />
+                                <ActionItem
+                                    icon="map-outline"
+                                    label={t('home_map')}
+                                    delay={600}
+                                    onPress={() => navigation.navigate('Mapa')}
+                                    customWidth={actionItemWidth}
+                                />
+                                <ActionItem
+                                    icon="stats-chart-outline"
+                                    label={t('home_impact')}
+                                    delay={700}
+                                    onPress={() => navigation.navigate('Premios')}
+                                    customWidth={actionItemWidth}
+                                />
+                                <ActionItem
+                                    icon="trophy-outline"
+                                    label={t('home_ranking')}
+                                    delay={800}
+                                    onPress={() => navigation.navigate('Premios')}
+                                    customWidth={actionItemWidth}
+                                />
+                            </View>
+                        </View>
                     </View>
                 </ScrollView>
             </SafeAreaView>
@@ -272,14 +293,17 @@ const styles = StyleSheet.create({
     avatarImage: { width: rs(50), height: rs(50), borderRadius: rs(25) },
     avatarInitials: { fontSize: rf(18), fontWeight: '700' },
 
+    desktopRow: { flexDirection: 'row', alignItems: 'flex-start' },
+    mobileCol: { flexDirection: 'column' },
+
     balanceContainer: { marginBottom: SPACING.xl },
-    balanceCard: { borderRadius: RADIUS.xl, padding: SPACING.lg, overflow: 'hidden' },
+    balanceCard: { borderRadius: RADIUS.xl, padding: SPACING.lg, overflow: 'hidden', minHeight: 200 },
     cardShine: {
         position: 'absolute', top: 0, left: 0, right: 0, height: '50%',
         backgroundColor: 'rgba(255, 255, 255, 0.05)',
         borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl,
     },
-    balanceContent: { zIndex: 1 },
+    balanceContent: { zIndex: 1, height: '100%', justifyContent: 'space-between' },
     balanceLabel: {
         color: BRAND.oceanLight, fontSize: rf(11), fontWeight: '600',
         textTransform: 'uppercase', letterSpacing: rs(2),
@@ -311,10 +335,10 @@ const styles = StyleSheet.create({
 
     sectionTitle: { fontSize: rf(18), fontWeight: '700', marginBottom: SPACING.md },
 
-    grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: SPACING.md },
-    actionItem: { width: (SCREEN.width - SPACING.lg * 2 - SPACING.md) / 2 },
-    actionCard: { padding: 0 },
-    actionContent: { alignItems: 'center', padding: SPACING.lg },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: SPACING.md },
+    actionItem: { /* width handled dynamically */ },
+    actionCard: { padding: 0, height: '100%' }, // Ensure full height
+    actionContent: { alignItems: 'center', padding: SPACING.lg, justifyContent: 'center', height: '100%' },
     iconBox: {
         width: rs(52), height: rs(52), borderRadius: rs(16),
         justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.sm,

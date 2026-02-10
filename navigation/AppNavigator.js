@@ -98,84 +98,101 @@ function LockedTabIcon({ name, size, focused, isLocked }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// PREMIUM FLOATING TAB BAR
+// PREMIUM FLOATING TAB BAR (MOBILE) & SIDEBAR (DESKTOP)
 // ═══════════════════════════════════════════════════════════════════════════
+import { useWindowDimensions } from 'react-native';
+import DesktopSidebar from '../components/DesktopSidebar';
+import { isDesktop } from '../constants/responsive';
+
 function TabNavigator() {
     const { level } = useGame();
     const { colors, shadows, isDark } = useTheme();
+    const { width } = useWindowDimensions();
     const isPromotionsLocked = level < 2;
 
+    // Check if desktop view (width > 1024)
+    const showSidebar = width >= 1024;
+
     return (
-        <Tab.Navigator
-            screenOptions={{
-                headerShown: false,
-                tabBarShowLabel: false,
-                lazy: false,
-                tabBarStyle: [
-                    styles.tabBar,
-                    {
-                        backgroundColor: isDark ? colors.tabBar : 'rgba(0, 51, 78, 0.95)',
-                        borderColor: isDark ? colors.tabBarBorder : 'rgba(255,255,255,0.1)',
-                        ...shadows.xl,
-                    }
-                ],
-            }}
-        >
-            <Tab.Screen
-                name="Inicio"
-                component={HomeScreen}
-                options={{
-                    tabBarIcon: ({ focused }) => (
-                        <AnimatedTabIcon name="home" size={24} focused={focused} />
-                    )
-                }}
-            />
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+            {/* Desktop Sidebar (Left) */}
+            {showSidebar && <DesktopSidebar />}
 
-            <Tab.Screen
-                name="Mapa"
-                component={BeachMapScreen}
-                options={{
-                    tabBarIcon: ({ focused }) => (
-                        <AnimatedTabIcon name="map" size={24} focused={focused} />
-                    )
-                }}
-            />
+            {/* Main Content Area (Right) */}
+            <View style={{ flex: 1 }}>
+                <Tab.Navigator
+                    screenOptions={{
+                        headerShown: false,
+                        tabBarShowLabel: false,
+                        lazy: false,
+                        // Hide bottom tab bar if sidebar is shown
+                        tabBarStyle: showSidebar ? { display: 'none' } : [
+                            styles.tabBar,
+                            {
+                                backgroundColor: isDark ? colors.tabBar : 'rgba(0, 51, 78, 0.95)',
+                                borderColor: isDark ? colors.tabBarBorder : 'rgba(255,255,255,0.1)',
+                                ...shadows.xl,
+                            }
+                        ],
+                    }}
+                >
+                    <Tab.Screen
+                        name="Inicio"
+                        component={HomeScreen}
+                        options={{
+                            tabBarIcon: ({ focused }) => (
+                                <AnimatedTabIcon name="home" size={24} focused={focused} />
+                            )
+                        }}
+                    />
 
-            <Tab.Screen
-                name="Escanear"
-                component={ScanScreen}
-                options={{
-                    tabBarIcon: ({ focused }) => (
-                        <AnimatedTabIcon name="scan" size={24} focused={focused} />
-                    )
-                }}
-            />
+                    <Tab.Screen
+                        name="Mapa"
+                        component={BeachMapScreen}
+                        options={{
+                            tabBarIcon: ({ focused }) => (
+                                <AnimatedTabIcon name="map" size={24} focused={focused} />
+                            )
+                        }}
+                    />
 
-            <Tab.Screen
-                name="Premios"
-                component={RewardsScreen}
-                options={{
-                    tabBarIcon: ({ focused }) => (
-                        <AnimatedTabIcon name="trophy" size={24} focused={focused} />
-                    )
-                }}
-            />
+                    <Tab.Screen
+                        name="Escanear"
+                        component={ScanScreen}
+                        options={{
+                            tabBarIcon: ({ focused }) => (
+                                <AnimatedTabIcon name="scan" size={24} focused={focused} />
+                            )
+                        }}
+                    />
 
-            <Tab.Screen
-                name="Promos"
-                component={isPromotionsLocked ? LockedPromotionsScreen : PromotionsScreen}
-                options={{
-                    tabBarIcon: ({ focused }) => (
-                        <LockedTabIcon
-                            name="gift"
-                            size={24}
-                            focused={focused}
-                            isLocked={isPromotionsLocked}
-                        />
-                    )
-                }}
-            />
-        </Tab.Navigator>
+                    <Tab.Screen
+                        name="Premios"
+                        component={RewardsScreen}
+                        options={{
+                            tabBarIcon: ({ focused }) => (
+                                <AnimatedTabIcon name="trophy" size={24} focused={focused} />
+                            )
+                        }}
+                    />
+
+                    <Tab.Screen
+                        name="Promos"
+                        component={isPromotionsLocked ? LockedPromotionsScreen : PromotionsScreen}
+                        options={{
+                            tabBarIcon: ({ focused }) => (
+                                <LockedTabIcon
+                                    name="gift"
+                                    size={24}
+                                    focused={focused}
+                                    isLocked={isPromotionsLocked}
+                                />
+                            )
+                        }}
+                    />
+                </Tab.Navigator>
+            </View>
+        </View>
     );
 }
 

@@ -19,6 +19,8 @@ export const BRAND = {
     sandGold: '#d4a574',
     sandLight: '#e8c4a0',
     sandDark: '#8b6342',
+    goldShimmer: '#fcd34d', // Vibrant gold for highlights
+
 
     // Accent colors
     coral: '#ff6b6b',
@@ -157,6 +159,7 @@ export const DARK_THEME = {
 
 // Gradients
 export const GRADIENTS = {
+    primary: [BRAND.oceanMid, BRAND.oceanDark],
     oceanSurface: [BRAND.oceanMid, BRAND.oceanDark],
     oceanDeep: [BRAND.oceanDark, BRAND.oceanDeep],
     primaryButton: [BRAND.oceanMid, BRAND.oceanDark],

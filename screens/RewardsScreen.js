@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Dimensions, Platform
+    View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Dimensions, Platform, useWindowDimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -145,6 +145,9 @@ export default function RewardsScreen() {
     const [selectedNFT, setSelectedNFT] = useState(null);
     const [lastUnlockedNFT, setLastUnlockedNFT] = useState(null);
 
+    const { width } = useWindowDimensions();
+    const isDesktop = width >= 1024;
+
     const handleNFTPress = (nft) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         if (nft.isNew) {
@@ -154,11 +157,14 @@ export default function RewardsScreen() {
         setShowDetail(true);
     };
 
-    const numColumns = 3;
+    const numColumns = isDesktop ? 6 : 3;
     const cardGap = SPACING.sm;
-    // Calculate width for 3 columns with padding and gaps
-    // Screen width - horizontal padding (lg=24 * 2) - gaps between columns ((3-1) * sm=8)
-    const availableWidth = SCREEN.width - (SPACING.lg * 2) - (cardGap * (numColumns - 1));
+
+    // Calculate width
+    // Desktop: Screen - Sidebar (250) - Padding (2*24) - Gaps
+    // Mobile: Screen - Padding (2*24) - Gaps
+    const sidebarOffset = isDesktop ? 250 : 0;
+    const availableWidth = width - sidebarOffset - (SPACING.lg * 2) - (cardGap * (numColumns - 1));
     const cardWidth = availableWidth / numColumns;
     const cardHeight = cardWidth * 1.4;
 
@@ -240,6 +246,7 @@ export default function RewardsScreen() {
 
             <SafeAreaView style={styles.safeArea} edges={['top']}>
                 <FlatList
+                    key={numColumns}
                     data={nfts}
                     renderItem={renderNFT}
                     keyExtractor={(item) => item.id}

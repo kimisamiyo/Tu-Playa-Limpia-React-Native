@@ -232,7 +232,7 @@ const EarthCard = ({
 
                             {!compact && date && (
                                 <View style={styles.footer}>
-                                    <Text style={styles.dateLabel}>DESCUBIERTO EL</Text>
+                                    <Text style={styles.dateLabel}>{t('nft_discovered_on')}</Text>
                                     <Text style={styles.dateValue}>{date}</Text>
                                 </View>
                             )}
