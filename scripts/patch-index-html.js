@@ -54,7 +54,7 @@ function findAndCopyFont(prefix, targetName) {
       // Copy to flat /fonts/ for our CSS
       const dstFlat = path.join(FONTS_TARGET_DIR, `${targetName}.ttf`);
       fs.copyFileSync(src, dstFlat);
-      return `/fonts/${targetName}.ttf`;
+      return `./fonts/${targetName}.ttf`;
     }
   } catch (e) {
     console.warn(`Could not copy font ${targetName}: ${e.message}`);

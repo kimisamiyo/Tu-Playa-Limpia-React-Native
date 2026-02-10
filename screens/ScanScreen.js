@@ -16,7 +16,7 @@ import Animated, {
     FadeInDown,
     FadeInUp,
     FadeInLeft,
-    FadeOut,
+    FadeOutDown,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGame } from '../context/GameContext';
@@ -382,7 +382,6 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
     return (
         <Animated.View
             entering={isDesktop ? FadeInLeft.springify() : FadeInUp.springify()}
-            exiting={FadeOut}
             style={[
                 styles.lastScanPanel,
                 {
