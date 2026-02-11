@@ -1,8 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-    View, Text, StyleSheet, Platform, TextInput,
-    KeyboardAvoidingView, ScrollView, TouchableOpacity,
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as Haptics from 'expo-haptics';
@@ -37,7 +34,6 @@ import PinDisplay from './PinDisplay';
 import PinPad from './PinPad';
 import LivingWater from './LivingWater';
 import FloatingBubbles from './premium/FloatingBubbles';
-import GlassCard from './premium/GlassCard';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PREMIUM AUTH SCREEN - Multi-step registration, login, and import flows
@@ -60,30 +56,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
     // Multi-step state
     const [mode, setMode] = useState(isFirstTime ? 'choice' : 'login');
     const [pin, setPin] = useState('');
-    const [firstPin, setFirstPin] = useState('');
-    const [statusText, setStatusText] = useState('');
-
-    // Visibility State
-    const [showPassword, setShowPassword] = useState(false);
-    const [showPin, setShowPin] = useState(false);
-
-    // Registration fields
-    const [regUsername, setRegUsername] = useState('');
-    const [regPassword, setRegPassword] = useState('');
-    const [regPasswordConfirm, setRegPasswordConfirm] = useState('');
-
-    // Import fields
-    const [importFileName, setImportFileName] = useState('');
-    const [importFileContent, setImportFileContent] = useState('');
-    const [importFilePassword, setImportFilePassword] = useState('');
-    const [importNewPassword, setImportNewPassword] = useState('');
-    const [importNewPasswordConfirm, setImportNewPasswordConfirm] = useState('');
-    const [importedUsername, setImportedUsername] = useState('');
-
-    // Error display
-    const [errorText, setErrorText] = useState('');
-
-    // Animation values
+    const [showEmailModal, setShowEmailModal] = useState(false);
     const shake = useSharedValue(0);
     const contentOpacity = useSharedValue(0);
     const contentY = useSharedValue(rs(30));
@@ -681,44 +654,28 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                             ) : null}
                         </View>
 
-                        {/* PIN Pad */}
-                        <View style={styles.inputArea}>
-                            <PinPad
-                                onPinPress={handlePinPress}
-                                onBiometricPress={mode === 'login' ? authenticateBiometric : undefined}
-                                onDeletePress={handleDelete}
-                            />
-                        </View>
-                    </Animated.View>
-                ) : (
-                    /* ═══ Form mode layout (choice, register, import) ═══ */
-                    <KeyboardAvoidingView
-                        style={styles.contentWrapper}
-                        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                    >
-                        <ScrollView
-                            contentContainerStyle={styles.scrollForm}
-                            keyboardShouldPersistTaps="handled"
-                            showsVerticalScrollIndicator={false}
+                    {/* Input Area */}
+                    <View style={styles.inputArea}>
+                        <PinPad
+                            onPinPress={handlePinPress}
+                            onBiometricPress={authenticate}
+                            onDeletePress={handleDelete}
+                        />
+                        
+                        {/* Botón de verificación por email */}
+                        <TouchableOpacity
+                            style={styles.emailButton}
+                            onPress={() => {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                setShowEmailModal(true);
+                            }}
                         >
-                            <Animated.View style={contentStyle}>
-                                {/* Header */}
-                                <View style={styles.formHeader}>
-                                    <Text style={[styles.title, { color: isDark ? colors.accent : colors.primary }]}>
-                                        {getTitle()}
-                                    </Text>
-                                    <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                                        {getSubtitle()}
-                                    </Text>
-                                </View>
-
-
-                                {/* Form content */}
-                                {renderFormContent()}
-                            </Animated.View>
-                        </ScrollView>
-                    </KeyboardAvoidingView>
-                )}
+                            <Text style={[styles.emailButtonText, { color: colors.accent }]}>
+                                📧 Verificar con Email
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </Animated.View>
             </SafeAreaView>
         </View>
     );
@@ -777,66 +734,29 @@ const styles = StyleSheet.create({
         width: rs(56), height: rs(56), borderRadius: rs(28),
         justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md,
     },
-    choiceIconBgAlt: {
-        width: rs(56), height: rs(56), borderRadius: rs(28),
-        justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md,
+    feedbackArea: {
+        flex: 0.8,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    choiceTitle: { fontSize: rf(17), fontWeight: '700', marginBottom: rs(4) },
-    choiceDesc: { fontSize: rf(12), textAlign: 'center', lineHeight: rf(18) },
-
-    // ═══ FORM CARDS ═══
-    formContainer: { marginTop: SPACING.sm },
-    formCard: { padding: SPACING.xl },
-    formIconRow: { alignItems: 'center', marginBottom: SPACING.lg },
-    input: {
-        borderWidth: 1, borderRadius: RADIUS.md, padding: SPACING.md,
-        fontSize: rf(15), marginBottom: SPACING.sm,
+    pinHint: {
+        fontSize: rf(12),
+        marginTop: rs(8),
+        letterSpacing: rs(0.5),
     },
-    passwordContainer: {
-        position: 'relative',
-        marginBottom: SPACING.sm,
-        justifyContent: 'center', // Center vertically
+    inputArea: {
+        flex: 3.5,
+        justifyContent: 'center',
+        paddingBottom: rh(20),
     },
-    passwordInput: {
-        marginBottom: 0,
-        paddingRight: rs(48), // Space for eye icon (16 padding + 24 icon + 8 buffer)
+    emailButton: {
+        marginTop: rs(16),
+        padding: rs(12),
+        alignItems: 'center',
     },
-    eyeIcon: {
-        position: 'absolute',
-        right: 0,
-        height: '100%', // Full height of container
-        justifyContent: 'center', // Vertical center
-        paddingHorizontal: SPACING.md, // Click target size
+    emailButtonText: {
+        fontSize: rf(14),
+        fontWeight: '600',
+        textDecorationLine: 'underline',
     },
-    hintText: { fontSize: rf(11), marginBottom: SPACING.sm, textAlign: 'center' },
-    errorText: { fontSize: rf(12), color: BRAND.info, marginBottom: SPACING.sm, textAlign: 'center', fontWeight: '600' },
-
-    nextButton: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-        paddingVertical: SPACING.md, borderRadius: RADIUS.md, gap: SPACING.xs,
-        marginTop: SPACING.sm,
-    },
-    nextButtonText: { color: '#fff', fontSize: rf(15), fontWeight: '700' },
-
-    backButton: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-        gap: SPACING.xs, marginTop: SPACING.lg, paddingVertical: SPACING.sm,
-    },
-    backButtonText: { fontSize: rf(13), fontWeight: '500' },
-
-    // ═══ FILE PICKER ═══
-    filePicker: {
-        flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
-        borderWidth: 1, borderRadius: RADIUS.md, padding: SPACING.md,
-        borderStyle: 'dashed', marginBottom: SPACING.sm,
-    },
-    filePickerText: { fontSize: rf(13), flex: 1 },
-
-    // ═══ DIVIDER ═══
-    sectionDivider: {
-        flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
-        marginVertical: SPACING.md,
-    },
-    dividerLine: { flex: 1, height: 1 },
-    dividerText: { fontSize: rf(10), textTransform: 'uppercase', letterSpacing: 1 },
 });
