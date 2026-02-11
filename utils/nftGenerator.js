@@ -5,7 +5,7 @@ import MissionNFT from "./blockchain/MissionNFT.json";
 import { mintNFT } from './blockchain/missionNFT';
 import { LAYER_IMAGES } from '../constants/nftAssets';
 
-const CONTRACT_ADDRESS = "0x12539926A3E4331B411b9d1bFC66fddeD008b72E"; // <-- cambia esto
+const CONTRACT_ADDRESS = "0x0D0dfA1dE746B6eF0685e40bB48AFCb471b7a64c"; // <-- cambia esto
 
 // --- DEFINICIÓN DE CAPAS Y RAREZAS ---
 const layersSetup = [

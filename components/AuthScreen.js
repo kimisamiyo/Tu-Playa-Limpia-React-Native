@@ -34,6 +34,7 @@ import PinDisplay from './PinDisplay';
 import PinPad from './PinPad';
 import LivingWater from './LivingWater';
 import FloatingBubbles from './premium/FloatingBubbles';
+import GlassCard from './premium/GlassCard';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PREMIUM AUTH SCREEN - Multi-step registration, login, and import flows

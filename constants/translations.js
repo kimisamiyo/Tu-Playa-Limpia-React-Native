@@ -23,6 +23,45 @@ export const LANGUAGE_LABELS = {
     pt: { label: 'Português', flag: '🇧🇷' },
 };
 
+// Localized labels for claim button states (7 supported languages)
+export const REWARDS_CLAIM_LABELS = {
+    es: {
+        claim: 'Canjear',
+        claiming: 'Canjeando...',
+        alreadyClaimed: 'Reclamado',
+    },
+    en: {
+        claim: 'Claim NFT',
+        claiming: 'Claiming...',
+        alreadyClaimed: 'Already Claimed',
+    },
+    zh: {
+        claim: '领取 NFT',
+        claiming: '正在领取...',
+        alreadyClaimed: '已领取',
+    },
+    hi: {
+        claim: 'NFT दावा करें',
+        claiming: 'दावा किया जा रहा है...',
+        alreadyClaimed: 'पहले ही दावा किया गया',
+    },
+    ar: {
+        claim: 'المطالبة بـ NFT',
+        claiming: 'جاري المطالبة...',
+        alreadyClaimed: 'تم المطالبة بالفعل',
+    },
+    fr: {
+        claim: 'Récupérer le NFT',
+        claiming: 'Récupération...',
+        alreadyClaimed: 'Déjà réclamé',
+    },
+    pt: {
+        claim: 'Resgatar NFT',
+        claiming: 'Resgatando...',
+        alreadyClaimed: 'Já resgatado',
+    }
+};
+
 const translations = {
     // ═══════════════════════════════════════════
     // ESPAÑOL (default)

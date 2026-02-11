@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import MissionNFTABI from "./MissionNFT.json";
 
-const CONTRACT_ADDRESS = "0x12539926A3E4331B411b9d1bFC66fddeD008b72E";
+const CONTRACT_ADDRESS = "0x0D0dfA1dE746B6eF0685e40bB48AFCb471b7a64c";
 
 export const getContract = async () => {
   if (!window.ethereum) {
