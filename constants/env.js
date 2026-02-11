@@ -33,8 +33,8 @@ const ENV = {
   // ─────────────────────────────────────────────────────────────────────────
   // ROBOFLOW API - Ocean Waste Detection
   // ─────────────────────────────────────────────────────────────────────────
-  ROBOFLOW_API_KEY: process.env.ROBOFLOW_API_KEY || "",
-  ROBOFLOW_MODEL: process.env.ROBOFLOW_MODEL || "ocean-waste/2",
+  ROBOFLOW_API_KEY: process.env.EXPO_PUBLIC_ROBOFLOW_API_KEY || "Ea6ZGPtYBMLo2MM6lh0P",
+  ROBOFLOW_MODEL: process.env.EXPO_PUBLIC_ROBOFLOW_MODEL || "ocean-waste/2",
 
   // ─────────────────────────────────────────────────────────────────────────
   // BACKEND API

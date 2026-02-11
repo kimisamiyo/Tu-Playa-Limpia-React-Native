@@ -1598,6 +1598,8 @@ const styles = StyleSheet.create({
     height: rs(48),
     borderRadius: RADIUS.full,
     overflow: "hidden",
+    justifyContent: "center",
+    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,

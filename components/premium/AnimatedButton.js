@@ -40,6 +40,7 @@ export default function AnimatedButton({
     withHaptics = true,
     icon,
     fullWidth = false,
+    gradientColors, // Custom gradient colors
     style,
     textStyle,
     ...props
@@ -128,7 +129,7 @@ export default function AnimatedButton({
             {...props}
         >
             <LinearGradient
-                colors={variantConfig.gradientColors}
+                colors={gradientColors || variantConfig.gradientColors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[

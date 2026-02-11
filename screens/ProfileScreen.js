@@ -28,7 +28,6 @@ import FloatingBubbles from '../components/premium/FloatingBubbles';
 import GlassCard from '../components/premium/GlassCard';
 import ScalePressable from '../components/ScalePressable';
 import CelebrationModal from '../components/CelebrationModal';
-import ConnectWalletScreen from './ConnectWalletScreen';
 import { mintNFT } from "../utils/blockchain/missionNFT";
 import { generateNFTAttributes } from "../utils/nftGenerator";
 
@@ -64,9 +63,6 @@ export default function ProfileScreen({ navigation }) {
     const [filePasswordConfirm, setFilePasswordConfirm] = useState('');
     const [exportError, setExportError] = useState('');
     const [isExporting, setIsExporting] = useState(false);
-
-    // Wallet State
-    const [showWalletModal, setShowWalletModal] = useState(false);
 
     // Visibility State
     const [showPassword, setShowPassword] = useState(false);
@@ -593,18 +589,7 @@ export default function ProfileScreen({ navigation }) {
                         </GlassCard>
                     </ScalePressable>
 
-                    <ScalePressable onPress={() => setShowWalletModal(true)}>
-                        <GlassCard variant="default" style={[styles.infoCard, { marginTop: SPACING.sm }]}>
-                            <Ionicons name="wallet-outline" size={rs(20)} color={colors.accent} />
-                            <View style={styles.infoContent}>
-                                <Text style={[styles.infoLabel, { color: colors.textSecondary }]}>{t('wallet_connect_title')}</Text>
-                                <Text style={[styles.infoValue, { color: colors.text }]}>{t('wallet_connect_desc')}</Text>
-                            </View>
-                            <View style={[styles.exportButton, { backgroundColor: isDark ? BRAND.oceanMid : BRAND.oceanDark, paddingHorizontal: rs(12), height: rs(32) }]}>
-                                <Ionicons name="arrow-forward" size={rs(16)} color="#fff" />
-                            </View>
-                        </GlassCard>
-                    </ScalePressable>
+                    {/* Wallet Section Removed */}
                 </Animated.View>
 
                 {/* Privacy Notice */}
@@ -750,20 +735,7 @@ export default function ProfileScreen({ navigation }) {
                 </View>
             </Modal>
 
-            {/* Wallet Connection Modal */}
-            <Modal visible={showWalletModal} transparent animationType="fade">
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, { backgroundColor: colors.surface, maxHeight: '85%' }]}>
-                        <View style={styles.modalHeader}>
-                            <Text style={[styles.modalTitle, { color: colors.text, marginBottom: 0 }]}>{t('wallet_connect_title')}</Text>
-                            <ScalePressable onPress={() => setShowWalletModal(false)}>
-                                <Ionicons name="close" size={rs(24)} color={colors.text} />
-                            </ScalePressable>
-                        </View>
-                        <ConnectWalletScreen onSuccess={() => setShowWalletModal(false)} />
-                    </View>
-                </View>
-            </Modal>
+            {/* Wallet Modal Removed */}
 
             {/* CELEBRATION MODAL */}
             <CelebrationModal

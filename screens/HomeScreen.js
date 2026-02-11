@@ -120,10 +120,7 @@ const BalanceCard = () => {
                     <Text style={styles.balanceLabel}>{t('home_total_balance')}</Text>
                     <Text style={styles.balanceValue}>{points} TPL</Text>
                     <View style={styles.balanceRow}>
-                        <View style={styles.badge}>
-                            <Ionicons name="trending-up" size={rs(14)} color={BRAND.success} />
-                            <Text style={styles.badgeText}>{t('home_this_week')}</Text>
-                        </View>
+
                     </View>
                     <View style={styles.statsRow}>
                         <View style={styles.statItem}>

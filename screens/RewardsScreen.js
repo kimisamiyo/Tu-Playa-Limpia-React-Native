@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Dimensions, Platform, useWindowDimensions
+    View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Dimensions, Platform, useWindowDimensions, Alert, Image, Linking
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -70,10 +70,24 @@ const CelebrationModal = ({ visible, onClose, nft }) => {
 // ═══════════════════════════════════════════════════════════════════════════
 // NFT DETAIL MODAL
 // ═══════════════════════════════════════════════════════════════════════════
-const NFTDetailModal = ({ visible, onClose, nft }) => {
+const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
+    const [claiming, setClaiming] = useState(false);
+
     if (!nft) return null;
+
+    const handleClaimPress = async () => {
+        if (nft.claimed || claiming) return;
+        setClaiming(true);
+        try {
+            await onClaim(nft);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setClaiming(false);
+        }
+    };
 
     return (
         <Modal visible={visible} transparent animationType="slide">
@@ -119,6 +133,58 @@ const NFTDetailModal = ({ visible, onClose, nft }) => {
                                     </Text>
                                 </View>
                             )}
+
+                            <View style={{ marginTop: SPACING.xl, width: '100%', gap: SPACING.md }}>
+                                {/* Pali Option (Primary) */}
+                                <AnimatedButton
+                                    title={nft.claimed ? t('rewards_claimed') : "CLAIM WITH PALI"}
+                                    onPress={handleClaimPress}
+                                    variant="primary"
+                                    icon={
+                                        <Image
+                                            source={require('../assets/logo-pali.png')}
+                                            style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
+                                            resizeMode="contain"
+                                        />
+                                    }
+                                    disabled={nft.claimed || claiming}
+                                    fullWidth
+                                    style={{ justifyContent: 'center', alignItems: 'center' }}
+                                />
+
+                                {/* MetaMask Option */}
+                                <AnimatedButton
+                                    title={nft.claimed ? t('rewards_claimed') : "CLAIM WITH METAMASK"}
+                                    onPress={() => {
+                                        onClose();
+                                        setTimeout(() => {
+                                            // Try to open MetaMask App
+                                            const metamaskUrl = 'metamask://';
+                                            Linking.canOpenURL(metamaskUrl).then(supported => {
+                                                if (supported) {
+                                                    Linking.openURL(metamaskUrl);
+                                                } else {
+                                                    // Fallback to https (universal link)
+                                                    Linking.openURL('https://metamask.app.link/dapp/tu-playa-limpia-url');
+                                                }
+                                            }).catch(() => {
+                                                Linking.openURL('https://metamask.io');
+                                            });
+                                        }, 500);
+                                    }}
+                                    variant="primary"
+                                    icon={
+                                        <Image
+                                            source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/MetaMask_Fox.svg/1024px-MetaMask_Fox.svg.png' }}
+                                            style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
+                                            resizeMode="contain"
+                                        />
+                                    }
+                                    disabled={nft.claimed || claiming}
+                                    fullWidth
+                                    style={{ justifyContent: 'center', alignItems: 'center' }}
+                                />
+                            </View>
                         </View>
                     </Animated.View>
                 </SafeAreaView>
@@ -137,7 +203,7 @@ const NFTDetailModal = ({ visible, onClose, nft }) => {
 // MAIN REWARDS SCREEN
 // ═══════════════════════════════════════════════════════════════════════════
 export default function RewardsScreen() {
-    const { points, nfts, unlockNFT, markNFTSeen } = useGame();
+    const { points, nfts, unlockNFT, markNFTSeen, claimNFT } = useGame();
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
     const [showCelebration, setShowCelebration] = useState(false);
@@ -186,6 +252,7 @@ export default function RewardsScreen() {
                         description={item.description}
                         date={item.date}
                         attributes={item.attributes}
+                        id={item.id} // Pass ID for consistent art generation
                         image={item.image}
                         width={cardWidth}
                         height={cardHeight}
@@ -233,6 +300,21 @@ export default function RewardsScreen() {
         </Animated.View>
     );
 
+    const handleClaimNFT = async (nft) => {
+        const { handleClaim } = require('../utils/nftGenerator');
+        const timeout = (ms) => new Promise((res) => setTimeout(() => res({ success: false, error: new Error('Timeout') }), ms));
+        const result = await Promise.race([handleClaim(), timeout(120000)]);
+
+        if (result?.success) {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            claimNFT(nft.id);
+            Alert.alert(t('celebration_thanks'));
+        } else {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert('Error', result?.error?.message || 'Failed to claim');
+        }
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {isDark && (
@@ -268,6 +350,7 @@ export default function RewardsScreen() {
                 visible={showDetail}
                 onClose={() => setShowDetail(false)}
                 nft={selectedNFT}
+                onClaim={handleClaimNFT}
             />
         </View>
     );

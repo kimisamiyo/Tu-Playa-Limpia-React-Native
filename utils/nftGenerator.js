@@ -97,11 +97,9 @@ export const generateNFTAttributes = () => {
     return {
         dna: dna.join('-'),
         attributes,
-        description: `Un guardián equipado con ${
-            attributes.find(a => a.trait_type === 'Herramienta')?.value
-        } salvando el océano de ${
-            attributes.find(a => a.trait_type === 'Residuo Recolectado')?.value
-        }.`
+        description: `Un guardián equipado con ${attributes.find(a => a.trait_type === 'Herramienta')?.value
+            } salvando el océano de ${attributes.find(a => a.trait_type === 'Residuo Recolectado')?.value
+            }.`
     };
 };
 
@@ -122,14 +120,81 @@ export const handleClaim = async (externalSigner) => {
         // Determinar signer: preferir el pasado por parámetro (útil para pruebas)
         let signer = externalSigner;
         if (!signer) {
-            if (typeof window !== 'undefined' && window.ethereum) {
-                console.log('[nftGenerator] window.ethereum detected, getting signer');
-                const provider = new BrowserProvider(window.ethereum);
-                signer = await provider.getSigner();
-                console.log('[nftGenerator] signer acquired');
+            // Priorizar window.pali si existe (Pali Wallet injects itself there sometimes) o usar window.ethereum
+            const ethereum = window.pali || window.ethereum;
+
+            if (typeof window !== 'undefined' && ethereum) {
+                console.log('[nftGenerator] wallet provider detected:', window.pali ? 'Pali' : 'Ethereum');
+                const provider = new BrowserProvider(ethereum);
+
+                // 1. Solicitar acceso a cuentas con TIMEOUT (para evitar que se congele)
+                try {
+                    console.log('[nftGenerator] requesting accounts...');
+
+                    const requestPromise = provider.send("eth_requestAccounts", []);
+                    const timeoutPromise = new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('TIMEOUT_CONNECTION')), 15000)
+                    );
+
+                    await Promise.race([requestPromise, timeoutPromise]);
+
+                } catch (e) {
+                    console.warn('Connection/Auth error:', e);
+                    if (e.message === 'TIMEOUT_CONNECTION') {
+                        return { success: false, error: new Error('La conexión tardó demasiado. Por favor, abre tu wallet manualmente y vuelve a intentar.') };
+                    }
+                    if (e.message && e.message.includes("open window")) {
+                        return { success: false, error: new Error('Ya hay una solicitud de wallet abierta. Por favor revisa tu extensión de Pali/MetaMask.') };
+                    }
+                }
+
+                // 2. Intentar cambiar a Syscoin NEVM (Chain ID 57)
+                const SYSCOIN_CHAIN_ID = '0x39'; // 57 en hex
+                try {
+                    console.log('[nftGenerator] switching chain to Syscoin NEVM...');
+                    await provider.send('wallet_switchEthereumChain', [{ chainId: SYSCOIN_CHAIN_ID }]);
+                } catch (switchError) {
+                    // Este error 4902 indica que la cadena no ha sido agregada a la wallet.
+                    if (switchError.code === 4902 || switchError?.error?.code === 4902) {
+                        try {
+                            console.log('[nftGenerator] adding Syscoin NEVM chain...');
+                            await provider.send('wallet_addEthereumChain', [{
+                                chainId: SYSCOIN_CHAIN_ID,
+                                chainName: 'Syscoin Mainnet',
+                                nativeCurrency: {
+                                    name: 'Syscoin',
+                                    symbol: 'SYS',
+                                    decimals: 18
+                                },
+                                rpcUrls: ['https://rpc.syscoin.org'],
+                                blockExplorerUrls: ['https://explorer.syscoin.org/']
+                            }]);
+                        } catch (addError) {
+                            console.error('Failed to add Syscoin chain:', addError);
+                            if (addError.message && addError.message.includes("open window")) {
+                                return { success: false, error: new Error('Ya hay una solicitud de wallet abierta. Por favor revisa tu extensión.') };
+                            }
+                            throw new Error('Por favor, agrega la red Syscoin a tu wallet.');
+                        }
+                    } else {
+                        console.warn('Failed to switch chain:', switchError);
+                        if (switchError.message && switchError.message.includes("open window")) {
+                            return { success: false, error: new Error('Ya hay una solicitud de wallet abierta. Por favor revisa tu extensión.') };
+                        }
+                    }
+                }
+
+                // Obtener signer DESPUÉS de asegurar la red
+                try {
+                    signer = await provider.getSigner();
+                    console.log('[nftGenerator] signer acquired');
+                } catch (signerError) {
+                    console.error('Failed to get signer:', signerError);
+                    return { success: false, error: new Error('No se pudo obtener la cuenta. Revisa si tu wallet está desbloqueada.') };
+                }
             } else {
                 console.log('[nftGenerator] no provider available');
-                return { success: false, error: new Error('No hay un proveedor web3 disponible. Conecta una wallet.') };
+                return { success: false, error: new Error('No hay un proveedor web3 disponible. Conecta una wallet (Pali o MetaMask).') };
             }
         }
 
@@ -165,9 +230,26 @@ export const handleClaim = async (externalSigner) => {
             return { success: true, metadata, txHash };
         }
 
-        const contract = new Contract(CONTRACT_ADDRESS, abi, signer);
-        console.log('[nftGenerator] calling safeMint', { to: await signer.getAddress() });
-        const tx = await contract.safeMint(await signer.getAddress(), tokenURI);
+        const contractAddress = CONTRACT_ADDRESS;
+        const recipientAddress = await signer.getAddress();
+
+        console.log('--------------------------------------------------');
+        console.log('[nftGenerator] Contract Address:', contractAddress);
+        console.log('[nftGenerator] Recipient Address:', recipientAddress);
+        console.log('[nftGenerator] Token URI Length:', tokenURI.length);
+        console.log('--------------------------------------------------');
+
+        if (!contractAddress || contractAddress.length !== 42) {
+            throw new Error(`Dirección de contrato inválida: ${contractAddress}`);
+        }
+        if (!recipientAddress || recipientAddress.length !== 42) {
+            throw new Error(`Dirección de usuario inválida: ${recipientAddress}`);
+        }
+
+        const contract = new Contract(contractAddress, abi, signer);
+
+        console.log('[nftGenerator] calling safeMint...');
+        const tx = await contract.safeMint(recipientAddress, tokenURI);
         console.log('[nftGenerator] tx sent', tx);
         await tx.wait();
         console.log('[nftGenerator] tx confirmed - NFT minteado correctamente 🎉');
