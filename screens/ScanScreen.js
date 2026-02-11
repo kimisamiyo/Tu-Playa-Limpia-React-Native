@@ -27,6 +27,7 @@ import { rs, rf, rh, rw, SPACING, RADIUS, SCREEN } from '../constants/responsive
 import { SPRING } from '../constants/animations';
 import FloatingBubbles from '../components/premium/FloatingBubbles';
 import CelebrationModal from '../components/CelebrationModal';
+import ENV from '../constants/env';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const { width, height } = Dimensions.get('window');
@@ -252,10 +253,10 @@ const PermissionScreen = ({ onRequestPermission, isDark }) => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ROBOFLOW API CONFIGURATION - Direct API call, no backend needed
+// ROBOFLOW API CONFIGURATION - Usando variables de entorno seguras
 // ═══════════════════════════════════════════════════════════════════════════
-const ROBOFLOW_API_KEY = 'Ea6ZGPtYBMLo2MM6lh0P';
-const ROBOFLOW_MODEL = 'ocean-waste/2';
+const ROBOFLOW_API_KEY = ENV.ROBOFLOW_API_KEY;
+const ROBOFLOW_MODEL = ENV.ROBOFLOW_MODEL;
 const ROBOFLOW_URL = `https://serverless.roboflow.com/${ROBOFLOW_MODEL}`;
 const SCAN_INTERVAL_MS = 1500; // Scan every 1.5 seconds for real-time detection
 const CONFIDENCE_THRESHOLD = 40; // Minimum confidence % to show detection
