@@ -231,6 +231,8 @@ const translations = {
         rewards_owner: 'Propietario',
         rewards_claim: 'RECLAMAR',
         rewards_claimed: 'RECLAMADO',
+        rewards_claim_pali: 'RECLAMAR CON PALI',
+        rewards_claim_metamask: 'RECLAMAR CON METAMASK',
         rewards_processing: 'Procesando...',
 
         // Promotions
@@ -540,6 +542,8 @@ const translations = {
         rewards_owner: 'Owner',
         rewards_claim: 'CLAIM',
         rewards_claimed: 'CLAIMED',
+        rewards_claim_pali: 'CLAIM WITH PALI',
+        rewards_claim_metamask: 'CLAIM WITH METAMASK',
         rewards_processing: 'Processing...',
 
         promos_title: 'Special Promotions',
@@ -852,8 +856,10 @@ const translations = {
         rewards_nft_unlocked: '新NFT已解锁！',
         rewards_nft_redeemed: '你已兑换生态奖励',
         rewards_continue: '继续',
-        rewards_created: '创建于',
-        rewards_locked_until: '锁定至',
+        rewards_claimed: '已领取',
+        rewards_claim_pali: '使用 PALI 领取',
+        rewards_claim_metamask: '使用 METAMASK 领取',
+        rewards_processing: '处理中...',
         rewards_owner: '所有者',
 
         promos_title: '特别促销',
@@ -1156,6 +1162,8 @@ const translations = {
         rewards_created: 'बनाया गया',
         rewards_locked_until: 'तक लॉक',
         rewards_owner: 'स्वामी',
+        rewards_claim_pali: 'PALI के साथ दावा करें',
+        rewards_claim_metamask: 'METAMASK के साथ दावा करें',
 
         promos_title: 'विशेष प्रचार',
         promos_exclusive: 'स्तर के लिए विशेष',
@@ -1458,6 +1466,8 @@ const translations = {
         rewards_created: 'أُنشئ',
         rewards_locked_until: 'مقفل حتى',
         rewards_owner: 'المالك',
+        rewards_claim_pali: 'المطالبة باستخدام PALI',
+        rewards_claim_metamask: 'المطالبة باستخدام METAMASK',
 
         promos_title: 'عروض خاصة',
         promos_exclusive: 'حصري للمستوى',
@@ -1759,6 +1769,8 @@ const translations = {
         rewards_created: 'Créé',
         rewards_locked_until: 'Bloqué jusqu\'au',
         rewards_owner: 'Propriétaire',
+        rewards_claim_pali: 'RÉCLAMER AVEC PALI',
+        rewards_claim_metamask: 'RÉCLAMER AVEC METAMASK',
 
         promos_title: 'Promotions Spéciales',
         promos_exclusive: 'Exclusif pour le Niveau',
@@ -2061,6 +2073,8 @@ const translations = {
         rewards_created: 'Criado',
         rewards_locked_until: 'Bloqueado até',
         rewards_owner: 'Proprietário',
+        rewards_claim_pali: 'REIVINDICAR COM PALI',
+        rewards_claim_metamask: 'REIVINDICAR COM METAMASK',
 
         promos_title: 'Promoções Especiais',
         promos_exclusive: 'Exclusivo para Nível',

@@ -24,6 +24,7 @@ import CelebrationModal from '../components/CelebrationModal';
 import { mintNFT } from "../utils/blockchain/missionNFT";
 import { generateNFTAttributes } from "../utils/nftGenerator";
 import FlagIcon from "../components/FlagIcon";
+import { LANGUAGE_LABELS } from "../constants/translations";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -47,6 +48,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-MIRAMAR.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 2,
@@ -58,6 +60,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-LASCONCHITAS.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 3,
@@ -69,6 +72,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-PLAYAHERMOSA.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 4,
@@ -80,6 +84,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-PLAYACHICA.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 5,
@@ -91,6 +96,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-PLAYAGRANDE.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 6,
@@ -102,6 +108,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-PUNTAROQUITAS.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 7,
@@ -113,6 +120,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-LAPAMPILLA.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 8,
@@ -124,6 +132,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-WAIKIKI.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 9,
@@ -135,6 +144,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-MAKAHA.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 10,
@@ -146,6 +156,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-REDONDO.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 11,
@@ -157,6 +168,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-LAESTRELLA.webp"),
     clean: false,
     people: 0,
+    country: "pe",
   },
   {
     id: 12,
@@ -168,6 +180,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-LASCASCADAS.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 13,
@@ -179,6 +192,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-BARRANQUITO.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 14,
@@ -190,6 +204,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-LOSPAVOS.webp"),
     clean: false,
     people: 0,
+    country: "pe",
   },
   {
     id: 15,
@@ -201,6 +216,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-LOSYUYOS.webp"),
     clean: false,
     people: 0,
+    country: "pe",
   },
   {
     id: 16,
@@ -212,6 +228,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-LASSOMBRILLAS.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 17,
@@ -223,6 +240,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-AGUADULCE.webp"),
     clean: false,
     people: 0,
+    country: "pe",
   },
   {
     id: 18,
@@ -234,6 +252,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-PESCADORES.webp"),
     clean: false,
     people: 0,
+    country: "pe",
   },
   {
     id: 19,
@@ -245,6 +264,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-LAHERRADURA.webp"),
     clean: false,
     people: 0,
+    country: "pe",
   },
   {
     id: 20,
@@ -256,6 +276,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-LACHIRA.webp"),
     clean: false,
     people: 0,
+    country: "pe",
   },
   {
     id: 21,
@@ -267,6 +288,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-PLAYAVENECIA.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 22,
@@ -278,6 +300,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-BARLOVENTO.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 23,
@@ -289,6 +312,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-SANPEDRO.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 24,
@@ -300,6 +324,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-ARICA.webp"),
     clean: false,
     people: 0,
+    country: "pe",
   },
   {
     id: 25,
@@ -311,6 +336,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-LOSPULPUS.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 26,
@@ -322,6 +348,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-ELSILENCIO.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 27,
@@ -333,6 +360,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-PLAYACABALLEROS.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   {
     id: 28,
@@ -344,6 +372,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PE-LIM-PLAYASENORITAS.webp"),
     clean: true,
     people: 0,
+    country: "pe",
   },
   // Estados Unidos
   {
@@ -356,6 +385,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/USA-VENICEBEACH.webp"),
     clean: true,
     people: 0,
+    country: "us",
   },
   {
     id: 30,
@@ -367,6 +397,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/USA-SANTAMONICABEACH.webp"),
     clean: true,
     people: 0,
+    country: "us",
   },
   {
     id: 31,
@@ -378,6 +409,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/USA-MALIBUBEACH.webp"),
     clean: true,
     people: 0,
+    country: "us",
   },
   {
     id: 32,
@@ -389,6 +421,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/USA-SOUTHBEACH.webp"),
     clean: true,
     people: 0,
+    country: "us",
   },
   {
     id: 33,
@@ -400,6 +433,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/USA-WAIKIKIBEACH.webp"),
     clean: true,
     people: 0,
+    country: "us",
   },
   {
     id: 34,
@@ -411,6 +445,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/USA-LAGUNABEACH.webp"),
     clean: true,
     people: 0,
+    country: "us",
   },
   {
     id: 35,
@@ -422,6 +457,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/USA-CORONADOBEACH.webp"),
     clean: true,
     people: 0,
+    country: "us",
   },
   {
     id: 36,
@@ -433,6 +469,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/USA-CLEARWATERBEACH.webp"),
     clean: true,
     people: 0,
+    country: "us",
   },
   // México
   {
@@ -445,6 +482,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/MEX-PLAYADELCARMEN.webp"),
     clean: true,
     people: 0,
+    country: "mx",
   },
   {
     id: 38,
@@ -456,6 +494,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "mx",
   },
   {
     id: 39,
@@ -467,6 +506,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "mx",
   },
   {
     id: 40,
@@ -478,6 +518,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "mx",
   },
   {
     id: 41,
@@ -489,6 +530,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "mx",
   },
   {
     id: 42,
@@ -500,6 +542,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "mx",
   },
   // Brasil
   {
@@ -512,6 +555,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/BRA-COPACABANA.webp"),
     clean: true,
     people: 0,
+    country: "br",
   },
   {
     id: 44,
@@ -523,6 +567,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/BRA-IPANEMA.webp"),
     clean: true,
     people: 0,
+    country: "br",
   },
   {
     id: 45,
@@ -534,6 +579,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "br",
   },
   {
     id: 46,
@@ -545,6 +591,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/MEX-PRAIADOSANCHO.webp"),
     clean: true,
     people: 0,
+    country: "br",
   },
   {
     id: 47,
@@ -556,6 +603,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/BRA-BAIADOSANCHO.webp"),
     clean: true,
     people: 0,
+    country: "br",
   },
   // Colombia
   {
@@ -568,6 +616,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/COL-PLAYABLANCA.webp"),
     clean: true,
     people: 0,
+    country: "co",
   },
   {
     id: 49,
@@ -579,6 +628,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/COL-PLAYADEPALOMINO.webp"),
     clean: true,
     people: 0,
+    country: "co",
   },
   {
     id: 50,
@@ -590,6 +640,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "co",
   },
   // República Dominicana
   {
@@ -602,6 +653,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/REPDOMI-PUNTACANABEACH.webp"),
     clean: true,
     people: 0,
+    country: "do",
   },
   {
     id: 52,
@@ -613,6 +665,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/REPDOMI-BAVAROBEACH.webp"),
     clean: true,
     people: 0,
+    country: "do",
   },
   // Puerto Rico
   {
@@ -625,6 +678,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PUERTORICO-FLAMENCOBEACH.webp"),
     clean: true,
     people: 0,
+    country: "pr",
   },
   // Argentina
   {
@@ -637,6 +691,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/ARG-MARDEPLATA.webp"),
     clean: true,
     people: 0,
+    country: "ar",
   },
   {
     id: 55,
@@ -648,6 +703,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "ar",
   },
   // Uruguay
   {
@@ -660,6 +716,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/URU-PUNTADELESTE.webp"),
     clean: true,
     people: 0,
+    country: "uy",
   },
   {
     id: 57,
@@ -671,6 +728,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/URU-PLAYABRAVA.webp"),
     clean: true,
     people: 0,
+    country: "uy",
   },
   // Chile
   {
@@ -683,6 +741,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/CHI-PLAYAANAKENA.webp"),
     clean: true,
     people: 0,
+    country: "cl",
   },
   {
     id: 59,
@@ -694,6 +753,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/CHI-VIÑADELMAR.webp"),
     clean: true,
     people: 0,
+    country: "cl",
   },
   // España
   {
@@ -706,6 +766,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/ESP-PLAYADELACONCHA.webp"),
     clean: true,
     people: 0,
+    country: "es",
   },
   {
     id: 61,
@@ -717,6 +778,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/ESP-PLAYADELASCATEDRALES.webp"),
     clean: true,
     people: 0,
+    country: "es",
   },
   {
     id: 62,
@@ -728,6 +790,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/ESP-BARCELONETABEACH.webp"),
     clean: true,
     people: 0,
+    country: "es",
   },
   {
     id: 63,
@@ -739,6 +802,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/ESP-PLAYADESESILLETES.webp"),
     clean: true,
     people: 0,
+    country: "es",
   },
   // Portugal
   {
@@ -751,6 +815,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PORTUGAL-PRAIADEMARINHA.webp"),
     clean: true,
     people: 0,
+    country: "pt",
   },
   {
     id: 65,
@@ -762,6 +827,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/PORTUGAL-PRAIADEBENAGIL.webp"),
     clean: true,
     people: 0,
+    country: "pt",
   },
   // Francia
   {
@@ -774,6 +840,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/FRANCIA-PLAGEDEPALOMBAGGIA.webp"),
     clean: true,
     people: 0,
+    country: "fr",
   },
   {
     id: 67,
@@ -785,6 +852,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/FRANCIA-PLAGEDEPAMPELONNE.webp"),
     clean: true,
     people: 0,
+    country: "fr",
   },
   // Italia
   {
@@ -797,6 +865,7 @@ const LIMA_BEACHES = [
     image: require("./Beach/data/ITA-SPIAGGIADELCONIGLI.webp"),
     clean: true,
     people: 0,
+    country: "it",
   },
   // Grecia
   {
@@ -809,6 +878,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "gr",
   },
   {
     id: 70,
@@ -820,6 +890,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "gr",
   },
   // Middle East - Arabic Speaking Countries
   {
@@ -832,6 +903,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "ae",
   },
   {
     id: 72,
@@ -843,6 +915,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "eg",
   },
   {
     id: 73,
@@ -854,6 +927,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "ma",
   },
   {
     id: 74,
@@ -865,6 +939,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "om",
   },
   // Asia - Hindi Speaking (India)
   {
@@ -877,6 +952,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "in",
   },
   {
     id: 76,
@@ -888,6 +964,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "in",
   },
   {
     id: 77,
@@ -899,6 +976,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "in",
   },
   {
     id: 78,
@@ -910,6 +988,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "in",
   },
   // Asia - Chinese Speaking (China, Hong Kong, Taiwan)
   {
@@ -922,6 +1001,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "cn",
   },
   {
     id: 80,
@@ -933,6 +1013,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "cn",
   },
   {
     id: 81,
@@ -944,6 +1025,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "hk",
   },
   {
     id: 82,
@@ -955,6 +1037,7 @@ const LIMA_BEACHES = [
     image: require("../public/un-atractivo-valioso.jpg"),
     clean: true,
     people: 0,
+    country: "tw",
   },
 ];
 
@@ -1069,6 +1152,16 @@ const zoneMapping = {
   Asia: "map_zone_asia",
 };
 
+const LANGUAGE_TO_ZONE = {
+  es: "map_all_zones",
+  en: "map_zone_north_america",
+  zh: "map_zone_asia",
+  hi: "map_zone_asia",
+  ar: "map_zone_middle_east",
+  fr: "map_zone_europe",
+  pt: "map_zone_south_america",
+};
+
 // ═══════════════════════════════════════════════════════════════════════════
 // BEACH CARD COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1166,10 +1259,19 @@ const BeachCard = ({ beach, isDark, onPress, t }) => {
 export default function BeachMapScreen() {
   const { colors, shadows, isDark } = useTheme();
   const { unlockRegionNFT } = useGame();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [search, setSearch] = useState("");
   const [selectedZone, setSelectedZone] = useState("map_all_zones");
   const [showCelebration, setShowCelebration] = useState(false);
+
+  // Auto-switch zone based on language on mount and change
+  useEffect(() => {
+    if (language && LANGUAGE_TO_ZONE[language]) {
+      // If we are in "All Zones" or the previous language's zone, switch to new one
+      // But only if we aren't already in a specific manual filter
+      setSelectedZone(LANGUAGE_TO_ZONE[language]);
+    }
+  }, [language]);
   const [lastUnlockedNFT, setLastUnlockedNFT] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
 
@@ -1202,6 +1304,7 @@ export default function BeachMapScreen() {
 
 
   const filteredBeaches = LIMA_BEACHES.filter((beach) => {
+    // Basic search filtering
     const matchesSearch =
       beach.name.toLowerCase().includes(search.toLowerCase()) ||
       beach.district.toLowerCase().includes(search.toLowerCase()) ||
@@ -1209,9 +1312,19 @@ export default function BeachMapScreen() {
         .toLowerCase()
         .includes(search.toLowerCase());
 
-    const matchesZone =
+    // Zone filtering
+    let matchesZone =
       selectedZone === "map_all_zones" ||
       zoneMapping[beach.zone] === selectedZone;
+
+    // Language-based country filtering (if in All Zones and no active search)
+    // This satisfies "me muestre las playas de un pais" per language
+    if (!search && selectedZone === "map_all_zones") {
+      const preferredCountry = LANGUAGE_LABELS[language]?.code;
+      if (preferredCountry) {
+        matchesZone = beach.country === preferredCountry;
+      }
+    }
 
     return matchesSearch && matchesZone;
   });
@@ -1335,7 +1448,10 @@ export default function BeachMapScreen() {
                 borderWidth: isDark ? 1 : 0
               }
             ]}>
-              <Ionicons name="search" size={rs(20)} color={BRAND.primary} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: rs(8) }}>
+                <FlagIcon code={LANGUAGE_LABELS[language]?.code} size={0.8} />
+                <Ionicons name="search" size={rs(20)} color={BRAND.primary} />
+              </View>
               <TextInput
                 style={[styles.searchInput, { color: textColor }]}
                 placeholder={t("map_search_placeholder") || "Search beaches..."}

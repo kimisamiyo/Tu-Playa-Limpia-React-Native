@@ -137,7 +137,7 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
                             <View style={{ marginTop: SPACING.xl, width: '100%', gap: SPACING.md }}>
                                 {/* Pali Option (Primary) */}
                                 <AnimatedButton
-                                    title={nft.claimed ? t('rewards_claimed') : "CLAIM WITH PALI"}
+                                    title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_pali')}
                                     onPress={handleClaimPress}
                                     variant="primary"
                                     icon={
@@ -154,7 +154,7 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
 
                                 {/* MetaMask Option */}
                                 <AnimatedButton
-                                    title={nft.claimed ? t('rewards_claimed') : "CLAIM WITH METAMASK"}
+                                    title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_metamask')}
                                     onPress={() => {
                                         onClose();
                                         setTimeout(() => {
