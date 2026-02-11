@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS } from '../constants/theme';
+import { useLanguage } from '../context/LanguageContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -32,6 +33,7 @@ const GRADIENT_PALETTES = [
 ];
 
 export default function NFTDetailModal({ visible, nft, onClose, index }) {
+    const { t } = useLanguage();
     if (!nft) return null;
 
     const gradientIndex = (index || 0) % GRADIENT_PALETTES.length;
@@ -102,6 +104,21 @@ export default function NFTDetailModal({ visible, nft, onClose, index }) {
                                 <Text style={styles.detailLabel}>Token ID</Text>
                                 <Text style={styles.hashValue} numberOfLines={1}>
                                     {nft.hash.slice(0, 10)}...{nft.hash.slice(-8)}
+                                </Text>
+                            </View>
+                        )}
+
+                        <View style={styles.divider} />
+
+                        {/* Acquisition Source */}
+                        {nft.acquisition && (
+                            <View style={[styles.detailRow, { justifyContent: 'center', gap: 8 }]}>
+                                <Ionicons name="sparkles" size={16} color={COLORS.secondary} />
+                                <Text style={[styles.detailValue, { color: COLORS.secondary, fontStyle: 'italic', fontSize: 13 }]}>
+                                    {/* Handle parameterized translation keys like 'key:param' */}
+                                    {nft.acquisition.includes(':')
+                                        ? `${t(nft.acquisition.split(':')[0])} ${nft.acquisition.split(':')[1]}`
+                                        : t(nft.acquisition)}
                                 </Text>
                             </View>
                         )}
