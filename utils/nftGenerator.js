@@ -1,6 +1,11 @@
-// Logic adapted from user script
-// Fixed ReferenceError in chooseElement
-import { LAYER_IMAGES } from '../constants/nftAssets'; // Import to ensure keys match
+import { ethers } from 'ethers';
+// El ABI del contrato está dentro de utils/blockchain/MissionNFT.json
+// antes la ruta apuntaba a ../contracts que no existe en este proyecto
+import MissionNFT from "./blockchain/MissionNFT.json";
+import { mintNFT } from './blockchain/missionNFT';
+import { LAYER_IMAGES } from '../constants/nftAssets';
+
+const CONTRACT_ADDRESS = "0x12539926A3E4331B411b9d1bFC66fddeD008b72E"; // <-- cambia esto
 
 // --- DEFINICIÓN DE CAPAS Y RAREZAS ---
 const layersSetup = [
@@ -60,50 +65,116 @@ const layersSetup = [
     }
 ];
 
-// 1. Elegir un elemento basado en su rareza (peso)
+// Elegir elemento por peso
 const chooseElement = (layer) => {
-    let totalWeight = 0;
-    layer.elements.forEach(element => totalWeight += element.weight);
-
+    let totalWeight = layer.elements.reduce((sum, el) => sum + el.weight, 0);
     let random = Math.floor(Math.random() * totalWeight);
 
-    for (let i = 0; i < layer.elements.length; i++) {
-        random -= layer.elements[i].weight;
-        if (random < 0) {
-            return layer.elements[i];
-        }
+    for (let element of layer.elements) {
+        random -= element.weight;
+        if (random < 0) return element;
     }
-    return layer.elements[0]; // Fallback
+    return layer.elements[0];
 };
 
-// 2. Generar un ADN único y atributos
+// Generar atributos
 export const generateNFTAttributes = () => {
     let dna = [];
     let attributes = [];
 
     layersSetup.forEach((layer) => {
-        let selectedElement = chooseElement(layer);
+        const selected = chooseElement(layer);
 
-        // DNA String part
-        dna.push(`${layer.name}:${selectedElement.id}:${selectedElement.name}:${selectedElement.path}`);
+        dna.push(`${layer.name}:${selected.id}`);
 
-        // Attributes object for component
         attributes.push({
             trait_type: layer.name,
-            value: selectedElement.name,
-            path: selectedElement.path // Helpful debug or mapping
+            value: selected.name,
+            path: selected.path
         });
     });
 
     return {
         dna: dna.join('-'),
-        attributes: attributes,
-        description: `Un guardián equipado con ${attributes.find(a => a.trait_type === 'Herramienta')?.value} salvando el océano de ${attributes.find(a => a.trait_type === 'Residuo Recolectado')?.value}.`
+        attributes,
+        description: `Un guardián equipado con ${
+            attributes.find(a => a.trait_type === 'Herramienta')?.value
+        } salvando el océano de ${
+            attributes.find(a => a.trait_type === 'Residuo Recolectado')?.value
+        }.`
     };
 };
 
-export const rarityScore = (attributes) => {
-    // Simple rarity calculator placeholder
-    // In a real app we'd calculate based on global weights
-    return "Common";
-}
+
+
+// =============================
+// 🔥 HANDLE CLAIM + MINTEO
+// =============================
+
+export const handleClaim = async (externalSigner) => {
+    try {
+        // Preferir helper específico si existe (usa completeMission internamente)
+        const useExternalMint = typeof mintNFT === 'function';
+
+        console.log('[nftGenerator] handleClaim start');
+        const { BrowserProvider, Contract } = ethers;
+
+        // Determinar signer: preferir el pasado por parámetro (útil para pruebas)
+        let signer = externalSigner;
+        if (!signer) {
+            if (typeof window !== 'undefined' && window.ethereum) {
+                console.log('[nftGenerator] window.ethereum detected, getting signer');
+                const provider = new BrowserProvider(window.ethereum);
+                signer = await provider.getSigner();
+                console.log('[nftGenerator] signer acquired');
+            } else {
+                console.log('[nftGenerator] no provider available');
+                return { success: false, error: new Error('No hay un proveedor web3 disponible. Conecta una wallet.') };
+            }
+        }
+
+        const abi = MissionNFT?.abi || MissionNFT;
+        if (!abi) throw new Error('ABI del contrato MissionNFT no encontrada');
+
+        const nftData = generateNFTAttributes();
+        const metadata = {
+            name: 'Ocean Guardian NFT',
+            description: nftData.description,
+            attributes: nftData.attributes,
+        };
+
+        // Base64-safe
+        let metadataBase64;
+        if (typeof btoa !== 'undefined') {
+            metadataBase64 = btoa(JSON.stringify(metadata));
+        } else if (typeof Buffer !== 'undefined') {
+            metadataBase64 = Buffer.from(JSON.stringify(metadata), 'utf8').toString('base64');
+        } else if (globalThis?.Buffer) {
+            metadataBase64 = globalThis.Buffer.from(JSON.stringify(metadata), 'utf8').toString('base64');
+        } else {
+            metadataBase64 = encodeURIComponent(JSON.stringify(metadata));
+        }
+
+        const tokenURI = metadataBase64.startsWith('data:') ? metadataBase64 : `data:application/json;base64,${metadataBase64}`;
+
+        if (useExternalMint) {
+            console.log('[nftGenerator] using external mint helper (completeMission)');
+            // missionId por defecto 1; si necesitas otro, modifica la llamada
+            const txHash = await mintNFT(1, tokenURI);
+            console.log('[nftGenerator] external mint txHash', txHash);
+            return { success: true, metadata, txHash };
+        }
+
+        const contract = new Contract(CONTRACT_ADDRESS, abi, signer);
+        console.log('[nftGenerator] calling safeMint', { to: await signer.getAddress() });
+        const tx = await contract.safeMint(await signer.getAddress(), tokenURI);
+        console.log('[nftGenerator] tx sent', tx);
+        await tx.wait();
+        console.log('[nftGenerator] tx confirmed - NFT minteado correctamente 🎉');
+        return { success: true, metadata };
+
+    } catch (error) {
+        console.error('Error al mintear:', error);
+        return { success: false, error };
+    }
+};

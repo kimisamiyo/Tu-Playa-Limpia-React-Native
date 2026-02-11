@@ -9,6 +9,7 @@ import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { WalletProvider } from "./context/WalletContext";
 
 import { useFonts } from 'expo-font';
 import { Ionicons, MaterialCommunityIcons, FontAwesome, Feather } from '@expo/vector-icons';
@@ -58,7 +59,9 @@ export default function App() {
           <LanguageProvider>
             <AuthProvider>
               <GameProvider>
+                <WalletProvider>
                 <AppContent />
+                </WalletProvider>
               </GameProvider>
             </AuthProvider>
           </LanguageProvider>

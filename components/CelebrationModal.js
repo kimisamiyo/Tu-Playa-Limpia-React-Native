@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Modal, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Modal, Dimensions, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BRAND } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import AnimatedDog from './AnimatedDog';
 import LiquidButton from './LiquidButton';
+import { handleClaim } from '../utils/nftGenerator';
 
 const { width, height } = Dimensions.get('window');
 
@@ -13,6 +14,7 @@ export default function CelebrationModal({ visible, onClose, message }) {
     const { colors, isDark } = useTheme();
     const { t } = useLanguage();
     const [isAwake, setIsAwake] = useState(false);
+    const [processing, setProcessing] = useState(false);
 
     const displayMessage = message || t('celebration_thanks');
 
@@ -71,7 +73,32 @@ export default function CelebrationModal({ visible, onClose, message }) {
                     <View style={{ height: 40 }} />
 
                     {/* Action */}
-                    <LiquidButton onPress={onClose} label={t('celebration_continue')} />
+                    <LiquidButton
+                        onPress={async () => {
+                            console.log('[CelebrationModal] continue pressed');
+                            if (processing) return;
+                            setProcessing(true);
+                            try {
+                                // timeout wrapper to avoid infinite hang
+                                const timeout = (ms) => new Promise((res) => setTimeout(() => res({ success: false, error: new Error('Timeout al mintear') }), ms));
+                                const result = await Promise.race([handleClaim(), timeout(120000)]);
+                                console.log('[CelebrationModal] claim result', result);
+                                if (result?.success) {
+                                    Alert.alert(t('celebration_thanks'));
+                                    onClose && onClose();
+                                } else {
+                                    Alert.alert('Error', result?.error?.message || 'No se pudo mintear el NFT');
+                                }
+                            } catch (err) {
+                                console.log('[CelebrationModal] claim error', err);
+                                Alert.alert('Error', err?.message || 'Ocurrió un error');
+                            } finally {
+                                setProcessing(false);
+                            }
+                        }}
+                        label={processing ? 'Procesando...' : t('celebration_continue')}
+                    />
+                    {processing && <View style={{ marginTop: 12 }}><ActivityIndicator size="small" color="#fff" /></View>}
                 </View>
             </View>
         </Modal>

@@ -201,6 +201,16 @@ const translations = {
         account_password_mismatch: 'Las contraseñas no coinciden',
         account_password_short: 'La contraseña debe tener al menos 6 caracteres',
 
+        // Wallet
+        wallet_connect_title: 'Conectar Billetera',
+        wallet_connect_desc: 'Selecciona un proveedor para conectar tu billetera Web3',
+        wallet_success: '¡Billetera Conectada!',
+        wallet_connected: 'Billetera conectada',
+        wallet_error: 'Error de Conexión',
+        wallet_metamask_desc: 'La forma más segura de conectar',
+        wallet_walletconnect_desc: 'Conectar otras billeteras',
+        wallet_info_text: 'Tu dirección de billetera se mantendrá segura y se usará solo para transacciones autorizadas.',
+
         // Rewards
         rewards_title: 'Mis Recompensas',
         rewards_collection_count: 'NFTs en tu colección',
@@ -483,6 +493,16 @@ const translations = {
         account_import_error: 'Import error. Check the password.',
         account_password_mismatch: 'Passwords do not match',
         account_password_short: 'Password must be at least 6 characters',
+
+        // Wallet
+        wallet_connect_title: 'Connect Wallet',
+        wallet_connect_desc: 'Select a provider to connect your Web3 wallet',
+        wallet_success: 'Wallet Connected!',
+        wallet_connected: 'Wallet connected',
+        wallet_error: 'Connection Error',
+        wallet_metamask_desc: 'The most secure way to connect',
+        wallet_walletconnect_desc: 'Connect other wallets',
+        wallet_info_text: 'Your wallet address will remain secure and will only be used for authorized transactions.',
 
         rewards_title: 'My Rewards',
         rewards_collection_count: 'NFTs in your collection',
@@ -774,6 +794,16 @@ const translations = {
         account_password_mismatch: '密码不匹配',
         account_password_short: '密码至少需要6个字符',
 
+        // Wallet
+        wallet_connect_title: '连接钱包',
+        wallet_connect_desc: '选择一个提供商来连接你的Web3钱包',
+        wallet_success: '钱包已连接！',
+        wallet_connected: '钱包已连接',
+        wallet_error: '连接错误',
+        wallet_metamask_desc: '最安全的连接方式',
+        wallet_walletconnect_desc: '连接其他钱包',
+        wallet_info_text: '你的钱包地址将保持安全，仅用于授权交易。',
+
         rewards_title: '我的奖励',
         rewards_collection_count: '你收藏的NFT',
         rewards_coming_soon: '即将推出',
@@ -1050,6 +1080,16 @@ const translations = {
         account_import_error: 'आयात त्रुटि। पासवर्ड जांचें।',
         account_password_mismatch: 'पासवर्ड मेल नहीं खाते',
         account_password_short: 'पासवर्ड कम से कम 6 अक्षर का होना चाहिए',
+
+        // Wallet
+        wallet_connect_title: 'वॉलेट कनेक्ट करें',
+        wallet_connect_desc: 'अपने Web3 वॉलेट को कनेक्ट करने के लिए एक प्रदाता चुनें',
+        wallet_success: 'वॉलेट जुड़ गया!',
+        wallet_connected: 'वॉलेट जुड़ गया',
+        wallet_error: 'कनेक्शन त्रुटि',
+        wallet_metamask_desc: 'कनेक्ट करने का सबसे सुरक्षित तरीका',
+        wallet_walletconnect_desc: 'अन्य वॉलेट कनेक्ट करें',
+        wallet_info_text: 'आपका वॉलेट पता सुरक्षित रहेगा और केवल अधिकृत लेनदेन के लिए उपयोग किया जाएगा।',
 
         rewards_title: 'मेरे पुरस्कार',
         rewards_collection_count: 'आपके संग्रह में NFTs',
@@ -1329,6 +1369,16 @@ const translations = {
         account_password_mismatch: 'كلمات المرور غير متطابقة',
         account_password_short: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل',
 
+        // Wallet
+        wallet_connect_title: 'ربط المحفظة',
+        wallet_connect_desc: 'اختر مزودًا لربط محفظة Web3 الخاصة بك',
+        wallet_success: 'تم ربط المحفظة!',
+        wallet_connected: 'تم ربط المحفظة',
+        wallet_error: 'خطأ في الاتصال',
+        wallet_metamask_desc: 'الطريقة الأكثر أماناً للربط',
+        wallet_walletconnect_desc: 'ربط محافظ أخرى',
+        wallet_info_text: 'ستبقى عنوان محفظتك آمناً وسيتم استخدامه فقط للمعاملات المصرح بها.',
+
         rewards_title: 'مكافآتي',
         rewards_collection_count: 'NFTs في مجموعتك',
         rewards_coming_soon: 'قريباً',
@@ -1605,6 +1655,16 @@ const translations = {
         account_import_error: 'Erreur d\'importation. Vérifiez le mot de passe.',
         account_password_mismatch: 'Les mots de passe ne correspondent pas',
         account_password_short: 'Le mot de passe doit comporter au moins 6 caractères',
+
+        // Wallet
+        wallet_connect_title: 'Connecter Portefeuille',
+        wallet_connect_desc: 'Sélectionnez un fournisseur pour connecter votre portefeuille Web3',
+        wallet_success: 'Portefeuille Connecté!',
+        wallet_connected: 'Portefeuille connecté',
+        wallet_error: 'Erreur de Connexion',
+        wallet_metamask_desc: 'Le moyen le plus sûr de se connecter',
+        wallet_walletconnect_desc: 'Connecter d\'autres portefeuilles',
+        wallet_info_text: 'L\'adresse de votre portefeuille restera sécurisée et ne sera utilisée que pour les transactions autorisées.',
 
         rewards_title: 'Mes Récompenses',
         rewards_collection_count: 'NFTs dans votre collection',
@@ -1885,6 +1945,16 @@ const translations = {
         account_import_error: 'Erro na importação. Verifique a senha.',
         account_password_mismatch: 'As senhas não coincidem',
         account_password_short: 'A senha deve ter pelo menos 6 caracteres',
+
+        // Wallet
+        wallet_connect_title: 'Conectar Carteira',
+        wallet_connect_desc: 'Selecione um provedor para conectar sua carteira Web3',
+        wallet_success: 'Carteira Conectada!',
+        wallet_connected: 'Carteira conectada',
+        wallet_error: 'Erro de Conexão',
+        wallet_metamask_desc: 'A forma mais segura de conectar',
+        wallet_walletconnect_desc: 'Conectar outras carteiras',
+        wallet_info_text: 'Seu endereço de carteira permanecerá seguro e será usado apenas para transações autorizadas.',
 
         rewards_title: 'Minhas Recompensas',
         rewards_collection_count: 'NFTs na sua coleção',

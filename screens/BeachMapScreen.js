@@ -21,6 +21,8 @@ import { rs, rf, SPACING, RADIUS } from "../constants/responsive";
 import { useGame } from '../context/GameContext';
 import { useLanguage } from '../context/LanguageContext';
 import CelebrationModal from '../components/CelebrationModal';
+import { mintNFT } from "../utils/blockchain/missionNFT";
+import { generateNFTAttributes } from "../utils/nftGenerator";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONSTANTS

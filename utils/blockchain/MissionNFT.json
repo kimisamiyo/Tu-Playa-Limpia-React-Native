@@ -1,0 +1,12 @@
+[
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "missionId", "type": "uint256" },
+      { "internalType": "string", "name": "tokenURI", "type": "string" }
+    ],
+    "name": "completeMission",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
