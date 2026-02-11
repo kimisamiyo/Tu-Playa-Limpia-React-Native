@@ -23,6 +23,7 @@ import { useLanguage } from '../context/LanguageContext';
 import CelebrationModal from '../components/CelebrationModal';
 import { mintNFT } from "../utils/blockchain/missionNFT";
 import { generateNFTAttributes } from "../utils/nftGenerator";
+import FlagIcon from "../components/FlagIcon";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -973,6 +974,85 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════════════════════
+// FLAG MAPPING HELPER
+// ═══════════════════════════════════════════════════════════════════════════
+const getFlag = (district, zone) => {
+  // Map specific districts/zones to flags
+  const mapping = {
+    // Peru (Lima & others)
+    "Ancón": "pe", "Santa Rosa": "pe", "Miraflores": "pe", "Barranco": "pe",
+    "Chorrillos": "pe", "Villa El Salvador": "pe", "Lurín": "pe", "Punta Hermosa": "pe",
+    "Lima Norte": "pe", "Lima Centro": "pe", "Lima Sur": "pe", "Sur Chico": "pe", "Sur Grande": "pe",
+    // USA
+    "Los Angeles": "us", "Malibu": "us", "Miami Beach": "us", "Honolulu": "us",
+    "Orange County": "us", "San Diego": "us", "Clearwater": "us",
+    // Mexico
+    "Quintana Roo": "mx", "Cancún": "mx", "Tulum": "mx", "Isla Mujeres": "mx",
+    "Los Cabos": "mx", "Puerto Vallarta": "mx",
+    // Brazil
+    "Rio de Janeiro": "br", "Ceará": "br", "Fernando de Noronha": "br",
+    // Colombia
+    "Cartagena": "co", "La Guajira": "co", "San Andrés": "co",
+    // Dominican Republic
+    "Punta Cana": "do",
+    // Puerto Rico
+    "Culebra": "pr",
+    // Argentina
+    "Buenos Aires": "ar", "Mar del Plata": "ar",
+    // Uruguay
+    "Maldonado": "uy", "Punta del Este": "uy",
+    // Chile
+    "Isla de Pascua": "cl", "Valparaíso": "cl",
+    // Spain
+    "San Sebastián": "es", "Galicia": "es", "Barcelona": "es", "Formentera": "es",
+    // Portugal
+    "Algarve": "pt",
+    // France
+    "Corsica": "fr", "Saint-Tropez": "fr",
+    // Italy
+    "Lampedusa": "it",
+    // Greece
+    "Zakynthos": "gr", "Crete": "gr",
+    // UAE
+    "Dubai": "ae",
+    // Egypt
+    "Sharm El Sheikh": "eg",
+    // Morocco
+    "Agadir": "ma",
+    // Oman
+    "Muscat": "om",
+    // India
+    "Goa": "in", "Kerala": "in", "Andaman Islands": "in",
+    // China
+    "Hainan": "cn", "Sanya": "cn",
+    // Hong Kong
+    "Hong Kong": "hk",
+    // Taiwan
+    "Taiwan": "tw",
+  };
+
+  return mapping[district] || mapping[zone] || null;
+};
+
+const getZoneEmoji = (zone) => {
+  const mapping = {
+    "all": "all",
+    "Lima Norte": "pe",
+    "Lima Centro": "pe",
+    "Lima Sur": "pe",
+    "Sur Chico": "pe",
+    "Sur Grande": "pe",
+    "North America": "us",
+    "South America": "br", // Using BR as proxy for SA if needed, or just globe emoji
+    "Caribbean": "do",
+    "Europe": "eu",
+    "Middle East": "ae",
+    "Asia": "cn",
+  };
+  return mapping[zone] || null;
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
 // ZONE MAPPING
 // ═══════════════════════════════════════════════════════════════════════════
 const zoneMapping = {
@@ -994,10 +1074,13 @@ const zoneMapping = {
 // ═══════════════════════════════════════════════════════════════════════════
 const BeachCard = ({ beach, isDark, onPress, t }) => {
   const cardBg = isDark ? "rgba(13, 58, 77, 0.6)" : "#ffffff";
-  const textColor = isDark ? "#ffffff" : "#000000";
-  const subTextColor = isDark ? "rgba(170, 222, 243, 0.8)" : "#666666";
+  const textColor = "#ffffff";
+  const subTextColor = "rgba(170, 222, 243, 0.8)";
   const statusBg = beach.clean ? BLUE_GREY_BG : "rgba(245, 158, 11, 0.15)";
   const statusColor = beach.clean ? BLUE_GREY : "#f59e0b";
+
+  const flag = getFlag(beach.district, beach.zone);
+  const locationText = `${beach.district}`;
 
   return (
     <TouchableOpacity
@@ -1010,6 +1093,13 @@ const BeachCard = ({ beach, isDark, onPress, t }) => {
         style={styles.beachCardImage}
         resizeMode="cover"
       />
+
+      {/* Location Badge Overlay */}
+      <View style={styles.locationBadge}>
+        <FlagIcon code={flag} size={0.8} />
+        <Text style={styles.locationBadgeText}>{locationText}</Text>
+      </View>
+
       <LinearGradient
         colors={
           isDark
@@ -1028,7 +1118,7 @@ const BeachCard = ({ beach, isDark, onPress, t }) => {
                 {beach.name}
               </Text>
               <Text style={[styles.beachCardSubtitle, { color: subTextColor }]}>
-                {beach.district} · {t(zoneMapping[beach.zone] || beach.zone)}
+                {t(zoneMapping[beach.zone] || beach.zone)}
               </Text>
             </View>
             <TouchableOpacity
@@ -1189,8 +1279,9 @@ export default function BeachMapScreen() {
 
   const textColor = isDark ? colors.text : "#000000";
   const subTextColor = isDark ? colors.textMuted : "#666666";
-  const inputBg = isDark ? "rgba(0, 0, 0, 0.3)" : "#f5f5f5";
+  const inputBg = isDark ? "rgba(255, 255, 255, 0.1)" : "#ffffff";
   const headerBg = isDark ? BRAND.oceanDark : "#ffffff";
+  const navBarHeight = 90; // Adjust based on your header height
 
   const handleBeachPress = (beach) => {
     if (Platform.OS !== "web") {
@@ -1220,217 +1311,214 @@ export default function BeachMapScreen() {
         }
       />
 
-      <SafeAreaView
-        edges={["top"]}
-        style={[styles.container, { backgroundColor: headerBg, zIndex: 10 }]}
-      >
-        {/* HEADER */}
-        <View
-          style={[styles.header, shadows.md, { backgroundColor: headerBg }]}
-        >
-          <Text style={[styles.headerTitle, { color: textColor }]}>
-            {t("map_title")}
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: subTextColor }]}>
-            {filteredBeaches.length} {t("map_available")}
-          </Text>
-        </View>
-
-        {/* SEARCH BAR */}
-        <View
-          style={[styles.searchContainer, { paddingHorizontal: SPACING.md }]}
-        >
-          <View style={[styles.searchBar, { backgroundColor: inputBg }]}>
-            <Ionicons name="search" size={rs(20)} color={subTextColor} />
-            <TextInput
-              style={[styles.searchInput, { color: textColor }]}
-              placeholder={t("map_search_placeholder")}
-              placeholderTextColor={subTextColor}
-              value={search}
-              onChangeText={handleSearchChange}
-            />
-            {search.length > 0 && (
-              <TouchableOpacity
-                onPress={() => {
-                  setSearch("");
-                  setSuggestions([]);
-                }}
-                style={styles.clearButton}
-              >
-                <Ionicons
-                  name="close-circle"
-                  size={rs(20)}
-                  color={subTextColor}
-                />
-              </TouchableOpacity>
-            )}
+      {/* FIXED HEADER & SEARCH */}
+      <View style={{ backgroundColor: headerBg, zIndex: 100 }}>
+        <SafeAreaView edges={["top"]}>
+          <View
+            style={[styles.header, { backgroundColor: headerBg }]}
+          >
+            <Text style={[styles.headerTitle, { color: textColor }]}>
+              {t("map_title")}
+            </Text>
+            <Text style={[styles.headerSubtitle, { color: subTextColor }]}>
+              {filteredBeaches.length} {t("map_available")}
+            </Text>
           </View>
-        </View>
 
-        {/* SEARCH SUGGESTIONS */}
-        {suggestions.length > 0 && (
-          <View style={[styles.suggestionsContainer, { paddingHorizontal: SPACING.md }]}>
-            <View
-              style={[
-                styles.suggestionsList,
-                {
-                  backgroundColor: isDark ? "rgba(13, 58, 77, 0.95)" : "#ffffff",
-                  borderColor: isDark ? "rgba(96, 125, 139, 0.3)" : "rgba(226, 232, 240, 1)",
-                },
-              ]}
-            >
-              {suggestions.map((suggestion, index) => {
-                const isBeach = suggestion.type === 'beach';
-                const isDistrict = suggestion.type === 'district';
-                const isZone = suggestion.type === 'zone';
-
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.suggestionItem,
-                      index < suggestions.length - 1 && {
-                        borderBottomWidth: 1,
-                        borderBottomColor: isDark ? "rgba(96, 125, 139, 0.2)" : "rgba(226, 232, 240, 1)",
-                      },
-                    ]}
-                    onPress={() => handleSuggestionPress(suggestion)}
-                  >
-                    <Ionicons
-                      name={isBeach ? "location" : isDistrict ? "business" : "globe"}
-                      size={rs(18)}
-                      color={isBeach ? "#0ea5e9" : isDistrict ? "#8b5cf6" : "#f59e0b"}
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.suggestionText, { color: textColor }]}>
-                        {suggestion.text}
-                      </Text>
-                      <Text style={[styles.suggestionLabel, { color: subTextColor }]}>
-                        {isBeach ? (t("map_suggestion_beach") || "Playa") : isDistrict ? (t("map_suggestion_district") || "Distrito") : (t("map_suggestion_zone") || "Zona")}
-                      </Text>
-                    </View>
-                    <Ionicons name="arrow-forward" size={rs(16)} color={subTextColor} />
-                  </TouchableOpacity>
-                );
-              })}
+          {/* FLOATING SEARCH BAR */}
+          <View style={[styles.searchContainer, { paddingHorizontal: SPACING.md }]}>
+            <View style={[
+              styles.searchBar,
+              {
+                backgroundColor: inputBg,
+                borderColor: isDark ? "rgba(255,255,255,0.15)" : "transparent",
+                borderWidth: isDark ? 1 : 0
+              }
+            ]}>
+              <Ionicons name="search" size={rs(20)} color={BRAND.primary} />
+              <TextInput
+                style={[styles.searchInput, { color: textColor }]}
+                placeholder={t("map_search_placeholder") || "Search beaches..."}
+                placeholderTextColor={subTextColor}
+                value={search}
+                onChangeText={handleSearchChange}
+              />
+              {search.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearch("");
+                    setSuggestions([]);
+                  }}
+                  style={styles.clearButton}
+                >
+                  <Ionicons
+                    name="close-circle"
+                    size={rs(20)}
+                    color={subTextColor}
+                  />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
-        )}
-
-        {/* ZONE FILTERS */}
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={zones}
-          keyExtractor={(item) => item}
-          contentContainerStyle={styles.zoneFilters}
-          renderItem={({ item }) => {
-            const isSelected = selectedZone === item;
-            return (
-              <TouchableOpacity
-                onPress={() => {
-                  if (Platform.OS !== "web") {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }
-                  setSelectedZone(item);
-                }}
-                style={styles.zoneFilterWrapper}
+          {/* SEARCH SUGGESTIONS */}
+          {suggestions.length > 0 && (
+            <View style={[styles.suggestionsContainer, { paddingHorizontal: SPACING.md }]}>
+              <View
+                style={[
+                  styles.suggestionsList,
+                  {
+                    backgroundColor: isDark ? "rgba(13, 58, 77, 0.95)" : "#ffffff",
+                    borderColor: isDark ? "rgba(96, 125, 139, 0.3)" : "rgba(226, 232, 240, 1)",
+                  },
+                ]}
               >
-                {isSelected ? (
-                  <LinearGradient
-                    colors={["#0ea5e9", "#3b82f6"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={[
-                      styles.zoneFilterBtn,
-                      {
-                        shadowColor: "#3b82f6",
-                        shadowOffset: { width: 0, height: 3 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 6,
-                        elevation: 5,
-                      },
-                    ]}
-                  >
-                    <Ionicons
-                      name="checkmark-circle"
-                      size={rs(16)}
-                      color="#fff"
-                    />
-                    <Text
+                {suggestions.map((suggestion, index) => {
+                  const isBeach = suggestion.type === 'beach';
+                  const isDistrict = suggestion.type === 'district';
+                  const isZone = suggestion.type === 'zone';
+
+                  return (
+                    <TouchableOpacity
+                      key={index}
                       style={[
-                        styles.zoneFilterText,
-                        { color: "#fff", fontWeight: "700" },
+                        styles.suggestionItem,
+                        index < suggestions.length - 1 && {
+                          borderBottomWidth: 1,
+                          borderBottomColor: isDark ? "rgba(96, 125, 139, 0.2)" : "rgba(226, 232, 240, 1)",
+                        },
                       ]}
+                      onPress={() => handleSuggestionPress(suggestion)}
                     >
-                      {t(item)}
-                    </Text>
-                  </LinearGradient>
-                ) : (
-                  <View
-                    style={[
-                      styles.zoneFilterBtn,
-                      {
-                        backgroundColor: isDark
-                          ? "rgba(96, 125, 139, 0.15)"
-                          : "rgba(241, 245, 249, 1)",
-                        borderWidth: 1,
-                        borderColor: isDark
-                          ? "rgba(96, 125, 139, 0.3)"
-                          : "rgba(226, 232, 240, 1)",
-                      },
-                    ]}
-                  >
-                    <Text
+                      <Ionicons
+                        name={isBeach ? "location" : isDistrict ? "business" : "globe"}
+                        size={rs(18)}
+                        color={isBeach ? "#0ea5e9" : isDistrict ? "#8b5cf6" : "#f59e0b"}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.suggestionText, { color: textColor }]}>
+                          {suggestion.text}
+                        </Text>
+                        <Text style={[styles.suggestionLabel, { color: subTextColor }]}>
+                          {isBeach ? (t("map_suggestion_beach") || "Playa") : isDistrict ? (t("map_suggestion_district") || "Distrito") : (t("map_suggestion_zone") || "Zona")}
+                        </Text>
+                      </View>
+                      <Ionicons name="arrow-forward" size={rs(16)} color={subTextColor} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+
+          {/* ZONE FILTERS */}
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={zones}
+            keyExtractor={(item) => item}
+            contentContainerStyle={styles.zoneFilters}
+            renderItem={({ item }) => {
+              const isSelected = selectedZone === item;
+              return (
+                <TouchableOpacity
+                  onPress={() => {
+                    if (Platform.OS !== "web") {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
+                    setSelectedZone(item);
+                  }}
+                  style={styles.zoneFilterWrapper}
+                >
+                  {isSelected ? (
+                    <LinearGradient
+                      colors={["#0ea5e9", "#3b82f6"]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
                       style={[
-                        styles.zoneFilterText,
+                        styles.zoneFilterBtn,
                         {
-                          color: isDark ? "rgba(203, 213, 225, 1)" : "#64748b",
+                          shadowColor: "#3b82f6",
+                          shadowOffset: { width: 0, height: 3 },
+                          shadowOpacity: 0.3,
+                          shadowRadius: 6,
+                          elevation: 5,
                         },
                       ]}
                     >
-                      {t(item)}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          }}
-        />
+                      <Text
+                        style={[
+                          styles.zoneFilterText,
+                          { color: "#fff", fontWeight: "700", flexDirection: 'row', alignItems: 'center' },
+                        ]}
+                      >
+                        <FlagIcon code={getZoneEmoji(item)} size={0.7} style={{ marginRight: 4 }} />
+                        {t(item)}
+                      </Text>
+                    </LinearGradient>
+                  ) : (
+                    <View
+                      style={[
+                        styles.zoneFilterBtn,
+                        {
+                          backgroundColor: isDark
+                            ? "rgba(96, 125, 139, 0.15)"
+                            : "rgba(241, 245, 249, 1)",
+                          borderWidth: 1,
+                          borderColor: isDark
+                            ? "rgba(96, 125, 139, 0.3)"
+                            : "rgba(226, 232, 240, 1)",
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.zoneFilterText,
+                          { color: isDark ? "#fff" : "#475569", flexDirection: 'row', alignItems: 'center' },
+                        ]}
+                      >
+                        <FlagIcon code={getZoneEmoji(item)} size={0.7} style={{ marginRight: 4 }} />
+                        {t(item)}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            }}
+          />
+        </SafeAreaView>
+      </View>
 
-
-        {/* BEACH CARDS LIST */}
-        <FlatList
-          key={numColumns}
-          data={filteredBeaches}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={numColumns}
-          contentContainerStyle={styles.beachList}
-          columnWrapperStyle={numColumns > 1 ? { gap: SPACING.md } : undefined}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View style={{ width: cardWidth }}>
-              <BeachCard beach={item} isDark={isDark} onPress={handleBeachPress} t={t} />
-            </View>
-          )}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Ionicons
-                name="beach-outline"
-                size={rs(64)}
-                color={subTextColor}
-              />
-              <Text style={[styles.emptyText, { color: textColor }]}>
-                {t("map_no_beaches")}
-              </Text>
-              <Text style={[styles.emptySubtext, { color: subTextColor }]}>
-                {t("map_no_beaches_desc")}
-              </Text>
-            </View>
-          }
-        />
-      </SafeAreaView >
-    </View >
+      {/* CONTENT LIST */}
+      <FlatList
+        key={numColumns}
+        data={filteredBeaches}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={numColumns}
+        contentContainerStyle={[styles.beachList, { paddingTop: SPACING.sm }]}
+        columnWrapperStyle={numColumns > 1 ? { gap: SPACING.md } : undefined}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => (
+          <View style={{ width: cardWidth }}>
+            <BeachCard beach={item} isDark={isDark} onPress={handleBeachPress} t={t} />
+          </View>
+        )}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Ionicons
+              name="beach-outline"
+              size={rs(64)}
+              color={subTextColor}
+            />
+            <Text style={[styles.emptyText, { color: textColor }]}>
+              {t("map_no_beaches")}
+            </Text>
+            <Text style={[styles.emptySubtext, { color: subTextColor }]}>
+              {t("map_no_beaches_desc")}
+            </Text>
+          </View>
+        }
+      />
+    </View>
   );
 }
 
@@ -1440,17 +1528,17 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.md,
-    paddingBottom: SPACING.sm,
+    paddingTop: SPACING.xs,
+    paddingBottom: SPACING.xs,
   },
   headerTitle: {
     fontSize: rf(24),
     fontWeight: "800",
-    marginBottom: rs(4),
+    marginBottom: rs(2),
   },
   headerSubtitle: {
     fontSize: rf(13),
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   searchContainer: {
     marginBottom: SPACING.sm,
@@ -1459,14 +1547,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: SPACING.md,
-    height: rs(54),
-    borderRadius: RADIUS.lg,
+    height: rs(50),
+    borderRadius: RADIUS.full, // Rounded search bar
     gap: SPACING.sm,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
-    elevation: 5,
+    elevation: 4,
   },
   searchInput: {
     flex: 1,
@@ -1477,7 +1565,10 @@ const styles = StyleSheet.create({
     padding: rs(4),
   },
   suggestionsContainer: {
-    marginBottom: SPACING.sm,
+    position: 'absolute',
+    top: rs(125), // Adjust below search bar
+    left: 0,
+    right: 0,
     zIndex: 1000,
   },
   suggestionsList: {
@@ -1509,9 +1600,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   zoneFilters: {
-    paddingVertical: SPACING.sm,
+    paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.md,
     gap: SPACING.xs,
+    paddingBottom: SPACING.md,
   },
   zoneFilterWrapper: {
     marginRight: SPACING.xs,
@@ -1531,71 +1623,79 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   beachList: {
-    padding: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingBottom: SPACING.xl,
     gap: SPACING.md,
   },
   beachCard: {
     borderRadius: RADIUS.xl,
     overflow: "hidden",
     marginBottom: SPACING.md,
-    height: rs(260),
+    height: rs(220), // Slightly shorter for better list view
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 16,
-    elevation: 12,
+    elevation: 8,
   },
   beachCardImage: {
     width: "100%",
     height: "100%",
     position: "absolute",
   },
-  beachCardOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
+  locationBadge: {
+    position: 'absolute',
+    top: SPACING.sm,
+    left: SPACING.sm,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingVertical: rs(4),
+    paddingHorizontal: rs(10),
+    borderRadius: RADIUS.full,
+    backdropFilter: 'blur(4px)', // Web support
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: rs(4),
+    zIndex: 5
+  },
+  locationBadgeText: {
+    color: '#fff',
+    fontSize: rf(12),
+    fontWeight: '700',
   },
   beachCardGradient: {
     flex: 1,
     justifyContent: "flex-end",
-    padding: SPACING.lg,
+    padding: SPACING.md,
   },
   beachCardContent: {
-    gap: SPACING.sm,
+    gap: rs(4),
   },
   beachCardHeader: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: SPACING.sm,
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: rs(6),
   },
   beachCardTitle: {
-    fontSize: rf(22),
-    fontWeight: "900",
-    letterSpacing: 0.5,
+    fontSize: rf(18),
+    fontWeight: "800",
+    letterSpacing: 0.3,
     textShadowColor: "rgba(0, 0, 0, 0.8)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
-  },
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: rs(4),
-    marginTop: rs(4),
+    marginBottom: rs(2),
   },
   beachCardSubtitle: {
-    fontSize: rf(14),
+    fontSize: rf(12),
     fontWeight: "600",
-    letterSpacing: 0.3,
+    opacity: 0.9,
     textShadowColor: "rgba(0, 0, 0, 0.6)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
   mapIconBtn: {
-    width: rs(48),
-    height: rs(48),
+    width: rs(36),
+    height: rs(36),
     borderRadius: RADIUS.full,
     overflow: "hidden",
     justifyContent: "center",
@@ -1606,29 +1706,21 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 6,
   },
-  mapIconGradient: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-  },
   beachCardStats: {
     flexDirection: "row",
     gap: SPACING.sm,
   },
   beachCardStat: {
-    flex: 1,
+    paddingVertical: rs(4),
+    paddingHorizontal: rs(8),
+    borderRadius: RADIUS.md,
+    gap: rs(4),
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.lg,
-    gap: rs(6),
-    minHeight: rs(36),
+    minHeight: rs(24),
   },
   beachCardStatText: {
-    fontSize: rf(12),
+    fontSize: rf(11),
     fontWeight: "700",
     letterSpacing: 0.3,
   },

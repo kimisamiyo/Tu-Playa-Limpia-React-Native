@@ -99,33 +99,33 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
                     <Animated.View entering={FadeInUp.delay(100).springify()} style={styles.detailContent}>
                         <NFTMiniCard nft={nft} size="large" static />
                         <View style={styles.detailInfo}>
-                            <Text style={[styles.detailTitle, { color: colors.text }]}>{nft.title}</Text>
+                            <Text style={[styles.detailTitle, { color: '#ffffff' }]}>{nft.title}</Text>
                             <View style={styles.detailRow}>
                                 <Ionicons name="finger-print" size={rs(16)} color={colors.textMuted} />
-                                <Text style={[styles.detailHash, { color: colors.textMuted }]} numberOfLines={1}>
+                                <Text style={[styles.detailHash, { color: 'rgba(255,255,255,0.6)' }]} numberOfLines={1}>
                                     {nft.hash?.slice(0, 18)}...{nft.hash?.slice(-8)}
                                 </Text>
                             </View>
                             <View style={styles.detailStats}>
                                 <GlassCard variant="flat" style={styles.detailStat}>
-                                    <Text style={[styles.detailStatLabel, { color: colors.textSecondary }]}>{t('rewards_created')}</Text>
-                                    <Text style={[styles.detailStatValue, { color: colors.text }]}>{nft.date}</Text>
+                                    <Text style={[styles.detailStatLabel, { color: 'rgba(255,255,255,0.7)' }]}>{t('rewards_created')}</Text>
+                                    <Text style={[styles.detailStatValue, { color: '#ffffff' }]}>{nft.date}</Text>
                                 </GlassCard>
                                 <GlassCard variant="flat" style={styles.detailStat}>
-                                    <Text style={[styles.detailStatLabel, { color: colors.textSecondary }]}>{t('rewards_locked_until')}</Text>
-                                    <Text style={[styles.detailStatValue, { color: colors.text }]}>{nft.lockedUntil}</Text>
+                                    <Text style={[styles.detailStatLabel, { color: 'rgba(255,255,255,0.7)' }]}>{t('rewards_locked_until')}</Text>
+                                    <Text style={[styles.detailStatValue, { color: '#ffffff' }]}>{nft.lockedUntil}</Text>
                                 </GlassCard>
                             </View>
                             <View style={styles.detailRow}>
                                 <Ionicons name="person-circle" size={rs(18)} color={colors.accent} />
-                                <Text style={[styles.detailOwner, { color: colors.text }]}>
+                                <Text style={[styles.detailOwner, { color: '#ffffff' }]}>
                                     {t('rewards_owner')}: {nft.owner}
                                 </Text>
                             </View>
                             {nft.acquisition && (
                                 <View style={[styles.detailRow, { marginTop: SPACING.sm }]}>
                                     <Ionicons name="sparkles" size={rs(16)} color={BRAND.sandGold} />
-                                    <Text style={[styles.detailOwner, { color: colors.textSecondary, fontStyle: 'italic' }]}>
+                                    <Text style={[styles.detailOwner, { color: 'rgba(255,255,255,0.8)', fontStyle: 'italic' }]}>
                                         {nft.acquisition.includes(':')
                                             ? `${t(nft.acquisition.split(':')[0])} ${nft.acquisition.split(':')[1]}`
                                             : t(nft.acquisition)

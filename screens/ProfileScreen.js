@@ -21,13 +21,13 @@ import { useTheme } from '../context/ThemeContext';
 import { useWallet } from '../context/WalletContext';
 import { BRAND } from '../constants/theme';
 import { useLanguage } from '../context/LanguageContext';
-import { rs, rf, rh, SPACING, RADIUS, SCREEN } from '../constants/responsive';
-import { SPRING } from '../constants/animations';
+import { rs, rf, rh, SPACING, RADIUS } from '../constants/responsive';
+import FlagIcon from '../components/FlagIcon';
+import CelebrationModal from '../components/CelebrationModal';
 import LivingWater from '../components/LivingWater';
 import FloatingBubbles from '../components/premium/FloatingBubbles';
 import GlassCard from '../components/premium/GlassCard';
 import ScalePressable from '../components/ScalePressable';
-import CelebrationModal from '../components/CelebrationModal';
 import { mintNFT } from "../utils/blockchain/missionNFT";
 import { generateNFTAttributes } from "../utils/nftGenerator";
 
@@ -519,18 +519,18 @@ export default function ProfileScreen({ navigation }) {
                                     styles.langButtonText,
                                     { color: isAutoMode ? '#fff' : colors.textSecondary }
                                 ]}>
-                                    {t('profile_auto')}
+                                    🌐 {t('profile_auto')}
                                 </Text>
                             </ScalePressable>
                             {[
-                                { lang: LANGUAGES.ES, label: 'ES' },
-                                { lang: LANGUAGES.EN, label: 'EN' },
-                                { lang: LANGUAGES.ZH, label: 'ZH' },
-                                { lang: LANGUAGES.HI, label: 'HI' },
-                                { lang: LANGUAGES.AR, label: 'AR' },
-                                { lang: LANGUAGES.FR, label: 'FR' },
-                                { lang: LANGUAGES.PT, label: 'PT' },
-                            ].map(({ lang, label }) => (
+                                { lang: LANGUAGES.ES, id: 'es' },
+                                { lang: LANGUAGES.EN, id: 'en' },
+                                { lang: LANGUAGES.ZH, id: 'zh' },
+                                { lang: LANGUAGES.HI, id: 'hi' },
+                                { lang: LANGUAGES.AR, id: 'ar' },
+                                { lang: LANGUAGES.FR, id: 'fr' },
+                                { lang: LANGUAGES.PT, id: 'pt' },
+                            ].map(({ lang, id }) => (
                                 <ScalePressable
                                     key={lang}
                                     style={[
@@ -546,9 +546,10 @@ export default function ProfileScreen({ navigation }) {
                                 >
                                     <Text style={[
                                         styles.langButtonText,
-                                        { color: !isAutoMode && language === lang ? '#fff' : colors.textSecondary }
+                                        { color: !isAutoMode && language === lang ? '#fff' : colors.textSecondary, flexDirection: 'row', alignItems: 'center' }
                                     ]}>
-                                        {label}
+                                        <FlagIcon code={LANGUAGE_LABELS[id]?.code} size={0.8} style={{ marginRight: 6 }} />
+                                        {id.toUpperCase()}
                                     </Text>
                                 </ScalePressable>
                             ))}

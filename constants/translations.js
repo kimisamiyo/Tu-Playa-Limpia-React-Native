@@ -14,13 +14,13 @@ export const LANGUAGES = {
 };
 
 export const LANGUAGE_LABELS = {
-    es: { label: 'Español', flag: '🇪🇸' },
-    en: { label: 'English', flag: '🇺🇸' },
-    zh: { label: '中文', flag: '🇨🇳' },
-    hi: { label: 'हिन्दी', flag: '🇮🇳' },
-    ar: { label: 'العربية', flag: '🇸🇦' },
-    fr: { label: 'Français', flag: '🇫🇷' },
-    pt: { label: 'Português', flag: '🇧🇷' },
+    es: { label: 'Español', code: 'pe' },
+    en: { label: 'English', code: 'us' },
+    zh: { label: '中文', code: 'cn' },
+    hi: { label: 'हिन्दी', code: 'in' },
+    ar: { label: 'العربية', code: 'sa' },
+    fr: { label: 'Français', code: 'fr' },
+    pt: { label: 'Português', code: 'br' },
 };
 
 const translations = {
@@ -78,6 +78,9 @@ const translations = {
         home_map: 'Mapa',
         home_impact: 'Impacto',
         home_ranking: 'Ranking',
+        home_profile: 'Perfil',
+        home_rewards: 'Premios',
+        home_redeem_tpl: 'Canjear TPL',
 
         // Profile
         profile_title: 'Mi Perfil',
@@ -387,6 +390,9 @@ const translations = {
         home_map: 'Map',
         home_impact: 'Impact',
         home_ranking: 'Ranking',
+        home_profile: 'Profile',
+        home_rewards: 'Rewards',
+        home_redeem_tpl: 'Redeem TPL',
 
         profile_title: 'My Profile',
         profile_level: 'LEVEL',
@@ -688,6 +694,9 @@ const translations = {
         home_map: '地图',
         home_impact: '影响',
         home_ranking: '排名',
+        home_profile: '资料',
+        home_rewards: '奖励',
+        home_redeem_tpl: '兑换 TPL',
 
         profile_title: '我的资料',
         profile_level: '等级',
@@ -986,6 +995,9 @@ const translations = {
         home_map: 'मानचित्र',
         home_impact: 'प्रभाव',
         home_ranking: 'रैंकिंग',
+        home_profile: 'प्रोफ़ाइल',
+        home_rewards: 'पुरस्कार',
+        home_redeem_tpl: 'TPL भुनाएं',
 
         profile_title: 'मेरी प्रोफाइल',
         profile_level: 'स्तर',
@@ -1284,6 +1296,9 @@ const translations = {
         home_map: 'خريطة',
         home_impact: 'التأثير',
         home_ranking: 'الترتيب',
+        home_profile: 'الملف الشخصي',
+        home_rewards: 'الجوائز',
+        home_redeem_tpl: 'استبدال TPL',
 
         profile_title: 'ملفي الشخصي',
         profile_level: 'المستوى',
@@ -1583,6 +1598,9 @@ const translations = {
         home_map: 'Carte',
         home_impact: 'Impact',
         home_ranking: 'Classement',
+        home_profile: 'Profil',
+        home_rewards: 'Récompenses',
+        home_redeem_tpl: 'Échanger TPL',
 
         profile_title: 'Mon Profil',
         profile_level: 'NIVEAU',
@@ -1882,6 +1900,9 @@ const translations = {
         home_map: 'Mapa',
         home_impact: 'Impacto',
         home_ranking: 'Ranking',
+        home_profile: 'Perfil',
+        home_rewards: 'Prêmios',
+        home_redeem_tpl: 'Resgatar TPL',
 
         profile_title: 'Meu Perfil',
         profile_level: 'NÍVEL',

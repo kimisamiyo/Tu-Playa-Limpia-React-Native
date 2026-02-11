@@ -105,7 +105,7 @@ export default function NFTMiniCard({ nft, onPress, size = 'default', isNew = fa
                 {
                     backgroundColor: isDark ? 'rgba(0,18,32,0.95)' : colors.surface,
                     borderWidth: rarityConfig.borderWidth,
-                    borderColor: palette.secondary,
+                    borderColor: isDark ? palette.secondary : palette.accent,
                 },
                 shadows.sm
             ]}>
@@ -136,7 +136,7 @@ export default function NFTMiniCard({ nft, onPress, size = 'default', isNew = fa
                 {/* Info */}
                 <View style={[
                     styles.infoSection,
-                    { backgroundColor: isDark ? 'rgba(0,18,32,0.9)' : colors.backgroundTertiary }
+                    { backgroundColor: isDark ? 'rgba(0,18,32,0.9)' : 'rgba(13, 92, 117, 0.1)' }
                 ]}>
                     <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
                         {nft?.title || 'Eco Guardian'}

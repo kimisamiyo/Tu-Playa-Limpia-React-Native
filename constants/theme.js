@@ -81,8 +81,8 @@ export const LIGHT_THEME = {
     // Tab bar
     tabBar: 'rgba(255, 255, 255, 0.98)',
     tabBarBorder: 'rgba(0, 0, 0, 0.08)',
-    tabInactive: '#9ca3af',
-    tabActive: '#0d4a6f',
+    tabInactive: 'rgba(255, 255, 255, 0.5)',
+    tabActive: '#ffffff',
 
     // Cards
     card: '#ffffff',
