@@ -680,6 +680,7 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 // BEACH CARD COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 const BeachCard = ({ beach, isDark, onPress }) => {
+  const { t } = useLanguage();
   const cardBg = isDark ? "rgba(13, 58, 77, 0.6)" : "#ffffff";
   const textColor = isDark ? "#ffffff" : "#000000";
   const subTextColor = isDark ? "rgba(170, 222, 243, 0.8)" : "#666666";
@@ -714,8 +715,8 @@ const BeachCard = ({ beach, isDark, onPress }) => {
               >
                 {beach.name}
               </Text>
-              <Text style={[styles.beachCardSubtitle, { color: subTextColor }]}>
-                {beach.district} · {t(zoneMapping[beach.zone] || beach.zone)}
+              <Text style={[styles.beachCardSubtitle, { color: subTextColor }]}> 
+                {beach.district} · {beach.zone}
               </Text>
             </View>
             <TouchableOpacity
@@ -869,7 +870,7 @@ export default function BeachMapScreen() {
         </View >
 
         {/* ZONE FILTERS */}
-        < FlatList
+        <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
           data={zones}
@@ -912,28 +913,6 @@ export default function BeachMapScreen() {
 
 
       {/* BEACH CARDS LIST */}
-      <FlatList
-        data={filteredBeaches}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.beachList}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <BeachCard beach={item} isDark={isDark} onPress={handleBeachPress} />
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="beach-outline" size={rs(64)} color={subTextColor} />
-            <Text style={[styles.emptyText, { color: textColor }]}>
-              No se encontraron playas
-            </Text>
-            <Text style={[styles.emptySubtext, { color: subTextColor }]}>
-              Intenta con otros términos de búsqueda
-            </Text>
-          </View>
-        }
-      />
-    </SafeAreaView>
-        {/* BEACH CARDS LIST */}
         <FlatList
           key={numColumns}
           data={filteredBeaches}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Dimensions, Platform, useWindowDimensions
+    View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Dimensions, Platform, useWindowDimensions, Alert, ActivityIndicator
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +15,8 @@ import Animated, {
 import { useGame } from '../context/GameContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useWallet } from '../context/WalletContext';
+import { handleClaim } from '../utils/nftGenerator';
 import { BRAND, GRADIENTS } from '../constants/theme';
 import { rs, rf, rh, SPACING, RADIUS, SCREEN } from '../constants/responsive';
 import NFTMiniCard from '../components/NFTMiniCard';
@@ -73,7 +75,53 @@ const CelebrationModal = ({ visible, onClose, nft }) => {
 const NFTDetailModal = ({ visible, onClose, nft }) => {
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
+    const { address } = useWallet();
+    const [claiming, setClaiming] = useState(false);
+
     if (!nft) return null;
+
+    const handleClaim = async () => {
+        if (!address) {
+            Alert.alert(
+                t('rewards_wallet_required') || 'Wallet Required',
+                t('rewards_connect_wallet_first') || 'Please connect your wallet first to claim this NFT.',
+                [{ text: 'OK' }]
+            );
+            return;
+        }
+
+        setClaiming(true);
+        try {
+            console.log('[NFTDetailModal] Claiming NFT:', nft.id);
+            const { handleClaim: claimFn } = await import('../utils/nftGenerator');
+            const result = await claimFn();
+            console.log('[NFTDetailModal] Claim result:', result);
+
+            if (result?.success) {
+                if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                Alert.alert(
+                    t('rewards_claim_success') || 'Success',
+                    t('rewards_nft_claimed') || 'NFT claimed successfully!',
+                    [{ text: 'OK', onPress: onClose }]
+                );
+            } else {
+                if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                Alert.alert(
+                    t('rewards_claim_error') || 'Error',
+                    result?.error?.message || t('rewards_claim_failed') || 'Failed to claim NFT'
+                );
+            }
+        } catch (error) {
+            console.error('[NFTDetailModal] Claim error:', error);
+            if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert(
+                t('rewards_claim_error') || 'Error',
+                error?.message || t('rewards_claim_failed') || 'An unexpected error occurred'
+            );
+        } finally {
+            setClaiming(false);
+        }
+    };
 
     return (
         <Modal visible={visible} transparent animationType="slide">
@@ -119,6 +167,39 @@ const NFTDetailModal = ({ visible, onClose, nft }) => {
                                     </Text>
                                 </View>
                             )}
+
+                            {/* Wallet Connection Warning & Claim Button */}
+                            <View style={styles.claimSection}>
+                                {!address && (
+                                    <View style={[styles.walletWarning, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.08)' }]}>
+                                        <Ionicons name="alert-circle" size={rs(18)} color="#ef4444" />
+                                        <Text style={[styles.walletWarningText, { color: '#ef4444' }]}>
+                                            {t('rewards_wallet_required') || 'Wallet connection required to claim'}
+                                        </Text>
+                                    </View>
+                                )}
+                                <TouchableOpacity
+                                    style={[
+                                        styles.claimButton,
+                                        { backgroundColor: address ? BRAND.oceanMid : 'rgba(100, 116, 139, 0.5)' }
+                                    ]}
+                                    onPress={handleClaim}
+                                    disabled={claiming || !address}
+                                    activeOpacity={0.8}
+                                >
+                                    {claiming ? (
+                                        <>
+                                            <ActivityIndicator size="small" color="#fff" />
+                                            <Text style={styles.claimButtonText}>{t('rewards_claiming') || 'Claiming...'}</Text>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Ionicons name="download" size={rs(18)} color="#fff" />
+                                            <Text style={styles.claimButtonText}>{t('rewards_claim') || 'Claim NFT'}</Text>
+                                        </>
+                                    )}
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </Animated.View>
                 </SafeAreaView>
@@ -319,4 +400,11 @@ const styles = StyleSheet.create({
     detailStatLabel: { fontSize: rf(10), textTransform: 'uppercase', letterSpacing: 0.5 },
     detailStatValue: { fontSize: rf(14), fontWeight: '600', marginTop: rs(4) },
     detailOwner: { fontSize: rf(14), fontWeight: '600' },
+    
+    // Claim Section
+    claimSection: { marginTop: SPACING.lg, alignItems: 'center', width: '100%', gap: SPACING.md },
+    walletWarning: { width: '100%', borderRadius: RADIUS.md, padding: SPACING.md, flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+    walletWarningText: { fontSize: rf(13), fontWeight: '600', flex: 1 },
+    claimButton: { width: '100%', borderRadius: RADIUS.md, padding: SPACING.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm },
+    claimButtonText: { fontSize: rf(14), fontWeight: '700', color: '#fff' },
 });
