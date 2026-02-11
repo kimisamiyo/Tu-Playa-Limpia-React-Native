@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, TextInput, useWindowDimensions, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as Haptics from 'expo-haptics';
@@ -57,6 +57,21 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
     const [mode, setMode] = useState(isFirstTime ? 'choice' : 'login');
     const [pin, setPin] = useState('');
     const [showEmailModal, setShowEmailModal] = useState(false);
+
+    // Missing state variables
+    const [statusText, setStatusText] = useState('');
+    const [errorText, setErrorText] = useState('');
+    const [regUsername, setRegUsername] = useState('');
+    const [regPassword, setRegPassword] = useState('');
+    const [regPasswordConfirm, setRegPasswordConfirm] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [importFileName, setImportFileName] = useState('');
+    const [importFileContent, setImportFileContent] = useState('');
+    const [importFilePassword, setImportFilePassword] = useState('');
+    const [importNewPassword, setImportNewPassword] = useState('');
+    const [importNewPasswordConfirm, setImportNewPasswordConfirm] = useState('');
+    const [firstPin, setFirstPin] = useState('');
+
     const shake = useSharedValue(0);
     const contentOpacity = useSharedValue(0);
     const contentY = useSharedValue(rs(30));
@@ -654,28 +669,31 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                             ) : null}
                         </View>
 
-                    {/* Input Area */}
-                    <View style={styles.inputArea}>
-                        <PinPad
-                            onPinPress={handlePinPress}
-                            onBiometricPress={authenticate}
-                            onDeletePress={handleDelete}
-                        />
-                        
-                        {/* Botón de verificación por email */}
-                        <TouchableOpacity
-                            style={styles.emailButton}
-                            onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                setShowEmailModal(true);
-                            }}
-                        >
-                            <Text style={[styles.emailButtonText, { color: colors.accent }]}>
-                                📧 Verificar con Email
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                </Animated.View>
+                        {/* Input Area */}
+                        <View style={styles.inputArea}>
+                            <PinPad
+                                onPinPress={handlePinPress}
+                                onBiometricPress={authenticateBiometric}
+                                onDeletePress={handleDelete}
+                            />
+
+                            {/* Botón de verificación por email */}
+                            <TouchableOpacity
+                                style={styles.emailButton}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                                    setShowEmailModal(true);
+                                }}
+                            >
+                                <Text style={[styles.emailButtonText, { color: colors.accent }]}>
+                                    📧 Verificar con Email
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </Animated.View>
+                ) : (
+                    renderFormContent()
+                )}
             </SafeAreaView>
         </View>
     );
