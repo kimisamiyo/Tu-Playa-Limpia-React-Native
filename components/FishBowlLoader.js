@@ -13,7 +13,7 @@ import Animated, {
 import { COLORS } from '../constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const BOWL_SIZE = Math.min(SCREEN_WIDTH * 0.55, 220);
+const DEFAULT_BOWL_SIZE = Math.min(SCREEN_WIDTH * 0.55, 220);
 const FISH_SIZE = 45;
 
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -48,7 +48,8 @@ const FishSVG = () => (
     </Svg>
 );
 
-export default function FishBowlLoader() {
+export default function FishBowlLoader({ size }) {
+    const bowlSize = size || DEFAULT_BOWL_SIZE;
     // Animation values for circular/organic movement
     const fishProgress = useSharedValue(0);
     const fishY = useSharedValue(0);
@@ -143,8 +144,8 @@ export default function FishBowlLoader() {
         const progress = fishProgress.value;
 
         // Create a figure-8 / organic path
-        const radiusX = BOWL_SIZE * 0.28;
-        const radiusY = BOWL_SIZE * 0.12;
+        const radiusX = bowlSize * 0.28;
+        const radiusY = bowlSize * 0.12;
 
         // Figure-8 path using sine waves
         const translateX = Math.sin(progress * 2 * Math.PI) * radiusX;
@@ -185,7 +186,7 @@ export default function FishBowlLoader() {
     return (
         <View style={styles.container}>
             {/* Bowl */}
-            <View style={styles.bowl}>
+            <View style={[styles.bowl, { width: bowlSize, height: bowlSize, borderRadius: bowlSize / 2 }]}>
                 {/* Glass highlight (subtle) */}
                 <View style={styles.glassHighlight} />
                 <View style={styles.glassHighlight2} />
@@ -207,7 +208,7 @@ export default function FishBowlLoader() {
             </View>
 
             {/* Shadow */}
-            <View style={styles.shadow} />
+            <View style={[styles.shadow, { width: bowlSize * 0.9 }]} />
         </View>
     );
 }
@@ -218,9 +219,9 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     bowl: {
-        width: BOWL_SIZE,
-        height: BOWL_SIZE,
-        borderRadius: BOWL_SIZE / 2,
+        width: DEFAULT_BOWL_SIZE,
+        height: DEFAULT_BOWL_SIZE,
+        borderRadius: DEFAULT_BOWL_SIZE / 2,
         backgroundColor: '#2a3a4a',
         borderWidth: 4,
         borderColor: 'rgba(255,255,255,0.3)',
@@ -262,8 +263,8 @@ const styles = StyleSheet.create({
         right: -5,
         height: '100%',
         backgroundColor: '#1e96d1',
-        borderTopLeftRadius: BOWL_SIZE * 0.8,
-        borderTopRightRadius: BOWL_SIZE * 0.8,
+        borderTopLeftRadius: DEFAULT_BOWL_SIZE * 0.8,
+        borderTopRightRadius: DEFAULT_BOWL_SIZE * 0.8,
     },
     fishContainer: {
         position: 'absolute',
@@ -299,7 +300,7 @@ const styles = StyleSheet.create({
     },
     shadow: {
         marginTop: 15,
-        width: BOWL_SIZE * 0.9,
+        width: DEFAULT_BOWL_SIZE * 0.9,
         height: 25,
         borderRadius: 100,
         backgroundColor: 'rgba(0,0,0,0.25)',

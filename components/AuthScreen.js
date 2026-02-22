@@ -30,10 +30,10 @@ import { BRAND } from '../constants/theme';
 
 // Modular Components
 import FishBowlLoader from './FishBowlLoader';
-import PinDisplay from './PinDisplay';
-import PinPad from './PinPad';
+import DrawingPad from './DrawingPad';
 import LivingWater from './LivingWater';
 import FloatingBubbles from './premium/FloatingBubbles';
+import GlassCard from './premium/GlassCard';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PREMIUM AUTH SCREEN - Multi-step registration, login, and import flows
@@ -42,20 +42,21 @@ import FloatingBubbles from './premium/FloatingBubbles';
 //   choice           → "Create Account" / "Import Account"
 //   register_name    → Username input
 //   register_password → Password (x2)
-//   create_pin       → PIN creation (x2)
-//   login            → "Welcome, [username]" + PIN entry
+//   create_drawing   → Drawing creation (x2)
+//   login            → "Welcome, [username]" + Drawing entry
 //   import_file      → File picker + file password + new password
-//   import_pin       → PIN creation after import
+//   import_drawing   → Drawing creation after import
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, onLogin, onImport, username: savedUsername }) {
     const { colors, isDark } = useTheme();
     const { user } = useGame();
     const { t } = useLanguage();
+    const { height: winH } = useWindowDimensions();
 
     // Multi-step state
     const [mode, setMode] = useState(isFirstTime ? 'choice' : 'login');
-    const [pin, setPin] = useState('');
+    const [drawingStrokes, setDrawingStrokes] = useState(null);
     const [showEmailModal, setShowEmailModal] = useState(false);
 
     // Missing state variables
@@ -70,7 +71,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
     const [importFilePassword, setImportFilePassword] = useState('');
     const [importNewPassword, setImportNewPassword] = useState('');
     const [importNewPasswordConfirm, setImportNewPasswordConfirm] = useState('');
-    const [firstPin, setFirstPin] = useState('');
+    const [firstDrawing, setFirstDrawing] = useState(null);
 
     const shake = useSharedValue(0);
     const contentOpacity = useSharedValue(0);
@@ -95,23 +96,23 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             case 'register_password':
                 setStatusText(t('auth_create_password'));
                 break;
-            case 'create_pin':
-                setStatusText(t('auth_create_pin'));
+            case 'create_drawing':
+                setStatusText(t('auth_create_drawing'));
                 break;
-            case 'confirm_pin':
-                setStatusText(t('auth_confirm_pin'));
+            case 'confirm_drawing':
+                setStatusText(t('auth_confirm_drawing'));
                 break;
             case 'login':
-                setStatusText(t('auth_enter_pin'));
+                setStatusText(t('auth_enter_drawing'));
                 break;
             case 'import_file':
                 setStatusText(t('auth_import_desc'));
                 break;
-            case 'import_pin':
-                setStatusText(t('auth_create_pin'));
+            case 'import_drawing':
+                setStatusText(t('auth_create_drawing'));
                 break;
-            case 'import_confirm_pin':
-                setStatusText(t('auth_confirm_pin'));
+            case 'import_confirm_drawing':
+                setStatusText(t('auth_confirm_drawing'));
                 break;
         }
     }, [mode, t]);
@@ -171,59 +172,70 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
     };
 
     // ═══════════════════════════════════════════
-    // PIN HANDLERS
+    // DRAWING HANDLERS
     // ═══════════════════════════════════════════
-    const handlePinPress = (number) => {
-        hapticLight();
-        if (pin.length < 4) {
-            const newPin = pin + number;
-            setPin(newPin);
-            if (newPin.length === 4) {
-                handlePinComplete(newPin);
-            }
-        }
-    };
+    const handleDrawingSubmit = async (strokes) => {
+        setDrawingStrokes(strokes);
 
-    const handlePinComplete = async (completedPin) => {
-        if (mode === 'create_pin') {
-            setFirstPin(completedPin);
-            setPin('');
-            setMode('confirm_pin');
-        } else if (mode === 'confirm_pin') {
-            if (completedPin === firstPin) {
+        if (mode === 'create_drawing') {
+            // First drawing — save and ask user to repeat
+            setFirstDrawing(strokes);
+            setMode('confirm_drawing');
+        } else if (mode === 'confirm_drawing') {
+            // Compare both drawings using fuzzy fingerprint matching
+            const { hashDrawing, compareFingerprints } = require('../utils/crypto');
+            const fp1 = await hashDrawing(firstDrawing);
+            const fp2 = await hashDrawing(strokes);
+
+            if (compareFingerprints(fp1, fp2)) {
+                // Shapes match — proceed to register
                 hapticSuccess();
                 setStatusText(t('auth_creating_account'));
-                const result = await onRegister(regUsername, regPassword, completedPin);
+                const result = await onRegister(regUsername, regPassword, strokes);
                 if (result.success) {
                     onAuthenticated();
+                } else {
+                    hapticError();
+                    setErrorText(result.error || 'Registration failed');
+                    setTimeout(() => {
+                        setDrawingStrokes(null);
+                        setFirstDrawing(null);
+                        setMode('create_drawing');
+                    }, 1200);
                 }
             } else {
+                // Shapes don't match — ask to retry
                 hapticError();
                 triggerShake();
                 setErrorText(t('auth_pin_mismatch'));
                 setTimeout(() => {
-                    setPin('');
-                    setFirstPin('');
-                    setMode('create_pin');
-                }, 800);
+                    setDrawingStrokes(null);
+                    setFirstDrawing(null);
+                    setMode('create_drawing');
+                }, 1200);
             }
-        } else if (mode === 'import_pin') {
-            setFirstPin(completedPin);
-            setPin('');
-            setMode('import_confirm_pin');
-        } else if (mode === 'import_confirm_pin') {
-            if (completedPin === firstPin) {
+        } else if (mode === 'import_drawing') {
+            // First drawing for import — save and ask to repeat
+            setFirstDrawing(strokes);
+            setMode('import_confirm_drawing');
+        } else if (mode === 'import_confirm_drawing') {
+            // Compare both drawings using fuzzy fingerprint matching
+            const { hashDrawing, compareFingerprints } = require('../utils/crypto');
+            const fp1 = await hashDrawing(firstDrawing);
+            const fp2 = await hashDrawing(strokes);
+
+            if (compareFingerprints(fp1, fp2)) {
                 hapticSuccess();
                 setStatusText(t('auth_creating_account'));
-                const result = await onImport(importFileContent, importFilePassword, importNewPassword, completedPin);
+                const result = await onImport(importFileContent, importFilePassword, importNewPassword, strokes);
                 if (result.success) {
                     onAuthenticated();
                 } else {
                     hapticError();
                     setErrorText(t('account_import_error'));
                     setTimeout(() => {
-                        setPin('');
-                        setFirstPin('');
+                        setDrawingStrokes(null);
+                        setFirstDrawing(null);
                         setMode('import_file');
                     }, 1200);
                 }
@@ -232,27 +244,22 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                 triggerShake();
                 setErrorText(t('auth_pin_mismatch'));
                 setTimeout(() => {
-                    setPin('');
-                    setFirstPin('');
-                    setMode('import_pin');
-                }, 800);
+                    setDrawingStrokes(null);
+                    setFirstDrawing(null);
+                    setMode('import_drawing');
+                }, 1200);
             }
         } else if (mode === 'login') {
-            const result = await onLogin(completedPin);
+            const result = await onLogin(strokes);
             if (result.success) {
                 hapticSuccess();
                 onAuthenticated();
             } else {
                 hapticError();
                 triggerShake();
-                setTimeout(() => setPin(''), 300);
+                setErrorText(t('auth_drawing_mismatch'));
             }
         }
-    };
-
-    const handleDelete = () => {
-        setPin(pin.slice(0, -1));
-        hapticLight();
     };
 
     // ═══════════════════════════════════════════
@@ -283,7 +290,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
         }
         hapticLight();
         setErrorText('');
-        setMode('create_pin');
+        setMode('create_drawing');
     };
 
     // ═══════════════════════════════════════════
@@ -335,7 +342,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
         }
         hapticLight();
         setErrorText('');
-        setMode('import_pin');
+        setMode('import_drawing');
     };
 
     const contentStyle = useAnimatedStyle(() => ({
@@ -351,12 +358,12 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             case 'choice': return t('auth_welcome');
             case 'register_name': return t('auth_create_account');
             case 'register_password': return t('auth_create_account');
-            case 'create_pin':
-            case 'confirm_pin': return t('auth_first_time_title');
+            case 'create_drawing':
+            case 'confirm_drawing': return t('auth_first_time_title');
             case 'login': return `${t('auth_welcome_back')}, ${savedUsername || ''}`;
             case 'import_file': return t('auth_import_account');
-            case 'import_pin':
-            case 'import_confirm_pin': return t('auth_first_time_title');
+            case 'import_drawing':
+            case 'import_confirm_drawing': return t('auth_first_time_title');
             default: return t('auth_welcome');
         }
     };
@@ -366,256 +373,293 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             case 'choice': return t('auth_your_impact');
             case 'register_name': return t('auth_enter_username');
             case 'register_password': return t('auth_create_password');
-            case 'create_pin': return t('auth_first_time_subtitle');
-            case 'confirm_pin': return t('auth_confirm_pin');
+            case 'create_drawing': return t('auth_first_time_subtitle');
+            case 'confirm_drawing': return t('auth_confirm_drawing');
             case 'login': return t('auth_login_title');
             case 'import_file': return t('auth_import_desc');
-            case 'import_pin': return t('auth_first_time_subtitle');
-            case 'import_confirm_pin': return t('auth_confirm_pin');
+            case 'import_drawing': return t('auth_first_time_subtitle');
+            case 'import_confirm_drawing': return t('auth_confirm_drawing');
             default: return '';
         }
     };
 
     // ═══════════════════════════════════════════
-    // PIN MODES — show PIN pad
+    // DRAWING MODES — show drawing canvas
     // ═══════════════════════════════════════════
-    const isPinMode = ['create_pin', 'confirm_pin', 'login', 'import_pin', 'import_confirm_pin'].includes(mode);
+    const isDrawingMode = ['create_drawing', 'confirm_drawing', 'login', 'import_drawing', 'import_confirm_drawing'].includes(mode);
 
     // ═══════════════════════════════════════════
-    // RENDER FORM CONTENT (non-PIN modes)
+    // HEADER COMPONENT
+    // ═══════════════════════════════════════════
+    const renderHeader = () => (
+        <View style={styles.header}>
+            <Text style={[styles.title, { color: isDark ? colors.accent : colors.primary }]}>
+                {getTitle()}
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                {getSubtitle()}
+            </Text>
+        </View>
+    );
+
+    // ═══════════════════════════════════════════
+    // RENDER FORM CONTENT (non-drawing modes)
     // ═══════════════════════════════════════════
     const renderFormContent = () => {
-        if (mode === 'choice') {
-            return (
-                <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.choiceContainer}>
-                    <TouchableOpacity
-                        activeOpacity={0.85}
-                        onPress={() => { hapticLight(); setMode('register_name'); }}
-                    >
-                        <GlassCard variant="elevated" style={styles.choiceCard}>
-                            <LinearGradient
-                                colors={isDark
-                                    ? [BRAND.oceanMid, BRAND.oceanDark]
-                                    : [BRAND.oceanDark, BRAND.oceanDeep]
-                                }
-                                style={styles.choiceIconBg}
-                            >
-                                <Ionicons name="person-add-outline" size={rs(28)} color="#fff" />
-                            </LinearGradient>
-                            <Text style={[styles.choiceTitle, { color: colors.text }]}>
-                                {t('auth_create_account')}
-                            </Text>
-                            <Text style={[styles.choiceDesc, { color: colors.textSecondary }]}>
-                                {t('auth_create_account_desc')}
-                            </Text>
-                        </GlassCard>
-                    </TouchableOpacity>
+        const content = (() => {
+            if (mode === 'choice') {
+                return (
+                    <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.choiceContainer}>
+                        <TouchableOpacity
+                            activeOpacity={0.9}
+                            onPress={() => { hapticLight(); setMode('register_name'); }}
+                        >
+                            <GlassCard variant="elevated" style={styles.choiceCard}>
+                                <LinearGradient
+                                    colors={isDark
+                                        ? ['rgba(10,31,46,0.8)', 'rgba(5,20,30,0.9)']
+                                        : ['rgba(255,255,255,0.9)', 'rgba(230,245,255,0.9)']
+                                    }
+                                    style={StyleSheet.absoluteFill}
+                                />
+                                <View style={styles.choiceContent}>
+                                    <LinearGradient
+                                        colors={[BRAND.oceanMid, BRAND.oceanDark]}
+                                        style={styles.choiceIconBg}
+                                    >
+                                        <Ionicons name="person-add-outline" size={rs(32)} color="#fff" />
+                                    </LinearGradient>
+                                    <Text style={[styles.choiceTitle, { color: isDark ? '#fff' : BRAND.oceanDeep }]}>
+                                        {t('auth_create_account')}
+                                    </Text>
+                                    <Text style={[styles.choiceDesc, { color: isDark ? '#9ca3af' : colors.textSecondary }]}>
+                                        {t('auth_create_account_desc')}
+                                    </Text>
+                                </View>
+                            </GlassCard>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity
-                        activeOpacity={0.85}
-                        onPress={() => { hapticLight(); setMode('import_file'); }}
-                    >
-                        <GlassCard variant="flat" style={styles.choiceCard}>
-                            <View style={[styles.choiceIconBgAlt, {
-                                backgroundColor: isDark ? 'rgba(100,210,255,0.1)' : 'rgba(0,51,78,0.08)',
-                            }]}>
-                                <Ionicons name="cloud-download-outline" size={rs(28)}
-                                    color={isDark ? BRAND.oceanLight : BRAND.oceanDark} />
+                        <TouchableOpacity
+                            activeOpacity={0.9}
+                            onPress={() => { hapticLight(); setMode('import_file'); }}
+                        >
+                            <GlassCard variant="elevated" style={styles.choiceCard}>
+                                <LinearGradient
+                                    colors={isDark
+                                        ? ['rgba(10,31,46,0.6)', 'rgba(5,20,30,0.8)']
+                                        : ['rgba(255,255,255,0.6)', 'rgba(230,245,255,0.8)']
+                                    }
+                                    style={StyleSheet.absoluteFill}
+                                />
+                                <View style={styles.choiceContent}>
+                                    <View style={[styles.choiceIconBgAlt, {
+                                        backgroundColor: isDark ? 'rgba(100,210,255,0.1)' : 'rgba(0,51,78,0.08)',
+                                    }]}>
+                                        <Ionicons name="cloud-download-outline" size={rs(32)}
+                                            color={isDark ? BRAND.oceanLight : BRAND.oceanDark} />
+                                    </View>
+                                    <Text style={[styles.choiceTitle, { color: isDark ? '#fff' : BRAND.oceanDeep }]}>
+                                        {t('auth_import_account')}
+                                    </Text>
+                                    <Text style={[styles.choiceDesc, { color: isDark ? '#9ca3af' : colors.textSecondary }]}>
+                                        {t('auth_import_account_desc')}
+                                    </Text>
+                                </View>
+                            </GlassCard>
+                        </TouchableOpacity>
+                    </Animated.View>
+                );
+            }
+
+            if (mode === 'register_name') {
+                return (
+                    <Animated.View entering={SlideInRight.springify()} style={styles.formContainer}>
+                        <GlassCard variant="default" style={styles.formCard}>
+                            <View style={styles.formIconRow}>
+                                <Ionicons name="person-outline" size={rs(24)} color={colors.accent} />
                             </View>
-                            <Text style={[styles.choiceTitle, { color: colors.text }]}>
-                                {t('auth_import_account')}
-                            </Text>
-                            <Text style={[styles.choiceDesc, { color: colors.textSecondary }]}>
-                                {t('auth_import_account_desc')}
-                            </Text>
-                        </GlassCard>
-                    </TouchableOpacity>
-                </Animated.View>
-            );
-        }
-
-        if (mode === 'register_name') {
-            return (
-                <Animated.View entering={SlideInRight.springify()} style={styles.formContainer}>
-                    <GlassCard variant="default" style={styles.formCard}>
-                        <View style={styles.formIconRow}>
-                            <Ionicons name="person-outline" size={rs(24)} color={colors.accent} />
-                        </View>
-                        <TextInput
-                            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
-                            placeholder={t('auth_username_placeholder')}
-                            placeholderTextColor={colors.textMuted}
-                            value={regUsername}
-                            onChangeText={setRegUsername}
-                            autoCapitalize="words"
-                            autoFocus
-                            maxLength={30}
-                        />
-                        {errorText ? (
-                            <Text style={styles.errorText}>{errorText}</Text>
-                        ) : null}
-                        <TouchableOpacity
-                            style={[styles.nextButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.oceanDark }]}
-                            onPress={handleRegisterNameNext}
-                            activeOpacity={0.85}
-                        >
-                            <Text style={styles.nextButtonText}>{t('auth_next')}</Text>
-                            <Ionicons name="arrow-forward" size={rs(18)} color="#fff" />
-                        </TouchableOpacity>
-                    </GlassCard>
-
-                    <TouchableOpacity style={styles.backButton} onPress={() => { setMode('choice'); setErrorText(''); }}>
-                        <Ionicons name="arrow-back" size={rs(18)} color={colors.textSecondary} />
-                        <Text style={[styles.backButtonText, { color: colors.textSecondary }]}>{t('auth_back')}</Text>
-                    </TouchableOpacity>
-                </Animated.View>
-            );
-        }
-
-        if (mode === 'register_password') {
-            return (
-                <Animated.View entering={SlideInRight.springify()} style={styles.formContainer}>
-                    <GlassCard variant="default" style={styles.formCard}>
-                        <View style={styles.formIconRow}>
-                            <Ionicons name="lock-closed-outline" size={rs(24)} color={colors.accent} />
-                        </View>
-                        <View style={styles.passwordContainer}>
                             <TextInput
-                                style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
-                                placeholder={t('auth_password_placeholder')}
+                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                placeholder={t('auth_username_placeholder')}
                                 placeholderTextColor={colors.textMuted}
-                                secureTextEntry={!showPassword}
-                                value={regPassword}
-                                onChangeText={setRegPassword}
+                                value={regUsername}
+                                onChangeText={setRegUsername}
+                                autoCapitalize="words"
                                 autoFocus
+                                maxLength={30}
                             />
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                                <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
+                            {errorText ? (
+                                <Text style={styles.errorText}>{errorText}</Text>
+                            ) : null}
+                            <TouchableOpacity
+                                style={[styles.nextButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.oceanDark }]}
+                                onPress={handleRegisterNameNext}
+                                activeOpacity={0.85}
+                            >
+                                <Text style={styles.nextButtonText}>{t('auth_next')}</Text>
+                                <Ionicons name="arrow-forward" size={rs(18)} color="#fff" />
                             </TouchableOpacity>
-                        </View>
-                        <TextInput
-                            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
-                            placeholder={t('auth_password_confirm_placeholder')}
-                            placeholderTextColor={colors.textMuted}
-                            secureTextEntry={!showPassword}
-                            value={regPasswordConfirm}
-                            onChangeText={setRegPasswordConfirm}
-                        />
-                        <Text style={[styles.hintText, { color: colors.textMuted }]}>
-                            {t('auth_password_hint')}
-                        </Text>
-                        {errorText ? (
-                            <Text style={styles.errorText}>{errorText}</Text>
-                        ) : null}
-                        <TouchableOpacity
-                            style={[styles.nextButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.oceanDark }]}
-                            onPress={handleRegisterPasswordNext}
-                            activeOpacity={0.85}
-                        >
-                            <Text style={styles.nextButtonText}>{t('auth_next')}</Text>
-                            <Ionicons name="arrow-forward" size={rs(18)} color="#fff" />
+                        </GlassCard>
+
+                        <TouchableOpacity style={styles.backButton} onPress={() => { setMode('choice'); setErrorText(''); }}>
+                            <Ionicons name="arrow-back" size={rs(18)} color={colors.textSecondary} />
+                            <Text style={[styles.backButtonText, { color: colors.textSecondary }]}>{t('auth_back')}</Text>
                         </TouchableOpacity>
-                    </GlassCard>
+                    </Animated.View>
+                );
+            }
 
-                    <TouchableOpacity style={styles.backButton} onPress={() => { setMode('register_name'); setErrorText(''); }}>
-                        <Ionicons name="arrow-back" size={rs(18)} color={colors.textSecondary} />
-                        <Text style={[styles.backButtonText, { color: colors.textSecondary }]}>{t('auth_back')}</Text>
-                    </TouchableOpacity>
-                </Animated.View>
-            );
-        }
-
-        if (mode === 'import_file') {
-            return (
-                <Animated.View entering={SlideInRight.springify()} style={styles.formContainer}>
-                    <GlassCard variant="default" style={styles.formCard}>
-                        <View style={styles.formIconRow}>
-                            <Ionicons name="cloud-download-outline" size={rs(24)} color={colors.accent} />
-                        </View>
-
-                        {/* File picker */}
-                        <TouchableOpacity
-                            style={[styles.filePicker, { borderColor: colors.border, backgroundColor: colors.glass }]}
-                            onPress={handlePickFile}
-                            activeOpacity={0.85}
-                        >
-                            <Ionicons name="document-outline" size={rs(20)} color={colors.accent} />
-                            <Text style={[styles.filePickerText, { color: importFileName ? colors.text : colors.textMuted }]} numberOfLines={1}>
-                                {importFileName || t('account_import_button')}
+            if (mode === 'register_password') {
+                return (
+                    <Animated.View entering={SlideInRight.springify()} style={styles.formContainer}>
+                        <GlassCard variant="default" style={styles.formCard}>
+                            <View style={styles.formIconRow}>
+                                <Ionicons name="lock-closed-outline" size={rs(24)} color={colors.accent} />
+                            </View>
+                            <View style={styles.passwordContainer}>
+                                <TextInput
+                                    style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                    placeholder={t('auth_password_placeholder')}
+                                    placeholderTextColor={colors.textMuted}
+                                    secureTextEntry={!showPassword}
+                                    value={regPassword}
+                                    onChangeText={setRegPassword}
+                                    autoFocus
+                                />
+                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                    <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
+                                </TouchableOpacity>
+                            </View>
+                            <TextInput
+                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                placeholder={t('auth_password_confirm_placeholder')}
+                                placeholderTextColor={colors.textMuted}
+                                secureTextEntry={!showPassword}
+                                value={regPasswordConfirm}
+                                onChangeText={setRegPasswordConfirm}
+                            />
+                            <Text style={[styles.hintText, { color: colors.textMuted }]}>
+                                {t('auth_password_hint')}
                             </Text>
-                        </TouchableOpacity>
+                            {errorText ? (
+                                <Text style={styles.errorText}>{errorText}</Text>
+                            ) : null}
+                            <TouchableOpacity
+                                style={[styles.nextButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.oceanDark }]}
+                                onPress={handleRegisterPasswordNext}
+                                activeOpacity={0.85}
+                            >
+                                <Text style={styles.nextButtonText}>{t('auth_next')}</Text>
+                                <Ionicons name="arrow-forward" size={rs(18)} color="#fff" />
+                            </TouchableOpacity>
+                        </GlassCard>
 
-                        {/* File password */}
-                        <View style={styles.passwordContainer}>
+                        <TouchableOpacity style={styles.backButton} onPress={() => { setMode('register_name'); setErrorText(''); }}>
+                            <Ionicons name="arrow-back" size={rs(18)} color={colors.textSecondary} />
+                            <Text style={[styles.backButtonText, { color: colors.textSecondary }]}>{t('auth_back')}</Text>
+                        </TouchableOpacity>
+                    </Animated.View>
+                );
+            }
+
+            if (mode === 'import_file') {
+                return (
+                    <Animated.View entering={SlideInRight.springify()} style={styles.formContainer}>
+                        <GlassCard variant="default" style={styles.formCard}>
+                            <View style={styles.formIconRow}>
+                                <Ionicons name="cloud-download-outline" size={rs(24)} color={colors.accent} />
+                            </View>
+
+                            {/* File picker */}
+                            <TouchableOpacity
+                                style={[styles.filePicker, { borderColor: colors.border, backgroundColor: colors.glass }]}
+                                onPress={handlePickFile}
+                                activeOpacity={0.85}
+                            >
+                                <Ionicons name="document-outline" size={rs(20)} color={colors.accent} />
+                                <Text style={[styles.filePickerText, { color: importFileName ? colors.text : colors.textMuted }]} numberOfLines={1}>
+                                    {importFileName || t('account_import_button')}
+                                </Text>
+                            </TouchableOpacity>
+
+                            {/* File password */}
+                            <View style={styles.passwordContainer}>
+                                <TextInput
+                                    style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                    placeholder={t('auth_file_password_placeholder')}
+                                    placeholderTextColor={colors.textMuted}
+                                    secureTextEntry={!showPassword}
+                                    value={importFilePassword}
+                                    onChangeText={setImportFilePassword}
+                                />
+                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                    <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* New session password */}
+                            <View style={styles.sectionDivider}>
+                                <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+                                <Text style={[styles.dividerText, { color: colors.textMuted }]}>{t('auth_new_credentials')}</Text>
+                                <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+                            </View>
+
+                            <View style={styles.passwordContainer}>
+                                <TextInput
+                                    style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                    placeholder={t('auth_new_password_placeholder')}
+                                    placeholderTextColor={colors.textMuted}
+                                    secureTextEntry={!showPassword}
+                                    value={importNewPassword}
+                                    onChangeText={setImportNewPassword}
+                                />
+                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                    <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
+                                </TouchableOpacity>
+                            </View>
+
                             <TextInput
-                                style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
-                                placeholder={t('auth_file_password_placeholder')}
+                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                placeholder={t('auth_password_confirm_placeholder')}
                                 placeholderTextColor={colors.textMuted}
                                 secureTextEntry={!showPassword}
-                                value={importFilePassword}
-                                onChangeText={setImportFilePassword}
+                                value={importNewPasswordConfirm}
+                                onChangeText={setImportNewPasswordConfirm}
                             />
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                                <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
+                            <Text style={[styles.hintText, { color: colors.textMuted }]}>
+                                {t('auth_password_hint')}
+                            </Text>
+
+                            {errorText ? (
+                                <Text style={styles.errorText}>{errorText}</Text>
+                            ) : null}
+
+                            <TouchableOpacity
+                                style={[styles.nextButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.oceanDark }]}
+                                onPress={handleImportNext}
+                                activeOpacity={0.85}
+                            >
+                                <Text style={styles.nextButtonText}>{t('auth_next')}</Text>
+                                <Ionicons name="arrow-forward" size={rs(18)} color="#fff" />
                             </TouchableOpacity>
-                        </View>
+                        </GlassCard>
 
-                        {/* New session password */}
-                        <View style={styles.sectionDivider}>
-                            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-                            <Text style={[styles.dividerText, { color: colors.textMuted }]}>{t('auth_new_credentials')}</Text>
-                            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-                        </View>
-
-                        <View style={styles.passwordContainer}>
-                            <TextInput
-                                style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
-                                placeholder={t('auth_new_password_placeholder')}
-                                placeholderTextColor={colors.textMuted}
-                                secureTextEntry={!showPassword}
-                                value={importNewPassword}
-                                onChangeText={setImportNewPassword}
-                            />
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                                <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
-                            </TouchableOpacity>
-                        </View>
-
-                        <TextInput
-                            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
-                            placeholder={t('auth_password_confirm_placeholder')}
-                            placeholderTextColor={colors.textMuted}
-                            secureTextEntry={!showPassword}
-                            value={importNewPasswordConfirm}
-                            onChangeText={setImportNewPasswordConfirm}
-                        />
-                        <Text style={[styles.hintText, { color: colors.textMuted }]}>
-                            {t('auth_password_hint')}
-                        </Text>
-
-                        {errorText ? (
-                            <Text style={styles.errorText}>{errorText}</Text>
-                        ) : null}
-
-                        <TouchableOpacity
-                            style={[styles.nextButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.oceanDark }]}
-                            onPress={handleImportNext}
-                            activeOpacity={0.85}
-                        >
-                            <Text style={styles.nextButtonText}>{t('auth_next')}</Text>
-                            <Ionicons name="arrow-forward" size={rs(18)} color="#fff" />
+                        <TouchableOpacity style={styles.backButton} onPress={() => { setMode('choice'); setErrorText(''); }}>
+                            <Ionicons name="arrow-back" size={rs(18)} color={colors.textSecondary} />
+                            <Text style={[styles.backButtonText, { color: colors.textSecondary }]}>{t('auth_back')}</Text>
                         </TouchableOpacity>
-                    </GlassCard>
+                    </Animated.View>
+                );
+            }
+            return null;
+        })();
 
-                    <TouchableOpacity style={styles.backButton} onPress={() => { setMode('choice'); setErrorText(''); }}>
-                        <Ionicons name="arrow-back" size={rs(18)} color={colors.textSecondary} />
-                        <Text style={[styles.backButtonText, { color: colors.textSecondary }]}>{t('auth_back')}</Text>
-                    </TouchableOpacity>
-                </Animated.View>
-            );
-        }
-
-        return null;
+        return (
+            <Animated.View entering={FadeIn.duration(500)} style={{ flex: 1, alignItems: 'center' }}>
+                {renderHeader()}
+                {content}
+            </Animated.View>
+        );
     };
 
     // ═══════════════════════════════════════════
@@ -638,58 +682,47 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             </View>
 
             <SafeAreaView style={styles.safeContainer}>
-                {isPinMode ? (
-                    /* ═══ PIN mode layout ═══ */
+                {isDrawingMode ? (
+                    /* ═══ Drawing mode layout ═══ */
                     <Animated.View style={[styles.contentWrapper, contentStyle]}>
-                        {/* Header */}
-                        <View style={styles.header}>
-                            <Text style={[styles.title, { color: isDark ? colors.accent : colors.primary }]}>
-                                {getTitle()}
-                            </Text>
-                            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                                {getSubtitle()}
-                            </Text>
-                        </View>
+                        {renderHeader()}
 
-                        {/* Fish — only during PIN creation */}
-                        {(mode === 'create_pin' || mode === 'confirm_pin') && (
-                            <View style={styles.centerStage}>
-                                <FishBowlLoader />
+                        {(mode === 'create_drawing' || mode === 'confirm_drawing') && (
+                            <View style={{ alignItems: 'center', paddingVertical: winH < 700 ? rs(4) : rs(10) }}>
+                                <FishBowlLoader size={winH < 700 ? 120 : 180} />
                             </View>
                         )}
 
-                        {/* PIN Display */}
-                        <View style={styles.feedbackArea}>
-                            <PinDisplay pinLength={pin.length} shakeValue={shake} />
-                            <Text style={[styles.pinHint, { color: colors.textMuted }]}>
-                                {statusText}
-                            </Text>
-                            {errorText ? (
-                                <Text style={[styles.pinError]}>{errorText}</Text>
-                            ) : null}
+                        {/* Drawing Canvas */}
+                        <View style={styles.drawingArea}>
+                            <DrawingPad
+                                key={mode}
+                                onSubmit={handleDrawingSubmit}
+                                confirmLabel={t('auth_draw_confirm_btn')}
+                                clearLabel={t('auth_draw_clear')}
+                                hintText={t('auth_draw_hint')}
+                                strokeCountLabel={t('auth_draw_strokes')}
+                            />
+                            <Text style={[styles.pinHint, { color: colors.textMuted, marginTop: rs(8) }]}>{statusText}</Text>
+                            {errorText ? <Text style={[styles.pinError]}>{errorText}</Text> : null}
                         </View>
 
-                        {/* Input Area */}
-                        <View style={styles.inputArea}>
-                            <PinPad
-                                onPinPress={handlePinPress}
-                                onBiometricPress={authenticateBiometric}
-                                onDeletePress={handleDelete}
-                            />
-
-                            {/* Botón de verificación por email */}
+                        {/* Back button for drawing modes during registration/import */}
+                        {(mode === 'create_drawing' || mode === 'import_drawing') && (
                             <TouchableOpacity
-                                style={styles.emailButton}
+                                style={styles.backButton}
                                 onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                                    setShowEmailModal(true);
+                                    setDrawingStrokes(null);
+                                    setFirstDrawing(null);
+                                    setErrorText('');
+                                    if (mode === 'create_drawing') setMode('register_password');
+                                    else setMode('import_file');
                                 }}
                             >
-                                <Text style={[styles.emailButtonText, { color: colors.accent }]}>
-                                    📧 Verificar con Email
-                                </Text>
+                                <Ionicons name="arrow-back" size={rs(18)} color={colors.textSecondary} />
+                                <Text style={[styles.backButtonText, { color: colors.textSecondary }]}>{t('auth_back')}</Text>
                             </TouchableOpacity>
-                        </View>
+                        )}
                     </Animated.View>
                 ) : (
                     renderFormContent()
@@ -704,77 +737,143 @@ const styles = StyleSheet.create({
     bgContainer: { ...StyleSheet.absoluteFillObject, opacity: 0.3 },
     safeContainer: { flex: 1 },
     contentWrapper: { flex: 1 },
-    scrollForm: { flexGrow: 1, justifyContent: 'center', padding: SPACING.lg },
 
     // Header
     header: {
         alignItems: 'center',
-        paddingTop: rh(20),
-        flex: 1,
+        paddingVertical: rh(30),
         justifyContent: 'center',
-    },
-    formHeader: {
-        alignItems: 'center',
-        marginBottom: SPACING.md,
     },
     title: {
         fontSize: rf(26),
-        fontWeight: '700',
+        fontWeight: '800',
         letterSpacing: rs(0.5),
-        marginBottom: rs(6),
+        marginBottom: rs(8),
         textAlign: 'center',
     },
     subtitle: {
-        fontSize: rf(13),
+        fontSize: rf(12),
         textTransform: 'uppercase',
-        letterSpacing: rs(1.5),
-        fontWeight: '500',
+        letterSpacing: rs(2),
+        fontWeight: '600',
         textAlign: 'center',
     },
 
     // Fish
-    centerStage: { flex: 2.5, alignItems: 'center', justifyContent: 'center' },
-    fishSmall: { height: rh(160), alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.md },
+    centerStage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-    // PIN area
-    feedbackArea: { flex: 0.8, justifyContent: 'center', alignItems: 'center' },
+    // Drawing area
+    drawingArea: { flex: 3, justifyContent: 'center', alignItems: 'center', paddingBottom: rh(10) },
     pinHint: { fontSize: rf(12), marginTop: rs(8), letterSpacing: rs(0.5), textAlign: 'center' },
     pinError: { fontSize: rf(11), marginTop: rs(6), color: '#ef4444', textAlign: 'center', fontWeight: '600' },
-    inputArea: { flex: 3.5, justifyContent: 'center', paddingBottom: rh(20) },
 
     // ═══ CHOICE CARDS ═══
-    choiceContainer: { gap: SPACING.md, marginTop: SPACING.md },
+    choiceContainer: { width: '100%', gap: SPACING.lg, paddingHorizontal: SPACING.md },
     choiceCard: {
-        alignItems: 'center',
+        borderRadius: rs(24),
+        overflow: 'hidden',
+        minHeight: rh(160),
+        justifyContent: 'center',
+    },
+    choiceContent: {
         padding: SPACING.xl,
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10,
     },
     choiceIconBg: {
-        width: rs(56), height: rs(56), borderRadius: rs(28),
+        width: rs(60), height: rs(60), borderRadius: rs(30),
+        justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md,
+        shadowColor: BRAND.oceanLight,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 10,
+        elevation: 8,
+    },
+    choiceIconBgAlt: {
+        width: rs(60), height: rs(60), borderRadius: rs(30),
         justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md,
     },
-    feedbackArea: {
-        flex: 0.8,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    pinHint: {
-        fontSize: rf(12),
-        marginTop: rs(8),
+    choiceTitle: {
+        fontSize: rf(18),
+        fontWeight: '700',
+        marginBottom: SPACING.xs,
+        textAlign: 'center',
         letterSpacing: rs(0.5),
     },
-    inputArea: {
-        flex: 3.5,
+    choiceDesc: {
+        fontSize: rf(13),
+        textAlign: 'center',
+        opacity: 0.8,
+        lineHeight: rf(18),
+        paddingHorizontal: SPACING.sm,
+    },
+
+    // ═══ GENERAL FORM ═══
+    formContainer: { width: '100%', paddingHorizontal: SPACING.md },
+    formCard: { padding: SPACING.xl, borderRadius: rs(24) },
+    formIconRow: { alignItems: 'center', marginBottom: SPACING.lg },
+
+    input: {
+        height: rs(54),
+        borderWidth: 1,
+        borderRadius: rs(16),
+        paddingHorizontal: SPACING.lg,
+        fontSize: rf(16),
+        marginBottom: SPACING.md,
+    },
+    passwordContainer: { position: 'relative', marginBottom: SPACING.md },
+    passwordInput: { marginBottom: 0, paddingRight: rs(50) },
+    eyeIcon: { position: 'absolute', right: rs(16), top: rs(16), padding: 4 },
+
+    nextButton: {
+        flexDirection: 'row',
+        height: rs(54),
+        borderRadius: rs(16),
         justifyContent: 'center',
-        paddingBottom: rh(20),
-    },
-    emailButton: {
-        marginTop: rs(16),
-        padding: rs(12),
         alignItems: 'center',
+        marginTop: SPACING.md,
+        shadowColor: BRAND.oceanDark,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6,
     },
-    emailButtonText: {
-        fontSize: rf(14),
-        fontWeight: '600',
-        textDecorationLine: 'underline',
+    nextButtonText: {
+        color: '#fff',
+        fontSize: rf(16),
+        fontWeight: '700',
+        marginRight: SPACING.sm,
     },
+
+    backButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: SPACING.lg,
+        padding: SPACING.sm,
+    },
+    backButtonText: { marginLeft: SPACING.xs, fontSize: rf(14), fontWeight: '600' },
+    errorText: { color: '#ef4444', textAlign: 'center', marginBottom: SPACING.md, fontSize: rf(13) },
+    hintText: { fontSize: rf(12), textAlign: 'center', marginBottom: SPACING.md },
+
+    // File Picker
+    filePicker: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: SPACING.md,
+        borderWidth: 1,
+        borderRadius: rs(16),
+        borderStyle: 'dashed',
+        marginBottom: SPACING.lg,
+    },
+    filePickerText: { flex: 1, marginLeft: SPACING.sm, fontSize: rf(14) },
+    sectionDivider: {
+        flexDirection: 'row', alignItems: 'center', marginVertical: SPACING.md,
+    },
+    dividerLine: { flex: 1, height: 1, opacity: 0.3 },
+    dividerText: { marginHorizontal: SPACING.md, fontSize: rf(12), textTransform: 'uppercase' },
+
+    emailButton: { marginTop: rs(16), padding: rs(12), alignItems: 'center' },
+    emailButtonText: { fontSize: rf(14), fontWeight: '600', textDecorationLine: 'underline' },
 });
