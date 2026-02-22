@@ -69,7 +69,7 @@ const ActionItem = ({ icon, label, delay = 0, onPress, customWidth }) => {
             <GlassCard variant="elevated" style={styles.actionCard}>
                 <View style={styles.actionContent}>
                     <LinearGradient
-                        colors={isDark ? GRADIENTS.oceanSurface : GRADIENTS.primaryButton}
+                        colors={isDark ? GRADIENTS.oceanSurface : [BRAND.oceanLight, BRAND.oceanMid]}
                         style={[styles.iconBox, shadows.sm]}
                     >
                         <Ionicons name={icon} size={rs(24)} color="#fff" />
@@ -109,7 +109,7 @@ const BalanceCard = () => {
             <LinearGradient
                 colors={isDark
                     ? [BRAND.oceanMid, BRAND.oceanDark, BRAND.oceanDeep]
-                    : [BRAND.oceanDark, BRAND.oceanDeep, '#001220']
+                    : [BRAND.oceanLight, BRAND.oceanMid, BRAND.oceanDark]
                 }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -117,14 +117,17 @@ const BalanceCard = () => {
             >
                 <View style={styles.cardShine} />
                 <View style={styles.balanceContent}>
-                    <Text style={styles.balanceLabel}>{t('home_total_balance')}</Text>
-                    <Text style={styles.balanceValue}>{points} TPL</Text>
-                    <View style={styles.balanceRow}>
-                        <View style={styles.badge}>
-                            <Ionicons name="trending-up" size={rs(14)} color={BRAND.success} />
-                            <Text style={styles.badgeText}>{t('home_this_week')}</Text>
-                        </View>
+                    <View style={styles.balanceHeader}>
+                        <Text style={styles.balanceLabel}>{t('home_total_balance')}</Text>
+                        <TouchableOpacity
+                            style={[styles.redeemButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)' }]}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="gift-outline" size={rs(14)} color="#fff" style={{ marginRight: rs(6) }} />
+                            <Text style={styles.redeemButtonText}>{t('home_redeem_tpl')}</Text>
+                        </TouchableOpacity>
                     </View>
+                    <Text style={styles.balanceValue}>{points} TPL</Text>
                     <View style={styles.statsRow}>
                         <View style={styles.statItem}>
                             <Text style={styles.statValue}>{nfts.length}</Text>
@@ -250,15 +253,15 @@ export default function HomeScreen() {
                                     customWidth={actionItemWidth}
                                 />
                                 <ActionItem
-                                    icon="stats-chart-outline"
-                                    label={t('home_impact')}
+                                    icon="person-outline"
+                                    label={t('home_profile')}
                                     delay={700}
-                                    onPress={() => navigation.navigate('Premios')}
+                                    onPress={() => navigation.navigate('Profile')}
                                     customWidth={actionItemWidth}
                                 />
                                 <ActionItem
-                                    icon="trophy-outline"
-                                    label={t('home_ranking')}
+                                    icon="gift-outline"
+                                    label={t('home_rewards')}
                                     delay={800}
                                     onPress={() => navigation.navigate('Premios')}
                                     customWidth={actionItemWidth}
@@ -305,8 +308,28 @@ const styles = StyleSheet.create({
     },
     balanceContent: { zIndex: 1, height: '100%', justifyContent: 'space-between' },
     balanceLabel: {
-        color: BRAND.oceanLight, fontSize: rf(11), fontWeight: '600',
+        color: 'rgba(255, 255, 255, 0.7)', fontSize: rf(11), fontWeight: '600',
         textTransform: 'uppercase', letterSpacing: rs(2),
+    },
+    balanceHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+    },
+    redeemButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: rs(6),
+        paddingHorizontal: rs(12),
+        borderRadius: RADIUS.lg,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+    },
+    redeemButtonText: {
+        color: '#ffffff',
+        fontSize: rf(12),
+        fontWeight: '700',
     },
     balanceValue: { color: '#fff', fontSize: rf(36), fontWeight: '800', marginVertical: rs(8), letterSpacing: 1 },
     balanceRow: { flexDirection: 'row' },

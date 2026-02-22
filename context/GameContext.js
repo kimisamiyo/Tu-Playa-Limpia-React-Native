@@ -67,12 +67,12 @@ export const GameProvider = ({ children }) => {
             lockedUntil: new Date(Date.now() + 86400000 * 30).toLocaleDateString(),
             owner: user.name,
             ownerInitials: user.initials,
-            ownerAvatar: user.avatar,
-            isNew: true,
-            claimed: false,
-            acquisition: nftData.acquisition || 'nft_acq_default',
-            ...generatedData,
-            ...nftData,
+            ownerAvatar: user.avatar, // Creator's profile picture
+            isNew: true, // Mark as new by default
+            claimed: false, // Track if claimed to wallet
+            acquisition: nftData.acquisition || 'nft_acq_default', // Translation key for acquisition source
+            ...generatedData, // Apply generated attributes and description first
+            ...nftData, // Override if header provides specific data
         };
 
         setNfts(prev => [newNFT, ...prev]);
@@ -114,8 +114,12 @@ export const GameProvider = ({ children }) => {
             scanItem,
             unlockNFT,
             unlockRegionNFT,
-            markNFTSeen,
-            markNFTClaimed,
+            claimNFT: (id) => {
+                setNfts(prev => prev.map(n => n.id === id ? { ...n, claimed: true } : n));
+            },
+            markNFTSeen: (id) => {
+                setNfts(prev => prev.map(n => n.id === id ? { ...n, isNew: false } : n));
+            }
         }}>
             {children}
         </GameContext.Provider>

@@ -52,13 +52,13 @@ export default function AnimatedTabIcon({ name, focused, size = 24 }) {
 
     // Subtle, system-matching colors (no high contrast)
     const iconColor = focused
-        ? (isDark ? colors.textSecondary : colors.textSecondary)  // Subtle active color
-        : colors.tabInactive;
+        ? (isDark ? colors.textSecondary : '#ffffff')  // White for active in Light Mode
+        : (isDark ? colors.tabInactive : 'rgba(255, 255, 255, 0.6)');
 
-    // Very subtle background - blends with tab bar
+    // Very subtle background - matching the shiny bar
     const bgColor = isDark
-        ? 'rgba(85, 136, 163, 0.2)'   // Muted ocean
-        : 'rgba(26, 58, 74, 0.08)';   // Very subtle
+        ? 'rgba(85, 136, 163, 0.2)'
+        : 'rgba(255, 255, 255, 0.15)';
 
     return (
         <Animated.View style={[styles.container, containerStyle]}>

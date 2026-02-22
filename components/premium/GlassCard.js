@@ -30,23 +30,29 @@ export default function GlassCard({
             case 'elevated':
                 return {
                     backgroundColor: isDark
-                        ? 'rgba(20, 83, 116, 0.7)'
+                        ? 'rgba(10, 31, 46, 0.75)' // Darker, deeper blue
                         : 'rgba(255, 255, 255, 0.95)',
-                    ...shadows.lg,
+                    borderColor: isDark ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.4)', // Subtle gold hint
+                    borderWidth: 1,
+                    ...shadows.xl,
                 };
             case 'flat':
                 return {
                     backgroundColor: isDark
-                        ? 'rgba(20, 83, 116, 0.4)'
-                        : 'rgba(255, 255, 255, 0.7)',
+                        ? 'rgba(5, 20, 30, 0.4)'
+                        : 'rgba(255, 255, 255, 0.6)',
+                    borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.2)',
+                    borderWidth: 1,
                     ...shadows.none,
                 };
             default:
                 return {
                     backgroundColor: isDark
-                        ? 'rgba(20, 83, 116, 0.5)'
+                        ? 'rgba(12, 40, 60, 0.6)'
                         : 'rgba(255, 255, 255, 0.85)',
-                    ...shadows.md,
+                    borderColor: isDark ? 'rgba(100,210,255,0.1)' : 'rgba(255,255,255,0.3)',
+                    borderWidth: 1,
+                    ...shadows.lg,
                 };
         }
     };

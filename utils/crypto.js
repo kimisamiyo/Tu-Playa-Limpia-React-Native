@@ -140,6 +140,164 @@ export async function verifyPin(pin, storedHash) {
 }
 
 /**
+ * Extract behavioral fingerprint from drawing strokes.
+ * Mirrors DrawingPad.js extractBehavioralFingerprint().
+ *
+ * Per-stroke orientation: H/V/D/C, sorted.
+ * Format: "strokeCount-AR-CX-orientations"
+ */
+function extractFingerprint(strokes) {
+    if (!strokes || strokes.length === 0) return '';
+    const allPoints = strokes.flatMap(s => s);
+    if (allPoints.length < 3) return '';
+
+    const strokeCount = strokes.length;
+
+    // Aspect ratio
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const p of allPoints) {
+        if (p.x < minX) minX = p.x;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.y > maxY) maxY = p.y;
+    }
+    const bboxW = Math.max(maxX - minX, 1);
+    const bboxH = Math.max(maxY - minY, 1);
+    const aspectRatio = bboxW / bboxH;
+    const arBin = aspectRatio < 0.6 ? 'T' : aspectRatio < 1.7 ? 'S' : 'W';
+
+    // Complexity
+    let totalDist = 0;
+    for (const stroke of strokes) {
+        for (let i = 1; i < stroke.length; i++) {
+            const dx = stroke[i].x - stroke[i - 1].x;
+            const dy = stroke[i].y - stroke[i - 1].y;
+            totalDist += Math.sqrt(dx * dx + dy * dy);
+        }
+    }
+    const diag = Math.sqrt(bboxW * bboxW + bboxH * bboxH);
+    const normDist = totalDist / Math.max(diag, 1);
+    const cxBin = normDist < 4 ? 'S' : normDist < 12 ? 'M' : 'C';
+
+    // Per-stroke orientation
+    const orientations = [];
+    for (const stroke of strokes) {
+        if (stroke.length < 2) { orientations.push('P'); continue; }
+        let pathLen = 0;
+        for (let i = 1; i < stroke.length; i++) {
+            const dx = stroke[i].x - stroke[i - 1].x;
+            const dy = stroke[i].y - stroke[i - 1].y;
+            pathLen += Math.sqrt(dx * dx + dy * dy);
+        }
+        const sdx = stroke[stroke.length - 1].x - stroke[0].x;
+        const sdy = stroke[stroke.length - 1].y - stroke[0].y;
+        const endDist = Math.sqrt(sdx * sdx + sdy * sdy);
+        const closedness = endDist / Math.max(pathLen, 1);
+
+        if (closedness < 0.35) {
+            orientations.push('C');
+        } else {
+            const absDx = Math.abs(sdx);
+            const absDy = Math.abs(sdy);
+            const ratio = Math.min(absDx, absDy) / Math.max(absDx, absDy, 1);
+            if (ratio < 0.5) {
+                orientations.push(absDx > absDy ? 'H' : 'V');
+            } else {
+                orientations.push('D');
+            }
+        }
+    }
+    // Sort by spatial position (top→bottom, left→right)
+    const strokeInfos = orientations.map((orient, idx) => {
+        const stroke = strokes[idx];
+        const cx = stroke.reduce((s, p) => s + p.x, 0) / stroke.length;
+        const cy = stroke.reduce((s, p) => s + p.y, 0) / stroke.length;
+        const normY = (cy - minY) / Math.max(bboxH, 1);
+        const normX = (cx - minX) / Math.max(bboxW, 1);
+        return { orient, normY, normX };
+    });
+    strokeInfos.sort((a, b) => {
+        if (Math.abs(a.normY - b.normY) > 0.15) return a.normY - b.normY;
+        return a.normX - b.normX;
+    });
+    const orientSig = strokeInfos.map(s => s.orient).join('');
+
+    return `${strokeCount}-${arBin}-${cxBin}-${orientSig}`;
+}
+
+/**
+ * "Hash" a drawing — returns the behavioral fingerprint string.
+ */
+export async function hashDrawing(strokes) {
+    const fingerprint = extractFingerprint(strokes);
+    if (!fingerprint) return '';
+    return fingerprint;
+}
+
+/**
+ * Compare two fingerprint strings with tolerance.
+ *
+ * Format: "strokeCount-AR-CX-orientations"
+ *
+ * Rules:
+ *  - Stroke count: exact match required
+ *  - AR & CX: adjacent-or-exact
+ *  - Per-stroke orientations (sorted):
+ *    → D can match H or V (diagonal is ambiguous)
+ *    → C must match C (closed ≠ open)
+ *    → At most 1 such D↔H/D↔V tolerance allowed
+ */
+export function compareFingerprints(fp1, fp2) {
+    if (!fp1 || !fp2) return false;
+    const p1 = fp1.split('-');
+    const p2 = fp2.split('-');
+    if (p1.length !== 4 || p2.length !== 4) return false;
+
+    const [sc1, ar1, cx1, orient1] = p1;
+    const [sc2, ar2, cx2, orient2] = p2;
+
+    // Stroke count: exact
+    if (parseInt(sc1, 10) !== parseInt(sc2, 10)) return false;
+
+    // Orientations must be same length (implied by stroke count match)
+    if (orient1.length !== orient2.length) return false;
+
+    // Compare per-stroke orientations character by character
+    let orientTolerance = 0;
+    for (let i = 0; i < orient1.length; i++) {
+        if (orient1[i] === orient2[i]) continue; // exact match
+        const pair = orient1[i] + orient2[i];
+        // D (diagonal) can be confused with H or V — allow 1 such mismatch
+        if (pair === 'DH' || pair === 'HD' || pair === 'DV' || pair === 'VD') {
+            orientTolerance++;
+            if (orientTolerance > 1) return false; // too many D↔H/V mismatches
+        } else {
+            return false; // incompatible orientations (H≠V, C≠anything else)
+        }
+    }
+
+    // AR and CX: adjacent-or-exact
+    const isClose = (a, b, order) => {
+        const ia = order.indexOf(a);
+        const ib = order.indexOf(b);
+        return ia !== -1 && ib !== -1 && Math.abs(ia - ib) <= 1;
+    };
+    if (!isClose(ar1, ar2, ['T', 'S', 'W'])) return false;
+    if (!isClose(cx1, cx2, ['S', 'M', 'C'])) return false;
+
+    return true;
+}
+
+/**
+ * Verify a drawing against a stored fingerprint using fuzzy comparison
+ */
+export async function verifyDrawing(strokes, storedFingerprint) {
+    const fingerprint = extractFingerprint(strokes);
+    if (!fingerprint || !storedFingerprint) return false;
+    return compareFingerprints(fingerprint, storedFingerprint);
+}
+
+/**
  * Hash a password for export file protection
  * Uses a different salt than PIN to prevent collision
  */

@@ -104,11 +104,9 @@ export function LanguageProvider({ children }) {
         isReady,
     }), [t, language, setLanguage, isAutoMode, isReady]);
 
-    if (!isReady) return null; // Don't render until language is loaded
-
     return (
         <LanguageContext.Provider value={value}>
-            {children}
+            {isReady ? children : null}
         </LanguageContext.Provider>
     );
 }

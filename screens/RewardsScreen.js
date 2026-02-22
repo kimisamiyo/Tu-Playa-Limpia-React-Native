@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Dimensions, Platform, useWindowDimensions, Alert, ActivityIndicator
+    View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Dimensions, Platform, useWindowDimensions, Alert, Image, Linking
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,7 +26,8 @@ import Scoreboard from '../components/Scoreboard';
 import FloatingBubbles from '../components/premium/FloatingBubbles';
 import GlassCard from '../components/premium/GlassCard';
 import AnimatedButton from '../components/premium/AnimatedButton';
-import ConnectWalletScreen from './ConnectWalletScreen';
+import EarthCard from '../components/premium/EarthCard';
+import { handleClaim } from '../utils/nftGenerator';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CELEBRATION MODAL
@@ -73,64 +74,20 @@ const CelebrationModal = ({ visible, onClose, nft }) => {
 // ═══════════════════════════════════════════════════════════════════════════
 // NFT DETAIL MODAL
 // ═══════════════════════════════════════════════════════════════════════════
-const NFTDetailModal = ({ visible, onClose, nft, onWalletConnected }) => {
+const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
     const { colors, shadows, isDark } = useTheme();
-    const { t, language } = useLanguage();
-    const { address } = useWallet();
-    const { markNFTClaimed } = useGame();
+    const { t } = useLanguage();
     const [claiming, setClaiming] = useState(false);
-    const [showConnectWallet, setShowConnectWallet] = useState(false);
-
-    // Reset state when selected NFT changes or modal closes
-    useEffect(() => {
-        if (!visible || !nft) {
-            setClaiming(false);
-            setShowConnectWallet(false);
-        }
-    }, [visible, nft?.id]);
 
     if (!nft) return null;
 
-    const claimLabels = REWARDS_CLAIM_LABELS[language] || REWARDS_CLAIM_LABELS['es'];
-
     const handleClaimPress = async () => {
-        if (!address) {
-            console.log('[NFTDetailModal] No wallet, showing connect screen');
-            setShowConnectWallet(true);
-            return;
-        }
-
+        if (nft.claimed || claiming) return;
         setClaiming(true);
         try {
-            console.log('[NFTDetailModal] Claiming NFT:', nft.id);
-            const { handleClaim: claimFn } = await import('../utils/nftGenerator');
-            const result = await claimFn();
-            console.log('[NFTDetailModal] Claim result:', result);
-
-            if (result?.success) {
-                // Mark NFT as claimed in game state
-                markNFTClaimed(nft.id);
-                
-                if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                Alert.alert(
-                    t('rewards_claim_success') || 'Success',
-                    t('rewards_nft_claimed') || 'NFT claimed successfully!',
-                    [{ text: 'OK', onPress: onClose }]
-                );
-            } else {
-                if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                Alert.alert(
-                    t('rewards_claim_error') || 'Error',
-                    result?.error?.message || t('rewards_claim_failed') || 'Failed to claim NFT'
-                );
-            }
+            await onClaim(nft);
         } catch (error) {
-            console.error('[NFTDetailModal] Claim error:', error);
-            if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert(
-                t('rewards_claim_error') || 'Error',
-                error?.message || t('rewards_claim_failed') || 'An unexpected error occurred'
-            );
+            console.error(error);
         } finally {
             setClaiming(false);
         }
@@ -140,103 +97,100 @@ const NFTDetailModal = ({ visible, onClose, nft, onWalletConnected }) => {
         <Modal visible={visible} transparent animationType="slide">
             <View style={[styles.detailOverlay, { backgroundColor: isDark ? 'rgba(0,18,32,0.95)' : 'rgba(0,0,0,0.85)' }]}>
                 <SafeAreaView style={styles.detailSafeArea}>
-                    {showConnectWallet ? (
-                        <View style={styles.connectWalletContainer}>
-                            <TouchableOpacity
-                                style={styles.detailClose}
-                                onPress={() => setShowConnectWallet(false)}
-                            >
-                                <Ionicons name="close-circle" size={rs(36)} color={colors.textSecondary} />
-                            </TouchableOpacity>
-                            <ConnectWalletScreen
-                                onSuccess={() => {
-                                    console.log('[NFTDetailModal] Wallet connected, auto-claiming...');
-                                    setShowConnectWallet(false);
-                                    onWalletConnected?.();
-                                    setTimeout(() => handleClaimPress(), 500);
-                                }}
-                            />
-                        </View>
-                    ) : (
-                        <>
-                            <TouchableOpacity style={styles.detailClose} onPress={onClose}>
-                                <Ionicons name="close-circle" size={rs(36)} color={colors.textSecondary} />
-                            </TouchableOpacity>
-                            <Animated.View entering={FadeInUp.delay(100).springify()} style={styles.detailContent}>
-                                <NFTMiniCard nft={nft} size="large" static />
-                                <View style={styles.detailInfo}>
-                                    <Text style={[styles.detailTitle, { color: colors.text }]}>{nft.title}</Text>
-                                    <View style={styles.detailRow}>
-                                        <Ionicons name="finger-print" size={rs(16)} color={colors.textMuted} />
-                                        <Text style={[styles.detailHash, { color: colors.textMuted }]} numberOfLines={1}>
-                                            {nft.hash?.slice(0, 18)}...{nft.hash?.slice(-8)}
-                                        </Text>
-                                    </View>
-                                    <View style={styles.detailStats}>
-                                        <GlassCard variant="flat" style={styles.detailStat}>
-                                            <Text style={[styles.detailStatLabel, { color: colors.textSecondary }]}>{t('rewards_created')}</Text>
-                                            <Text style={[styles.detailStatValue, { color: colors.text }]}>{nft.date}</Text>
-                                        </GlassCard>
-                                        <GlassCard variant="flat" style={styles.detailStat}>
-                                            <Text style={[styles.detailStatLabel, { color: colors.textSecondary }]}>{t('rewards_locked_until')}</Text>
-                                            <Text style={[styles.detailStatValue, { color: colors.text }]}>{nft.lockedUntil}</Text>
-                                        </GlassCard>
-                                    </View>
-                                    <View style={styles.detailRow}>
-                                        <Ionicons name="person-circle" size={rs(18)} color={colors.accent} />
-                                        <Text style={[styles.detailOwner, { color: colors.text }]}>
-                                            {t('rewards_owner')}: {nft.owner}
-                                        </Text>
-                                    </View>
-                                    {nft.acquisition && (
-                                        <View style={[styles.detailRow, { marginTop: SPACING.sm }]}>
-                                            <Ionicons name="sparkles" size={rs(16)} color={BRAND.sandGold} />
-                                            <Text style={[styles.detailOwner, { color: colors.textSecondary, fontStyle: 'italic' }]}>
-                                                {nft.acquisition.includes(':')
-                                                    ? `${t(nft.acquisition.split(':')[0])} ${nft.acquisition.split(':')[1]}`
-                                                    : t(nft.acquisition)
-                                                }
-                                            </Text>
-                                        </View>
-                                    )}
-
-                                    {/* Claim Button */}
-                                    <View style={styles.claimSection}>
-                                        <TouchableOpacity
-                                            style={[
-                                                styles.claimButton,
-                                                {
-                                                    backgroundColor: nft.claimed
-                                                        ? colors.textMuted
-                                                        : BRAND.oceanMid
-                                                }
-                                            ]}
-                                            onPress={handleClaimPress}
-                                            disabled={claiming || nft.claimed}
-                                            activeOpacity={0.8}
-                                        >
-                                            {claiming ? (
-                                                <>
-                                                    <ActivityIndicator size="small" color="#fff" />
-                                                    <Text style={styles.claimButtonText}>{claimLabels.claiming}</Text>
-                                                </>
-                                            ) : nft.claimed ? (
-                                                <>
-                                                    <Ionicons name="checkmark-done-circle" size={rs(18)} color="#fff" />
-                                                    <Text style={styles.claimButtonText}>{claimLabels.alreadyClaimed}</Text>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Ionicons name="download" size={rs(18)} color="#fff" />
-                                                    <Text style={styles.claimButtonText}>{claimLabels.claim}</Text>
-                                                </>
-                                            )}
-                                        </TouchableOpacity>
-                                    </View>
+                    <TouchableOpacity style={styles.detailClose} onPress={onClose}>
+                        <Ionicons name="close-circle" size={rs(36)} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                    <Animated.View entering={FadeInUp.delay(100).springify()} style={styles.detailContent}>
+                        <NFTMiniCard nft={nft} size="large" static />
+                        <View style={styles.detailInfo}>
+                            <Text style={[styles.detailTitle, { color: '#ffffff' }]}>{nft.title}</Text>
+                            <View style={styles.detailRow}>
+                                <Ionicons name="finger-print" size={rs(16)} color={colors.textMuted} />
+                                <Text style={[styles.detailHash, { color: 'rgba(255,255,255,0.6)' }]} numberOfLines={1}>
+                                    {nft.hash?.slice(0, 18)}...{nft.hash?.slice(-8)}
+                                </Text>
+                            </View>
+                            <View style={styles.detailStats}>
+                                <GlassCard variant="flat" style={styles.detailStat}>
+                                    <Text style={[styles.detailStatLabel, { color: 'rgba(255,255,255,0.7)' }]}>{t('rewards_created')}</Text>
+                                    <Text style={[styles.detailStatValue, { color: '#ffffff' }]}>{nft.date}</Text>
+                                </GlassCard>
+                                <GlassCard variant="flat" style={styles.detailStat}>
+                                    <Text style={[styles.detailStatLabel, { color: 'rgba(255,255,255,0.7)' }]}>{t('rewards_locked_until')}</Text>
+                                    <Text style={[styles.detailStatValue, { color: '#ffffff' }]}>{nft.lockedUntil}</Text>
+                                </GlassCard>
+                            </View>
+                            <View style={styles.detailRow}>
+                                <Ionicons name="person-circle" size={rs(18)} color={colors.accent} />
+                                <Text style={[styles.detailOwner, { color: '#ffffff' }]}>
+                                    {t('rewards_owner')}: {nft.owner}
+                                </Text>
+                            </View>
+                            {nft.acquisition && (
+                                <View style={[styles.detailRow, { marginTop: SPACING.sm }]}>
+                                    <Ionicons name="sparkles" size={rs(16)} color={BRAND.sandGold} />
+                                    <Text style={[styles.detailOwner, { color: 'rgba(255,255,255,0.8)', fontStyle: 'italic' }]}>
+                                        {nft.acquisition.includes(':')
+                                            ? `${t(nft.acquisition.split(':')[0])} ${nft.acquisition.split(':')[1]}`
+                                            : t(nft.acquisition)
+                                        }
+                                    </Text>
                                 </View>
-                            </Animated.View>
-                        </>
-                    )}
+                            )}
+
+                            <View style={{ marginTop: SPACING.xl, width: '100%', gap: SPACING.md }}>
+                                {/* Pali Option (Primary) */}
+                                <AnimatedButton
+                                    title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_pali')}
+                                    onPress={handleClaimPress}
+                                    variant="primary"
+                                    icon={
+                                        <Image
+                                            source={require('../assets/logo-pali.png')}
+                                            style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
+                                            resizeMode="contain"
+                                        />
+                                    }
+                                    disabled={nft.claimed || claiming}
+                                    fullWidth
+                                    style={{ justifyContent: 'center', alignItems: 'center' }}
+                                />
+
+                                {/* MetaMask Option */}
+                                <AnimatedButton
+                                    title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_metamask')}
+                                    onPress={() => {
+                                        onClose();
+                                        setTimeout(() => {
+                                            // Try to open MetaMask App
+                                            const metamaskUrl = 'metamask://';
+                                            Linking.canOpenURL(metamaskUrl).then(supported => {
+                                                if (supported) {
+                                                    Linking.openURL(metamaskUrl);
+                                                } else {
+                                                    // Fallback to https (universal link)
+                                                    Linking.openURL('https://metamask.app.link/dapp/tu-playa-limpia-url');
+                                                }
+                                            }).catch(() => {
+                                                Linking.openURL('https://metamask.io');
+                                            });
+                                        }, 500);
+                                    }}
+                                    variant="primary"
+                                    icon={
+                                        <Image
+                                            source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/MetaMask_Fox.svg/1024px-MetaMask_Fox.svg.png' }}
+                                            style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
+                                            resizeMode="contain"
+                                        />
+                                    }
+                                    disabled={nft.claimed || claiming}
+                                    fullWidth
+                                    style={{ justifyContent: 'center', alignItems: 'center' }}
+                                />
+                            </View>
+                        </View>
+                    </Animated.View>
                 </SafeAreaView>
             </View>
         </Modal>
@@ -253,7 +207,7 @@ const NFTDetailModal = ({ visible, onClose, nft, onWalletConnected }) => {
 // MAIN REWARDS SCREEN
 // ═══════════════════════════════════════════════════════════════════════════
 export default function RewardsScreen() {
-    const { points, nfts, unlockNFT, markNFTSeen } = useGame();
+    const { points, nfts, unlockNFT, markNFTSeen, claimNFT } = useGame();
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
     const { address, signer, setProvider, setSigner, setAddress } = useWallet();
@@ -296,10 +250,19 @@ export default function RewardsScreen() {
                     width: cardWidth,
                 }}
             >
-                <GlassCard variant="default" style={{ padding: SPACING.xs }}>
-                    <NFTMiniCard 
-                        nft={item}
-                        size={cardWidth}
+                <TouchableOpacity onPress={() => handleNFTPress(item)} activeOpacity={0.9}>
+                    <EarthCard
+                        title={item.title}
+                        rarity={item.rarity}
+                        // Description and date are hidden in compact mode within EarthCard but passed anyway
+                        description={item.description}
+                        date={item.date}
+                        attributes={item.attributes}
+                        id={item.id} // Pass ID for consistent art generation
+                        image={item.image}
+                        width={cardWidth}
+                        height={cardHeight}
+                        compact={true}
                         isNew={item.isNew}
                         onPress={handleNFTPress}
                     />
@@ -396,6 +359,51 @@ export default function RewardsScreen() {
         </Animated.View>
     );
 
+    const handleClaimNFT = async (nft) => {
+        try {
+            if (!nft) return;
+
+            console.log("🚀 Claim iniciado para missionId:", nft.id);
+
+            const { handleClaim } = await import('../utils/nftGenerator');
+
+            const timeout = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Timeout: la transacción tardó demasiado')), 120000)
+            );
+
+            const result = await Promise.race([
+                handleClaim(nft.id), // ⬅️ PASAMOS missionId REAL
+                timeout
+            ]);
+
+            console.log("Resultado del claim:", result);
+
+            if (result?.success) {
+                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                claimNFT(nft.id);
+
+                Alert.alert(
+                    t('rewards_success') || 'NFT minteado 🎉',
+                    t('rewards_success_desc') || 'Tu NFT fue enviado a tu wallet'
+                );
+            } else {
+                throw result?.error || new Error('Error desconocido');
+            }
+
+        } catch (err) {
+
+            console.error("Error en handleClaimNFT:", err);
+
+            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+            Alert.alert(
+                'Error',
+                err?.message || 'No se pudo mintear el NFT'
+            );
+        }
+    };
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {isDark && (
@@ -431,39 +439,8 @@ export default function RewardsScreen() {
                 visible={showDetail}
                 onClose={() => setShowDetail(false)}
                 nft={selectedNFT}
-                onWalletConnected={() => console.log('[RewardsScreen] Wallet connected')}
+                onClaim={handleClaimNFT}
             />
-            {/* Connect wallet modal per-card */}
-            <Modal visible={!!connectTarget} transparent animationType="slide">
-                <View style={{ flex: 1, backgroundColor: isDark ? 'rgba(0,18,32,0.95)' : 'rgba(0,0,0,0.6)' }}>
-                    <SafeAreaView style={{ flex: 1 }}>
-                        <TouchableOpacity style={{ position: 'absolute', top: rs(16), right: rs(16), zIndex: 50 }} onPress={() => setConnectTarget(null)}>
-                            <Ionicons name="close-circle" size={rs(36)} color={'#fff'} />
-                        </TouchableOpacity>
-                        <ConnectWalletScreen onSuccess={() => {
-                            // close modal and attempt claim if target exists
-                            const target = connectTarget;
-                            setConnectTarget(null);
-                            setTimeout(async () => {
-                                try {
-                                    setClaimingMap(prev => ({ ...prev, [target.id]: true }));
-                                    const result = await handleClaim(signer);
-                                    if (result?.success) {
-                                        markNFTClaimed(target.id);
-                                        Alert.alert(t('rewards_claim_success') || 'Success', t('rewards_nft_claimed') || 'NFT claimed successfully!');
-                                    } else {
-                                        Alert.alert(t('rewards_claim_error') || 'Error', result?.error?.message || t('rewards_claim_failed') || 'Failed to claim NFT');
-                                    }
-                                } catch (err) {
-                                    console.error('Auto-claim error after connect:', err);
-                                } finally {
-                                    setClaimingMap(prev => ({ ...prev, [target.id]: false }));
-                                }
-                            }, 400);
-                        }} />
-                    </SafeAreaView>
-                </View>
-            </Modal>
         </View>
     );
 }

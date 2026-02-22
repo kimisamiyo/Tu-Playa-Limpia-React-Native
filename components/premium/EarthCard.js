@@ -13,7 +13,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { rs, rf, SPACING, RADIUS } from '../../constants/responsive';
 import { BRAND } from '../../constants/theme';
-import GenerativeNFT from '../GenerativeNFT';
+import GenerativeArt, { generatePatternFromId } from '../GenerativeArt';
 import { useLanguage } from '../../context/LanguageContext';
 
 const { width } = Dimensions.get('window');
@@ -115,6 +115,7 @@ const EarthCard = ({
     date,
     isNew, // Added isNew prop
     attributes, // New prop for generative NFTs
+    id, // Added id prop for generative SVG art
     width = DEFAULT_CARD_WIDTH,
     height = DEFAULT_CARD_HEIGHT,
     compact = false
@@ -123,8 +124,28 @@ const EarthCard = ({
     const bubbles = Array.from({ length: compact ? 4 : 8 }, (_, i) => i);
     const scale = compact ? 0.4 : 1;
 
-    // Determine if we should show the generative view
-    const isGenerative = attributes && attributes.length > 0;
+    // Determine if we should show the generative view (Prioritize ID if present)
+    const hasArt = !!id || (attributes && attributes.length > 0) || !!image;
+    // ═══════════════════════════════════════════════════════════════════════════
+    // RANDOM BACKGROUNDS - Grey/Blue tones (App Theme)
+    // ═══════════════════════════════════════════════════════════════════════════
+    const BG_VARIANTS = [
+        [BRAND.oceanDeep, '#000000', '#000000'],       // Deepest Blue
+        ['#0f172a', '#1e293b', '#0f172a'],              // Slate/Grey Blue
+        [BRAND.oceanDark, BRAND.oceanDeep, '#000000'],  // Dark Ocean
+        ['#1e3a8a', '#172554', '#0f172a'],              // Navy Blue
+        ['#334155', '#1e293b', '#0f172a'],              // Lighter Steel
+        ['#111827', '#1f2937', '#111827'],              // Cool Grey
+    ];
+
+    // Select background based on ID (Deterministic)
+    const bgIndex = React.useMemo(() => {
+        if (!id) return 0;
+        const seed = id.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        return seed % BG_VARIANTS.length;
+    }, [id]);
+
+    const currentBg = BG_VARIANTS[bgIndex];
 
     return (
         <View style={[
@@ -132,21 +153,22 @@ const EarthCard = ({
             { width, height, borderRadius: compact ? 12 : 20 }
         ]}>
             <LinearGradient
-                colors={[BRAND.oceanDeep, '#0a0a2e', '#000000']}
+                colors={currentBg}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.card, { borderRadius: compact ? 12 : 20 }]}
             >
                 {/* 1. Background Content */}
-                {isGenerative ? (
-                    /* RENDER GENERATIVE NFT */
-                    <View style={StyleSheet.absoluteFill}>
-                        <GenerativeNFT
-                            attributes={attributes}
-                            width={width}
-                            height={height}
+                {id ? (
+                    /* RENDER GENERATIVE ART (SVG) */
+                    <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
+                        {/* Centered art, maybe scale carefully */}
+                        <GenerativeArt
+                            id={id}
+                            size={Math.min(width, height)}
+                            isDark={true} // Always dark in EarthCard/Rewards context? Or pass prop? EarthCard is dark themed usually.
                         />
-                        {/* Overlay bubbles for effect if desired, or keep clean */}
+                        {/* Overlay bubbles for effect */}
                         <View style={[StyleSheet.absoluteFill, { zIndex: 5 }]}>
                             {bubbles.map((i) => (
                                 <AnimatedBubble key={i} index={i} total={8} sizeScale={scale} />

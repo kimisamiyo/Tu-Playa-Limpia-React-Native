@@ -73,8 +73,7 @@ export default function CelebrationModal({ visible, onClose, message }) {
                     {/* Action — simply close modal */}
                     <LiquidButton
                         onPress={() => {
-                            console.log('[CelebrationModal] continue pressed - closing modal');
-                            onClose && onClose();
+                            if (onClose) onClose();
                         }}
                         label={t('celebration_continue')}
                     />

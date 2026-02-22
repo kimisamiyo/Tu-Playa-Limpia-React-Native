@@ -17,9 +17,8 @@
     "@react-navigation/bottom-tabs": "^7.10.1",
     "@react-navigation/native": "^7.1.28",
     "@react-navigation/native-stack": "^7.11.0",
-    "@walletconnect/ethereum-provider": "^2.23.4",
+    "@walletconnect/ethereum-provider": "^2.23.5",
     "babel-preset-expo": "~54.0.10",
-    "ethers": "^6.16.0",
     "expo": "~54.0.32",
     "expo-camera": "^17.0.10",
     "expo-document-picker": "~14.0.8",
@@ -45,6 +44,26 @@
   },
   "private": true,
   "devDependencies": {
-    "@babel/plugin-proposal-export-namespace-from": "^7.18.9"
-  }
+    "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
+    "@nomicfoundation/hardhat-ethers": "^4.0.4",
+    "@openzeppelin/contracts": "^5.4.0",
+    "@types/node": "^22.19.11",
+    "dotenv": "^17.2.4",
+    "ethers": "^5.8.0",
+    "hardhat": "^3.1.8",
+    "typescript": "~5.8.0"
+  },
+  "type": "module",
+  "description": "This project has a minimal setup of Hardhat 3 Beta, without any plugins.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kimisamiyo/Tu-Playa-Limpia-React-Native.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kimisamiyo/Tu-Playa-Limpia-React-Native/issues"
+  },
+  "homepage": "https://github.com/kimisamiyo/Tu-Playa-Limpia-React-Native#readme"
 }

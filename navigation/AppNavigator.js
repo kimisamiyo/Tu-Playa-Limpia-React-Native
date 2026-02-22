@@ -84,7 +84,7 @@ function LockedTabIcon({ name, size, focused, isLocked }) {
                 name={focused ? name : `${name}-outline`}
                 size={rs(size)}
                 color={isLocked
-                    ? (isDark ? 'rgba(255,255,255,0.25)' : 'rgba(0,51,78,0.25)')
+                    ? (isDark ? 'rgba(255,255,255,0.25)' : 'rgba(13, 92, 117, 0.35)')
                     : (focused ? colors.tabActive : colors.tabInactive)
                 }
             />
@@ -126,11 +126,24 @@ function TabNavigator() {
                         tabBarShowLabel: false,
                         lazy: false,
                         // Hide bottom tab bar if sidebar is shown
+                        tabBarBackground: () => (
+                            !isDark && (
+                                <LinearGradient
+                                    colors={[BRAND.oceanLight, BRAND.oceanMid, BRAND.oceanDark]}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={{
+                                        ...StyleSheet.absoluteFillObject,
+                                        borderRadius: rs(35),
+                                    }}
+                                />
+                            )
+                        ),
                         tabBarStyle: showSidebar ? { display: 'none' } : [
                             styles.tabBar,
                             {
-                                backgroundColor: isDark ? colors.tabBar : 'rgba(0, 51, 78, 0.95)',
-                                borderColor: isDark ? colors.tabBarBorder : 'rgba(255,255,255,0.1)',
+                                backgroundColor: isDark ? colors.tabBar : 'transparent',
+                                borderColor: isDark ? colors.tabBarBorder : 'rgba(255,255,255,0.15)',
                                 ...shadows.xl,
                             }
                         ],
