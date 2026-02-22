@@ -1,14 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { hashPin, verifyPin, hashExportPassword, obfuscateData, deobfuscateData, encryptData, decryptData } from '../utils/crypto';
+import { hashDrawing, verifyDrawing, hashExportPassword, obfuscateData, deobfuscateData, encryptData, decryptData } from '../utils/crypto';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // AUTH CONTEXT - Redesigned multi-step auth system
 //
-// Registration:  username → password (x2) → PIN (x2) → done
-// Login:         welcome [username] → PIN → done
-// Export:        verify session password → create file password → JSON (no PIN)
-// Import:        file password → new session password → new PIN → done
+// Registration:  username → password (x2) → Drawing (x2) → done
+// Login:         welcome [username] → Drawing → done
+// Export:        verify session password → create file password → JSON
+// Import:        file password → new session password → new Drawing → done
 // ═══════════════════════════════════════════════════════════════════════════
 
 const AuthContext = createContext(null);
@@ -16,7 +16,7 @@ const AuthContext = createContext(null);
 const KEYS = {
     ACCOUNT: '@tpl_account_data',
     SESSION: '@tpl_session_active',
-    PIN_HASH: '@tpl_pin_hash',
+    DRAWING_HASH: '@tpl_drawing_hash',
     PASSWORD_HASH: '@tpl_password_hash',
     PROFILE: '@tpl_user_profile',
     USERNAME: '@tpl_username',
@@ -33,14 +33,14 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         (async () => {
             try {
-                const [pinHash, sessionActive, accountData, savedUsername] = await Promise.all([
-                    AsyncStorage.getItem(KEYS.PIN_HASH),
+                const [drawingHash, sessionActive, accountData, savedUsername] = await Promise.all([
+                    AsyncStorage.getItem(KEYS.DRAWING_HASH),
                     AsyncStorage.getItem(KEYS.SESSION),
                     AsyncStorage.getItem(KEYS.ACCOUNT),
                     AsyncStorage.getItem(KEYS.USERNAME),
                 ]);
 
-                if (pinHash && accountData) {
+                if (drawingHash && accountData) {
                     // Account exists
                     setIsFirstTime(false);
                     const parsed = JSON.parse(accountData);
@@ -48,11 +48,11 @@ export function AuthProvider({ children }) {
                     setUsername(savedUsername || '');
 
                     // Check for active session ("cookie")
-                    // MODIFIED: Even if session exists, we REQUIRE PIN on refresh for security
+                    // MODIFIED: Even if session exists, we REQUIRE drawing on refresh for security
                     if (sessionActive === 'true') {
                         // We do NOT set isAuthenticated(true) automatically.
-                        // User must enter PIN to unlock the session.
-                        console.log('Session active, waiting for PIN unlock...');
+                        // User must draw their pattern to unlock the session.
+                        console.log('Session active, waiting for drawing unlock...');
                     }
                     // If we wanted auto-login, we would uncomment:
                     // setIsAuthenticated(true);
@@ -69,17 +69,17 @@ export function AuthProvider({ children }) {
     }, []);
 
     /**
-     * Register new account with username + password + PIN
+     * Register new account with username + password + drawing
      */
-    const register = useCallback(async (name, password, pin) => {
+    const register = useCallback(async (name, password, drawingData) => {
         try {
             // Generate Web3-style account ID
             const timestamp = Date.now().toString(16);
             const random = Math.random().toString(16).slice(2, 14);
             const newAccountId = `0x${timestamp}${random}`.slice(0, 42).padEnd(42, '0');
 
-            // Hash both PIN and password
-            const pinHashed = await hashPin(pin);
+            // Hash both drawing and password
+            const drawingHashed = await hashDrawing(drawingData);
             const passwordHashed = await hashExportPassword(password);
 
             const accountData = {
@@ -90,7 +90,7 @@ export function AuthProvider({ children }) {
 
             // Store everything
             await Promise.all([
-                AsyncStorage.setItem(KEYS.PIN_HASH, pinHashed),
+                AsyncStorage.setItem(KEYS.DRAWING_HASH, drawingHashed),
                 AsyncStorage.setItem(KEYS.PASSWORD_HASH, passwordHashed),
                 AsyncStorage.setItem(KEYS.USERNAME, name),
                 AsyncStorage.setItem(KEYS.ACCOUNT, JSON.stringify(accountData)),
@@ -110,20 +110,20 @@ export function AuthProvider({ children }) {
     }, []);
 
     /**
-     * Login with PIN → verify against stored hash
+     * Login with drawing → verify against stored hash
      */
-    const login = useCallback(async (pin) => {
+    const login = useCallback(async (drawingData) => {
         try {
-            const storedHash = await AsyncStorage.getItem(KEYS.PIN_HASH);
+            const storedHash = await AsyncStorage.getItem(KEYS.DRAWING_HASH);
             if (!storedHash) return { success: false, error: 'No account found' };
 
-            const isValid = await verifyPin(pin, storedHash);
+            const isValid = await verifyDrawing(drawingData, storedHash);
             if (isValid) {
                 await AsyncStorage.setItem(KEYS.SESSION, 'true');
                 setIsAuthenticated(true);
                 return { success: true };
             }
-            return { success: false, error: 'Invalid PIN' };
+            return { success: false, error: 'Invalid drawing' };
         } catch (e) {
             return { success: false, error: e.message };
         }
@@ -212,9 +212,9 @@ export function AuthProvider({ children }) {
     /**
      * Import account from encrypted JSON
      * - Decrypts with file password
-     * - Sets new session password + new PIN
+     * - Sets new session password + new drawing
      */
-    const importAccount = useCallback(async (fileContent, filePassword, newPassword, newPin) => {
+    const importAccount = useCallback(async (fileContent, filePassword, newPassword, newDrawingData) => {
         try {
             const parsed = JSON.parse(fileContent);
 
@@ -246,7 +246,7 @@ export function AuthProvider({ children }) {
 
             // Hash new credentials
             const newPasswordHash = await hashExportPassword(newPassword);
-            const newPinHash = await hashPin(newPin);
+            const newDrawingHash = await hashDrawing(newDrawingData);
 
             // CRITICAL FIX: Save to GameContext Keys so the game actually loads the data
             const GAME_KEYS = {
@@ -265,7 +265,7 @@ export function AuthProvider({ children }) {
             // Restore data with NEW credentials
             await Promise.all([
                 // Auth Keys
-                AsyncStorage.setItem(KEYS.PIN_HASH, newPinHash),
+                AsyncStorage.setItem(KEYS.DRAWING_HASH, newDrawingHash),
                 AsyncStorage.setItem(KEYS.PASSWORD_HASH, newPasswordHash),
                 AsyncStorage.setItem(KEYS.USERNAME, importedData.username || ''),
                 AsyncStorage.setItem(KEYS.ACCOUNT, accountDataStr),

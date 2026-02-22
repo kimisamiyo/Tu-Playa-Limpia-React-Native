@@ -30,8 +30,7 @@ import { BRAND } from '../constants/theme';
 
 // Modular Components
 import FishBowlLoader from './FishBowlLoader';
-import PinDisplay from './PinDisplay';
-import PinPad from './PinPad';
+import DrawingPad from './DrawingPad';
 import LivingWater from './LivingWater';
 import FloatingBubbles from './premium/FloatingBubbles';
 import GlassCard from './premium/GlassCard';
@@ -43,20 +42,21 @@ import GlassCard from './premium/GlassCard';
 //   choice           → "Create Account" / "Import Account"
 //   register_name    → Username input
 //   register_password → Password (x2)
-//   create_pin       → PIN creation (x2)
-//   login            → "Welcome, [username]" + PIN entry
+//   create_drawing   → Drawing creation (x2)
+//   login            → "Welcome, [username]" + Drawing entry
 //   import_file      → File picker + file password + new password
-//   import_pin       → PIN creation after import
+//   import_drawing   → Drawing creation after import
 // ═══════════════════════════════════════════════════════════════════════════
 
 export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, onLogin, onImport, username: savedUsername }) {
     const { colors, isDark } = useTheme();
     const { user } = useGame();
     const { t } = useLanguage();
+    const { height: winH } = useWindowDimensions();
 
     // Multi-step state
     const [mode, setMode] = useState(isFirstTime ? 'choice' : 'login');
-    const [pin, setPin] = useState('');
+    const [drawingStrokes, setDrawingStrokes] = useState(null);
     const [showEmailModal, setShowEmailModal] = useState(false);
 
     // Missing state variables
@@ -71,7 +71,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
     const [importFilePassword, setImportFilePassword] = useState('');
     const [importNewPassword, setImportNewPassword] = useState('');
     const [importNewPasswordConfirm, setImportNewPasswordConfirm] = useState('');
-    const [firstPin, setFirstPin] = useState('');
+    const [firstDrawing, setFirstDrawing] = useState(null);
 
     const shake = useSharedValue(0);
     const contentOpacity = useSharedValue(0);
@@ -96,23 +96,23 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             case 'register_password':
                 setStatusText(t('auth_create_password'));
                 break;
-            case 'create_pin':
-                setStatusText(t('auth_create_pin'));
+            case 'create_drawing':
+                setStatusText(t('auth_create_drawing'));
                 break;
-            case 'confirm_pin':
-                setStatusText(t('auth_confirm_pin'));
+            case 'confirm_drawing':
+                setStatusText(t('auth_confirm_drawing'));
                 break;
             case 'login':
-                setStatusText(t('auth_enter_pin'));
+                setStatusText(t('auth_enter_drawing'));
                 break;
             case 'import_file':
                 setStatusText(t('auth_import_desc'));
                 break;
-            case 'import_pin':
-                setStatusText(t('auth_create_pin'));
+            case 'import_drawing':
+                setStatusText(t('auth_create_drawing'));
                 break;
-            case 'import_confirm_pin':
-                setStatusText(t('auth_confirm_pin'));
+            case 'import_confirm_drawing':
+                setStatusText(t('auth_confirm_drawing'));
                 break;
         }
     }, [mode, t]);
@@ -172,59 +172,70 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
     };
 
     // ═══════════════════════════════════════════
-    // PIN HANDLERS
+    // DRAWING HANDLERS
     // ═══════════════════════════════════════════
-    const handlePinPress = (number) => {
-        hapticLight();
-        if (pin.length < 4) {
-            const newPin = pin + number;
-            setPin(newPin);
-            if (newPin.length === 4) {
-                handlePinComplete(newPin);
-            }
-        }
-    };
+    const handleDrawingSubmit = async (strokes) => {
+        setDrawingStrokes(strokes);
 
-    const handlePinComplete = async (completedPin) => {
-        if (mode === 'create_pin') {
-            setFirstPin(completedPin);
-            setPin('');
-            setMode('confirm_pin');
-        } else if (mode === 'confirm_pin') {
-            if (completedPin === firstPin) {
+        if (mode === 'create_drawing') {
+            // First drawing — save and ask user to repeat
+            setFirstDrawing(strokes);
+            setMode('confirm_drawing');
+        } else if (mode === 'confirm_drawing') {
+            // Compare both drawings using fuzzy fingerprint matching
+            const { hashDrawing, compareFingerprints } = require('../utils/crypto');
+            const fp1 = await hashDrawing(firstDrawing);
+            const fp2 = await hashDrawing(strokes);
+
+            if (compareFingerprints(fp1, fp2)) {
+                // Shapes match — proceed to register
                 hapticSuccess();
                 setStatusText(t('auth_creating_account'));
-                const result = await onRegister(regUsername, regPassword, completedPin);
+                const result = await onRegister(regUsername, regPassword, strokes);
                 if (result.success) {
                     onAuthenticated();
+                } else {
+                    hapticError();
+                    setErrorText(result.error || 'Registration failed');
+                    setTimeout(() => {
+                        setDrawingStrokes(null);
+                        setFirstDrawing(null);
+                        setMode('create_drawing');
+                    }, 1200);
                 }
             } else {
+                // Shapes don't match — ask to retry
                 hapticError();
                 triggerShake();
                 setErrorText(t('auth_pin_mismatch'));
                 setTimeout(() => {
-                    setPin('');
-                    setFirstPin('');
-                    setMode('create_pin');
-                }, 800);
+                    setDrawingStrokes(null);
+                    setFirstDrawing(null);
+                    setMode('create_drawing');
+                }, 1200);
             }
-        } else if (mode === 'import_pin') {
-            setFirstPin(completedPin);
-            setPin('');
-            setMode('import_confirm_pin');
-        } else if (mode === 'import_confirm_pin') {
-            if (completedPin === firstPin) {
+        } else if (mode === 'import_drawing') {
+            // First drawing for import — save and ask to repeat
+            setFirstDrawing(strokes);
+            setMode('import_confirm_drawing');
+        } else if (mode === 'import_confirm_drawing') {
+            // Compare both drawings using fuzzy fingerprint matching
+            const { hashDrawing, compareFingerprints } = require('../utils/crypto');
+            const fp1 = await hashDrawing(firstDrawing);
+            const fp2 = await hashDrawing(strokes);
+
+            if (compareFingerprints(fp1, fp2)) {
                 hapticSuccess();
                 setStatusText(t('auth_creating_account'));
-                const result = await onImport(importFileContent, importFilePassword, importNewPassword, completedPin);
+                const result = await onImport(importFileContent, importFilePassword, importNewPassword, strokes);
                 if (result.success) {
                     onAuthenticated();
                 } else {
                     hapticError();
                     setErrorText(t('account_import_error'));
                     setTimeout(() => {
-                        setPin('');
-                        setFirstPin('');
+                        setDrawingStrokes(null);
+                        setFirstDrawing(null);
                         setMode('import_file');
                     }, 1200);
                 }
@@ -233,27 +244,22 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                 triggerShake();
                 setErrorText(t('auth_pin_mismatch'));
                 setTimeout(() => {
-                    setPin('');
-                    setFirstPin('');
-                    setMode('import_pin');
-                }, 800);
+                    setDrawingStrokes(null);
+                    setFirstDrawing(null);
+                    setMode('import_drawing');
+                }, 1200);
             }
         } else if (mode === 'login') {
-            const result = await onLogin(completedPin);
+            const result = await onLogin(strokes);
             if (result.success) {
                 hapticSuccess();
                 onAuthenticated();
             } else {
                 hapticError();
                 triggerShake();
-                setTimeout(() => setPin(''), 300);
+                setErrorText(t('auth_drawing_mismatch'));
             }
         }
-    };
-
-    const handleDelete = () => {
-        setPin(pin.slice(0, -1));
-        hapticLight();
     };
 
     // ═══════════════════════════════════════════
@@ -284,7 +290,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
         }
         hapticLight();
         setErrorText('');
-        setMode('create_pin');
+        setMode('create_drawing');
     };
 
     // ═══════════════════════════════════════════
@@ -336,7 +342,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
         }
         hapticLight();
         setErrorText('');
-        setMode('import_pin');
+        setMode('import_drawing');
     };
 
     const contentStyle = useAnimatedStyle(() => ({
@@ -352,12 +358,12 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             case 'choice': return t('auth_welcome');
             case 'register_name': return t('auth_create_account');
             case 'register_password': return t('auth_create_account');
-            case 'create_pin':
-            case 'confirm_pin': return t('auth_first_time_title');
+            case 'create_drawing':
+            case 'confirm_drawing': return t('auth_first_time_title');
             case 'login': return `${t('auth_welcome_back')}, ${savedUsername || ''}`;
             case 'import_file': return t('auth_import_account');
-            case 'import_pin':
-            case 'import_confirm_pin': return t('auth_first_time_title');
+            case 'import_drawing':
+            case 'import_confirm_drawing': return t('auth_first_time_title');
             default: return t('auth_welcome');
         }
     };
@@ -367,20 +373,20 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             case 'choice': return t('auth_your_impact');
             case 'register_name': return t('auth_enter_username');
             case 'register_password': return t('auth_create_password');
-            case 'create_pin': return t('auth_first_time_subtitle');
-            case 'confirm_pin': return t('auth_confirm_pin');
+            case 'create_drawing': return t('auth_first_time_subtitle');
+            case 'confirm_drawing': return t('auth_confirm_drawing');
             case 'login': return t('auth_login_title');
             case 'import_file': return t('auth_import_desc');
-            case 'import_pin': return t('auth_first_time_subtitle');
-            case 'import_confirm_pin': return t('auth_confirm_pin');
+            case 'import_drawing': return t('auth_first_time_subtitle');
+            case 'import_confirm_drawing': return t('auth_confirm_drawing');
             default: return '';
         }
     };
 
     // ═══════════════════════════════════════════
-    // PIN MODES — show PIN pad
+    // DRAWING MODES — show drawing canvas
     // ═══════════════════════════════════════════
-    const isPinMode = ['create_pin', 'confirm_pin', 'login', 'import_pin', 'import_confirm_pin'].includes(mode);
+    const isDrawingMode = ['create_drawing', 'confirm_drawing', 'login', 'import_drawing', 'import_confirm_drawing'].includes(mode);
 
     // ═══════════════════════════════════════════
     // HEADER COMPONENT
@@ -397,7 +403,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
     );
 
     // ═══════════════════════════════════════════
-    // RENDER FORM CONTENT (non-PIN modes)
+    // RENDER FORM CONTENT (non-drawing modes)
     // ═══════════════════════════════════════════
     const renderFormContent = () => {
         const content = (() => {
@@ -676,32 +682,47 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             </View>
 
             <SafeAreaView style={styles.safeContainer}>
-                {isPinMode ? (
-                    /* ═══ PIN mode layout ═══ */
+                {isDrawingMode ? (
+                    /* ═══ Drawing mode layout ═══ */
                     <Animated.View style={[styles.contentWrapper, contentStyle]}>
                         {renderHeader()}
 
-                        {(mode === 'create_pin' || mode === 'confirm_pin') && (
-                            <View style={styles.centerStage}>
-                                <FishBowlLoader />
+                        {(mode === 'create_drawing' || mode === 'confirm_drawing') && (
+                            <View style={{ alignItems: 'center', paddingVertical: winH < 700 ? rs(4) : rs(10) }}>
+                                <FishBowlLoader size={winH < 700 ? 120 : 180} />
                             </View>
                         )}
 
-                        {/* PIN Display */}
-                        <View style={styles.feedbackArea}>
-                            <PinDisplay pinLength={pin.length} shakeValue={shake} />
-                            <Text style={[styles.pinHint, { color: colors.textMuted }]}>{statusText}</Text>
+                        {/* Drawing Canvas */}
+                        <View style={styles.drawingArea}>
+                            <DrawingPad
+                                key={mode}
+                                onSubmit={handleDrawingSubmit}
+                                confirmLabel={t('auth_draw_confirm_btn')}
+                                clearLabel={t('auth_draw_clear')}
+                                hintText={t('auth_draw_hint')}
+                                strokeCountLabel={t('auth_draw_strokes')}
+                            />
+                            <Text style={[styles.pinHint, { color: colors.textMuted, marginTop: rs(8) }]}>{statusText}</Text>
                             {errorText ? <Text style={[styles.pinError]}>{errorText}</Text> : null}
                         </View>
 
-                        {/* Input Area */}
-                        <View style={styles.inputArea}>
-                            <PinPad
-                                onPinPress={handlePinPress}
-                                onBiometricPress={authenticateBiometric}
-                                onDeletePress={handleDelete}
-                            />
-                        </View>
+                        {/* Back button for drawing modes during registration/import */}
+                        {(mode === 'create_drawing' || mode === 'import_drawing') && (
+                            <TouchableOpacity
+                                style={styles.backButton}
+                                onPress={() => {
+                                    setDrawingStrokes(null);
+                                    setFirstDrawing(null);
+                                    setErrorText('');
+                                    if (mode === 'create_drawing') setMode('register_password');
+                                    else setMode('import_file');
+                                }}
+                            >
+                                <Ionicons name="arrow-back" size={rs(18)} color={colors.textSecondary} />
+                                <Text style={[styles.backButtonText, { color: colors.textSecondary }]}>{t('auth_back')}</Text>
+                            </TouchableOpacity>
+                        )}
                     </Animated.View>
                 ) : (
                     renderFormContent()
@@ -739,13 +760,12 @@ const styles = StyleSheet.create({
     },
 
     // Fish
-    centerStage: { flex: 2.5, alignItems: 'center', justifyContent: 'center' },
+    centerStage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-    // PIN area
-    feedbackArea: { flex: 0.8, justifyContent: 'center', alignItems: 'center' },
+    // Drawing area
+    drawingArea: { flex: 3, justifyContent: 'center', alignItems: 'center', paddingBottom: rh(10) },
     pinHint: { fontSize: rf(12), marginTop: rs(8), letterSpacing: rs(0.5), textAlign: 'center' },
     pinError: { fontSize: rf(11), marginTop: rs(6), color: '#ef4444', textAlign: 'center', fontWeight: '600' },
-    inputArea: { flex: 3.5, justifyContent: 'center', paddingBottom: rh(20) },
 
     // ═══ CHOICE CARDS ═══
     choiceContainer: { width: '100%', gap: SPACING.lg, paddingHorizontal: SPACING.md },
