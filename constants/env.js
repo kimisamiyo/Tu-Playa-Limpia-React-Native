@@ -41,6 +41,19 @@ const ENV = {
   // ─────────────────────────────────────────────────────────────────────────
   API_BASE_URL: process.env.API_BASE_URL || "",
   API_KEY: process.env.API_KEY || "",
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // BLOCKCHAIN CONFIGURATION
+  // ─────────────────────────────────────────────────────────────────────────
+  // zkSYS PoB Devnet Configuration
+  BLOCKCHAIN_CHAIN_ID: 57042,
+  BLOCKCHAIN_CHAIN_ID_HEX: '0xDED2',
+  BLOCKCHAIN_RPC_URL: process.env.BLOCKCHAIN_RPC_URL || 'https://rpc-pob.dev11.top',
+  BLOCKCHAIN_CHAIN_NAME: 'zkSYS PoB Devnet',
+  BLOCKCHAIN_NATIVE_CURRENCY_NAME: 'Testnet Syscoin',
+  BLOCKCHAIN_NATIVE_CURRENCY_SYMBOL: 'TSYS',
+  BLOCKCHAIN_NATIVE_CURRENCY_DECIMALS: 18,
+  BLOCKCHAIN_BLOCK_EXPLORER_URL: process.env.BLOCKCHAIN_BLOCK_EXPLORER_URL || 'https://explorer-pob.dev11.top',
 };
 
 // Validar variables críticas

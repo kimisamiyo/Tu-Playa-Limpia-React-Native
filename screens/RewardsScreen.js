@@ -24,6 +24,7 @@ import FloatingBubbles from '../components/premium/FloatingBubbles';
 import GlassCard from '../components/premium/GlassCard';
 import AnimatedButton from '../components/premium/AnimatedButton';
 import EarthCard from '../components/premium/EarthCard';
+import { handleClaim } from '../utils/nftGenerator';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CELEBRATION MODAL
@@ -301,17 +302,47 @@ export default function RewardsScreen() {
     );
 
     const handleClaimNFT = async (nft) => {
-        const { handleClaim } = require('../utils/nftGenerator');
-        const timeout = (ms) => new Promise((res) => setTimeout(() => res({ success: false, error: new Error('Timeout') }), ms));
-        const result = await Promise.race([handleClaim(), timeout(120000)]);
+        try {
+            if (!nft) return;
 
-        if (result?.success) {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            claimNFT(nft.id);
-            Alert.alert(t('celebration_thanks'));
-        } else {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert('Error', result?.error?.message || 'Failed to claim');
+            console.log("🚀 Claim iniciado para missionId:", nft.id);
+
+            const { handleClaim } = await import('../utils/nftGenerator');
+
+            const timeout = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('Timeout: la transacción tardó demasiado')), 120000)
+            );
+
+            const result = await Promise.race([
+                handleClaim(nft.id), // ⬅️ PASAMOS missionId REAL
+                timeout
+            ]);
+
+            console.log("Resultado del claim:", result);
+
+            if (result?.success) {
+                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+                claimNFT(nft.id);
+
+                Alert.alert(
+                    t('rewards_success') || 'NFT minteado 🎉',
+                    t('rewards_success_desc') || 'Tu NFT fue enviado a tu wallet'
+                );
+            } else {
+                throw result?.error || new Error('Error desconocido');
+            }
+
+        } catch (err) {
+
+            console.error("Error en handleClaimNFT:", err);
+
+            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+
+            Alert.alert(
+                'Error',
+                err?.message || 'No se pudo mintear el NFT'
+            );
         }
     };
 

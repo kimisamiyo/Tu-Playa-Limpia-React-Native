@@ -1,69 +1,32 @@
-import { Platform } from 'react-native';
-
-// Importar Linking de forma segura
-let Linking = null;
-try {
-  Linking = require('react-native').Linking;
-} catch (e) {
-  console.log('Linking no disponible');
-}
+import { ethers } from 'ethers';
+import EthereumProvider from "@walletconnect/ethereum-provider";
 
 export async function connectWalletConnect() {
   try {
-    if (Platform.OS === 'web') {
-      // Para web, retornar datos mock
-      return {
-        provider: null,
-        signer: null,
-        address: '0x' + Math.random().toString(16).substring(2, 42),
-        success: true,
-        message: 'WalletConnect conectado',
-      };
-    } else {
-      // Para mobile: intentar abrir wallets compatibles
-      if (!Linking) {
-        return {
-          provider: null,
-          signer: null,
-          address: '0x' + Math.random().toString(16).substring(2, 42),
-          success: true,
-          message: 'Wallet conectada',
-        };
-      }
+    const provider = await EthereumProvider.init({
+      projectId: "5c7937e314de0f188fccc2d1f9927e11",
+      chains: [57042],
+      rpcMap: {
+        57042: "https://rpc-pob.dev11.top"
+      },
+      showQrModal: true,
+    });
 
-      const deepLinkUrl = `wc:localhost@2?symKey=test&relay-protocol=irn`;
-      
-      try {
-        // Intentar con Rainbow Wallet primero (no esperar)
-        Linking.canOpenURL('rainbow://')
-          .then(canOpen => {
-            if (canOpen) {
-              Linking.openURL(`rainbow://wc?uri=${encodeURIComponent(deepLinkUrl)}`);
-            }
-          })
-          .catch(err => console.log('Rainbow check error:', err));
+    await provider.connect();
 
-        // Retornar éxito inmediatamente
-        return {
-          provider: null,
-          signer: null,
-          address: '0x' + Math.random().toString(16).substring(2, 42),
-          success: true,
-          message: 'Wallet conectada',
-        };
-      } catch (error) {
-        console.error('WalletConnect mobile error:', error);
-        return {
-          provider: null,
-          signer: null,
-          address: '0x' + Math.random().toString(16).substring(2, 42),
-          success: true,
-          message: 'Intenta conectar tu wallet',
-        };
-      }
-    }
+    const ethersProvider = new ethers.BrowserProvider(provider);
+    const signer = await ethersProvider.getSigner();
+    const address = await signer.getAddress();
+
+    return {
+      provider: ethersProvider,
+      signer,
+      address,
+      success: true,
+    };
+
   } catch (error) {
-    console.error('WalletConnect connection error:', error);
-    throw new Error(error.message || "Error al conectar con WalletConnect");
+    console.error("WalletConnect error:", error);
+    throw new Error("Error al conectar con WalletConnect");
   }
 }

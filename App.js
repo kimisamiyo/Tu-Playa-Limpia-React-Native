@@ -11,6 +11,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { WalletProvider } from "./context/WalletContext";
+import { injectPaliWallet } from './utils/paliInjector';
 
 import { useFonts } from 'expo-font';
 import { Ionicons, MaterialCommunityIcons, FontAwesome, Feather } from '@expo/vector-icons';
@@ -28,6 +29,19 @@ function AppContent() {
     ...FontAwesome.font,
     ...Feather.font,
   });
+
+  // Inyectar Pali Wallet en web
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      injectPaliWallet().then((success) => {
+        if (success) {
+          console.log("✅ Pali Wallet disponible para usar");
+        } else {
+          console.warn("⚠️ Pali Wallet no está disponible. Asegúrate de tener la extensión instalada.");
+        }
+      });
+    }
+  }, []);
 
   // Only wait for Auth to initialize. If fonts fail, icons will pop in later.
   if (isLoading) return null;
