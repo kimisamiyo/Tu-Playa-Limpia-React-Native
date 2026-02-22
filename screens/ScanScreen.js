@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions, ActivityIndicator, useWindowDimensions } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -246,6 +247,7 @@ const PermissionScreen = ({ onRequestPermission, isDark }) => {
                         <Ionicons name="checkmark-circle" size={rs(20)} color="#fff" />
                         <Text style={styles.permissionButtonText}>{t('scan_permission_allow')}</Text>
                     </Pressable>
+
                 </Animated.View>
             </View>
         </View>
@@ -461,6 +463,32 @@ export default function ScanScreen() {
     const { t } = useLanguage();
     const [lastScanned, setLastScanned] = useState(null);
     const [permission, requestPermission] = useCameraPermissions();
+    const [permissionRevoked, setPermissionRevoked] = useState(false);
+
+    // Persistence: Load permissionRevoked state
+    useEffect(() => {
+        const loadRevokeState = async () => {
+            try {
+                const saved = await AsyncStorage.getItem('@tpl_scan_permission_revoked');
+                if (saved === 'true') setPermissionRevoked(true);
+            } catch (e) {
+                console.warn('Failed to load revoke state:', e);
+            }
+        };
+        loadRevokeState();
+    }, []);
+
+    // Persistence: Save permissionRevoked state
+    useEffect(() => {
+        const saveRevokeState = async () => {
+            try {
+                await AsyncStorage.setItem('@tpl_scan_permission_revoked', permissionRevoked.toString());
+            } catch (e) {
+                console.warn('Failed to save revoke state:', e);
+            }
+        };
+        saveRevokeState();
+    }, [permissionRevoked]);
 
     // AI Scanning states
     const cameraRef = useRef(null);
@@ -781,9 +809,17 @@ export default function ScanScreen() {
         );
     }
 
-    if (!permission.granted) {
-        // Permission not granted, show request UI
-        return <PermissionScreen onRequestPermission={requestPermission} isDark={isDark} />;
+    if (!permission.granted || permissionRevoked) {
+        // Permission not granted or manually revoked, show request UI
+        return (
+            <PermissionScreen
+                onRequestPermission={() => {
+                    setPermissionRevoked(false);
+                    requestPermission();
+                }}
+                isDark={isDark}
+            />
+        );
     }
 
     // Permission granted - show camera scanner with original design
@@ -799,6 +835,24 @@ export default function ScanScreen() {
             {/* Bubbles - same as original */}
             <FloatingBubbles count={12} minSize={4} maxSize={16} zIndex={1} />
 
+            {/* ═══ Revoke permission button ═══ */}
+            <Pressable
+                onPress={() => {
+                    setIsAutoScanning(false);
+                    setPermissionRevoked(true);
+                    setPredictions([]);
+                    setDetectionResults(null);
+                    if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
+                }}
+                style={({ pressed }) => [
+                    styles.revokeButton,
+                    { opacity: pressed ? 0.6 : 1 }
+                ]}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+                <Ionicons name="close" size={rs(16)} color={isDark ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.95)'} />
+            </Pressable>
+
             <CelebrationModal
                 visible={showCelebration}
                 onClose={() => setShowCelebration(false)}
@@ -808,7 +862,7 @@ export default function ScanScreen() {
             {/* Status indicator - MOVED OUTSIDE OVERLAY */}
             <Animated.View
                 entering={FadeIn.delay(400)}
-                style={styles.instructionBox}
+                style={styles.scanningBox}
             >
                 {isReadyToCollect ? (
                     <Ionicons
@@ -1460,5 +1514,19 @@ const styles = StyleSheet.create({
         top: rs(8),
         right: rs(8),
         padding: rs(4),
+    },
+    revokeButton: {
+        position: 'absolute',
+        top: rs(48),
+        right: rs(16),
+        zIndex: 100,
+        width: rs(32),
+        height: rs(32),
+        borderRadius: rs(16),
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        borderWidth: 1.5,
+        borderColor: 'rgba(255, 255, 255, 0.4)',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
 });

@@ -253,8 +253,12 @@ const translations = {
         promos_redeem: 'CANJEAR',
         promos_footer: 'El proyecto pronto tendrá muchas más funcionalidades',
         promos_locked_title: 'Promociones Bloqueadas',
-        promos_locked_desc: 'Alcanza Nivel 2 (8 NFTs) para desbloquear',
+        promos_locked_desc: 'Alcanza Nivel 2 (4 NFTs) para desbloquear',
         promos_locked_hint: '¡Sigue escaneando y canjeando recompensas!',
+
+        // Scoreboard
+        score_progress: 'Progreso al Nivel {level}',
+        score_collected: '{count}/{total} NFTs recolectados',
 
         // Scan
         scan_camera_permission: 'Permiso de Cámara',
@@ -571,8 +575,12 @@ const translations = {
         promos_redeem: 'REDEEM',
         promos_footer: 'The project will soon have many more features',
         promos_locked_title: 'Promotions Locked',
-        promos_locked_desc: 'Reach Level 2 (8 NFTs) to unlock',
+        promos_locked_desc: 'Reach Level 2 (4 NFTs) to unlock',
         promos_locked_hint: 'Keep scanning and redeeming rewards!',
+
+        // Scoreboard
+        score_progress: 'Progress to Level {level}',
+        score_collected: '{count}/{total} NFTs collected',
 
         scan_camera_permission: 'Camera Permission',
         scan_camera_permission_desc: 'We need camera access to scan waste.',
@@ -895,8 +903,12 @@ const translations = {
         promos_redeem: '兑换',
         promos_footer: '该项目很快将拥有更多功能',
         promos_locked_title: '促销已锁定',
-        promos_locked_desc: '达到等级2（8个NFT）解锁',
+        promos_locked_desc: '达到等级2（4个NFT）解锁',
         promos_locked_hint: '继续扫描和兑换奖励！',
+
+        // Scoreboard
+        score_progress: '升级至第 {level} 级',
+        score_collected: '已收集 {count}/{total} 个 NFT',
 
         scan_camera_permission: '相机权限',
         scan_camera_permission_desc: '我们需要相机权限来扫描垃圾。',
@@ -1206,8 +1218,12 @@ const translations = {
         promos_redeem: 'भुनाएं',
         promos_footer: 'हर सप्ताह नए प्रचार। और अनलॉक करने के लिए स्कैन जारी रखें।',
         promos_locked_title: 'प्रचार लॉक',
-        promos_locked_desc: 'अनलॉक करने के लिए स्तर 2 (8 NFTs) प्राप्त करें',
+        promos_locked_desc: 'अनलॉक करने के लिए स्तर 2 (4 NFTs) प्राप्त करें',
         promos_locked_hint: 'स्कैन और भुनाना जारी रखें!',
+
+        // Scoreboard
+        score_progress: 'स्तर {level} के लिए प्रगति',
+        score_collected: '{count}/{total} NFTs एकत्र किए गए',
 
         scan_camera_permission: 'कैमरा अनुमति',
         scan_camera_permission_desc: 'कचरा स्कैन करने के लिए हमें कैमरा एक्सेस चाहिए।',
@@ -1518,8 +1534,12 @@ const translations = {
         promos_redeem: 'استبدال',
         promos_footer: 'سيحتوي المشروع قريباً على المزيد من الميزات',
         promos_locked_title: 'العروض مقفلة',
-        promos_locked_desc: 'اوصل للمستوى 2 (8 NFTs) لفتح',
+        promos_locked_desc: 'اوصل للمستوى 2 (4 NFTs) لفتح',
         promos_locked_hint: 'واصل المسح واستبدال المكافآت!',
+
+        // Scoreboard
+        score_progress: 'التقدم إلى المستوى {level}',
+        score_collected: 'تم جمع {count}/{total} من NFTs',
 
         scan_camera_permission: 'إذن الكاميرا',
         scan_camera_permission_desc: 'نحتاج الوصول إلى الكاميرا لمسح النفايات.',
@@ -1829,8 +1849,12 @@ const translations = {
         promos_redeem: 'ÉCHANGER',
         promos_footer: 'Le projet aura bientôt beaucoup plus de fonctionnalités',
         promos_locked_title: 'Promotions Verrouillées',
-        promos_locked_desc: 'Atteignez le Niveau 2 (8 NFTs) pour débloquer',
+        promos_locked_desc: 'Atteignez le Niveau 2 (4 NFTs) pour débloquer',
         promos_locked_hint: 'Continuez à scanner et à échanger des récompenses !',
+
+        // Scoreboard
+        score_progress: 'Progression vers le niveau {level}',
+        score_collected: '{count}/{total} NFTs collectés',
 
         scan_camera_permission: 'Permission Caméra',
         scan_camera_permission_desc: 'Nous avons besoin de la caméra pour scanner les déchets.',
@@ -2141,8 +2165,12 @@ const translations = {
         promos_redeem: 'RESGATAR',
         promos_footer: 'O projeto em breve terá muito mais funcionalidades',
         promos_locked_title: 'Promoções Bloqueadas',
-        promos_locked_desc: 'Alcance o Nível 2 (8 NFTs) para desbloquear',
+        promos_locked_desc: 'Alcance o Nível 2 (4 NFTs) para desbloquear',
         promos_locked_hint: 'Continue escaneando e resgatando recompensas!',
+
+        // Scoreboard
+        score_progress: 'Progresso para o Nível {level}',
+        score_collected: '{count}/{total} NFTs coletados',
 
         scan_camera_permission: 'Permissão da Câmera',
         scan_camera_permission_desc: 'Precisamos de acesso à câmera para escanear resíduos.',

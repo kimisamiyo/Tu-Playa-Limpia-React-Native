@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useGame } from '../context/GameContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { BRAND } from '../constants/theme';
 import { rs, rf, SPACING, RADIUS } from '../constants/responsive';
 import GlassCard from './premium/GlassCard';
@@ -16,14 +17,15 @@ import GlassCard from './premium/GlassCard';
 export default function Scoreboard() {
     const { points, nfts, level, scannedItems } = useGame();
     const { colors, shadows, isDark } = useTheme();
+    const { t } = useLanguage();
 
     const stats = [
-        { label: 'Puntos', value: points, icon: 'star', color: '#fbbf24' },
-        { label: 'NFTs', value: nfts.length, icon: 'diamond', color: '#60a5fa' },
-        { label: 'Nivel', value: level, icon: 'trophy', color: '#f472b6' },
+        { label: t('home_points'), value: points, icon: 'star', color: '#fbbf24' },
+        { label: t('home_nfts'), value: nfts.length, icon: 'diamond', color: '#60a5fa' },
+        { label: t('profile_level'), value: level, icon: 'trophy', color: '#f472b6' },
     ];
 
-    const progressPercent = Math.min((nfts.length / 8) * 100, 100);
+    const progressPercent = Math.min((nfts.length / 4) * 100, 100);
 
     return (
         <Animated.View entering={FadeIn.delay(150)} style={styles.container}>
@@ -54,7 +56,7 @@ export default function Scoreboard() {
                     <View style={styles.progressHeader}>
                         <Ionicons name="arrow-up-circle" size={rs(14)} color={colors.textMuted} />
                         <Text style={[styles.progressLabel, { color: colors.textMuted }]}>
-                            Progreso al Nivel {level + 1}
+                            {t('score_progress', { level: level + 1 })}
                         </Text>
                     </View>
                     <View style={[styles.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(26,58,74,0.08)' }]}>
@@ -66,7 +68,7 @@ export default function Scoreboard() {
                         />
                     </View>
                     <Text style={[styles.progressText, { color: colors.textMuted }]}>
-                        {nfts.length}/8 NFTs recolectados
+                        {t('score_collected', { count: nfts.length, total: 4 })}
                     </Text>
                 </View>
             </GlassCard>
