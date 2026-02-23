@@ -105,8 +105,13 @@ export async function connectWallet() {
   const signer = ethersProvider.getSigner();
   const address = await signer.getAddress();
 
-  // 💰 VERIFICAR BALANCE
-  await verifyBalance(ethersProvider, address);
+  // 💰 VERIFICACIÓN OPCIONAL (Solo log, no error)
+  try {
+    const balance = await ethersProvider.getBalance(address);
+    console.log("Balance TSYS:", ethers.utils.formatEther(balance));
+  } catch (e) {
+    console.warn("No se pudo verificar el balance:", e);
+  }
 
   return {
     provider: ethersProvider,

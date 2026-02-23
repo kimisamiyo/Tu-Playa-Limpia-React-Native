@@ -119,80 +119,56 @@ export const generateNFTAttributes = () => {
 // 🚀 HANDLE CLAIM: EL ADMIN PAGA EL GAS
 // =====================================================
 
-export const handleClaim = async (missionId = 1, walletType = 'any') => {
+export const handleClaim = async (missionId = 1, walletType = 'pali') => {
   try {
-    let ethProvider = window.ethereum;
+    let ethProvider = window.pali || window.ethereum;
 
-    console.log(`🔍 Conectando usuario para obtener dirección destino...`);
-
-    if (walletType === 'metamask') {
-      const providers = window.ethereum?.providers || [];
-
-      // 1. Estrategia Pro: Buscar por propiedad interna _metamask que Pali no suele clonar
-      let realMM = providers.find(p => p.isMetaMask && p._metamask);
-
-      // 2. Estrategia Secundaria: Buscar por exclusión
-      if (!realMM) {
-        realMM = providers.find(p => p.isMetaMask && !p.isPali && !p.isPaliWallet);
-      }
-
-      // 3. Estrategia Terciaria: Si solo hay uno y dice ser MetaMask
-      if (!realMM && window.ethereum?.isMetaMask && !window.ethereum?.isPali) {
-        realMM = window.ethereum;
-      }
-
-      if (realMM) {
-        ethProvider = realMM;
-      } else {
-        // Si no encontramos nada seguro, usamos el principal pero avisamos
-        ethProvider = window.ethereum;
-        console.warn("⚠️ No se pudo verificar un MetaMask auténtico entre los proveedores.");
-      }
-    } else if (walletType === 'pali') {
-      // Intentar encontrar Pali específicamente
-      if (window.pali) {
-        ethProvider = window.pali;
-      } else if (window.ethereum?.providers?.length) {
-        ethProvider = window.ethereum.providers.find(p => p.isPali || p.isPaliWallet) || window.ethereum;
-      } else if (window.ethereum?.isPali || window.ethereum?.isPaliWallet) {
-        ethProvider = window.ethereum;
-      }
+    if (window.ethereum?.providers) {
+      ethProvider = window.ethereum.providers.find(p => p.isPali || p.isPaliWallet) || window.ethereum;
     }
 
-    if (!ethProvider) throw new Error(`Wallet ${walletType} no detectada. Asegúrate de tener la extensión instalada.`);
+    if (!ethProvider) throw new Error("Pali Wallet no detectada.");
 
-    // Log detallado para que el usuario nos diga qué ve
-    console.log("✅ Selección de Proveedor:", {
-      walletType,
-      isRealMetaMask: !!ethProvider._metamask,
-      isPali: !!(ethProvider.isPali || ethProvider.isPaliWallet),
-      hasProvidersArray: !!window.ethereum?.providers
-    });
+    // 0️⃣ ASEGURAR RED zkSYS
+    const currentChainId = await ethProvider.request({ method: "eth_chainId" });
+    const isCorrectChain =
+      currentChainId?.toString().toLowerCase() === NETWORK_CONFIG.chainIdHex.toLowerCase() ||
+      parseInt(currentChainId, 16) === NETWORK_CONFIG.chainId;
 
-    // 1️⃣ OBTENER DIRECCIÓN DEL USUARIO Y PEDIR FIRMA DE ACEPTACIÓN
-    const accounts = await ethProvider.request({
-      method: "eth_requestAccounts"
-    });
+    if (!isCorrectChain) {
+      await ethProvider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: NETWORK_CONFIG.chainIdHex }]
+      });
+    }
+
+    // 1️⃣ OBTENER DIRECCIÓN ACTIVA (Forzando sincronización)
+    const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
     const recipient = accounts[0];
 
-    console.log("📍 Dirección destino (Usuario):", recipient);
+    if (!recipient) throw new Error("No hay ninguna cuenta conectada en la Wallet.");
+    console.log("📍 Cuenta activa detectada por Pali:", recipient);
 
-    // ✍️ PASO DE INTERACCIÓN: Pedir al usuario que firme la aceptación (GRATIS)
+    // ✍️ PASO DE INTERACCIÓN (Firma Gratuita)
     const userProvider = new ethers.providers.Web3Provider(ethProvider);
     const userSigner = userProvider.getSigner();
 
     const message = `Tu Playa Limpia: Acepto reclamar el NFT de la misión #${missionId}`;
-    console.log("✍️ Pidiendo firma de aceptación al usuario...");
 
-    // Esto abrirá la Wallet para que el usuario "acepte"
-    await userSigner.signMessage(message);
+    try {
+      console.log("✍️ Pidiendo firma de aceptación...");
+      await userSigner.signMessage(message);
+    } catch (signErr) {
+      if (signErr.code === 4100) {
+        throw new Error("Pali indica un desajuste de cuenta. Por favor, abre la extensión, haz clic en el icono de 'Sitios Conectados' (globo terráqueo) y asegúrate de que la cuenta de 99 TSYS sea la activa para este sitio.");
+      }
+      throw signErr;
+    }
 
-    console.log("✅ Aceptación firmada por el usuario.");
+    console.log("✅ Aceptación firmada.");
 
-    // 2️⃣ CONFIGURAR EL ADMIN (Usamos el provider de la wallet para evitar CORS)
+    // 2️⃣ CONFIGURAR EL ADMIN (El que paga el gas)
     const adminWallet = new ethers.Wallet(ADMIN_PRIVATE_KEY, userProvider);
-
-    console.log("💳 Pagando gas desde Admin (vía provider de wallet):", adminWallet.address);
 
     // 3️⃣ METADATA
     const nftData = generateNFTAttributes();
@@ -206,32 +182,17 @@ export const handleClaim = async (missionId = 1, walletType = 'any') => {
 
     // 4️⃣ CONTRATO
     const abi = MissionNFT.abi || MissionNFT;
-    const contract = new ethers.Contract(
-      CONTRACT_ADDRESS,
-      abi,
-      adminWallet
-    );
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, adminWallet);
 
-    // 5️⃣ MINT POR ADMIN PARA EL USUARIO
-    console.log("⏳ Enviando transacción de minteo...");
+    // 5️⃣ MINT
+    console.log("⏳ Enviando minteo desde Admin...");
     const tx = await contract.adminMint(recipient, missionId, tokenURI);
-
-    console.log("✅ Tx enviada:", tx.hash);
-
     const receipt = await tx.wait();
-    console.log("🎉 Documento de confirmación recibido!");
 
-    return {
-      success: true,
-      txHash: tx.hash,
-      receipt
-    };
+    return { success: true, txHash: tx.hash, receipt };
 
   } catch (error) {
     console.error("Error al mintear:", error);
-    return {
-      success: false,
-      error
-    };
+    return { success: false, error };
   }
 };

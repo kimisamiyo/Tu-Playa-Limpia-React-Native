@@ -30,6 +30,7 @@ import GlassCard from '../components/premium/GlassCard';
 import ScalePressable from '../components/ScalePressable';
 import { mintNFT } from "../utils/blockchain/missionNFT";
 import { generateNFTAttributes } from "../utils/nftGenerator";
+import TPLTitle from '../components/premium/TPLTitle';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PREMIUM PROFILE SCREEN
@@ -390,6 +391,7 @@ export default function ProfileScreen({ navigation }) {
                             style={styles.nameDisplay}
                         >
                             <Text style={[styles.userName, { color: colors.text }]}>{user.name}</Text>
+                            <TPLTitle title={user.tplTitle} />
                             {!user.hasChangedUsername && (
                                 <Ionicons name="pencil" size={rs(16)} color={colors.textSecondary} style={{ marginLeft: rs(10) }} />
                             )}

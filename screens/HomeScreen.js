@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useWindowDimensions } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -31,6 +32,8 @@ import { BRAND, GRADIENTS } from '../constants/theme';
 import Water from '../components/Water';
 import FloatingBubbles from '../components/premium/FloatingBubbles';
 import GlassCard from '../components/premium/GlassCard';
+import TPLTitle from '../components/premium/TPLTitle';
+import TPLRedeemModal from '../components/TPLRedeemModal';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ANIMATED ACTION ITEM
@@ -84,9 +87,8 @@ const ActionItem = ({ icon, label, delay = 0, onPress, customWidth }) => {
 // ═══════════════════════════════════════════════════════════════════════════
 // PREMIUM BALANCE CARD
 // ═══════════════════════════════════════════════════════════════════════════
-const BalanceCard = () => {
+const BalanceCard = ({ onRedeem, points, nfts }) => {
     const { colors, shadows, isDark } = useTheme();
-    const { points, nfts } = useGame();
     const { t } = useLanguage();
     const balanceScale = useSharedValue(1);
 
@@ -122,6 +124,7 @@ const BalanceCard = () => {
                         <TouchableOpacity
                             style={[styles.redeemButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.2)' }]}
                             activeOpacity={0.7}
+                            onPress={onRedeem}
                         >
                             <Ionicons name="gift-outline" size={rs(14)} color="#fff" style={{ marginRight: rs(6) }} />
                             <Text style={styles.redeemButtonText}>{t('home_redeem_tpl')}</Text>
@@ -152,15 +155,21 @@ const BalanceCard = () => {
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN HOME SCREEN
 // ═══════════════════════════════════════════════════════════════════════════
-import { useWindowDimensions } from 'react-native';
 
 export default function HomeScreen() {
     const navigation = useNavigation();
-    const { user, points, nfts, level } = useGame();
+    const { user, points, nfts, level, updateUserProfile } = useGame();
     const { colors, shadows, isDark } = useTheme();
     const { t, language } = useLanguage();
     const { width } = useWindowDimensions();
     const isDesktop = width >= 1024;
+    const [showRedeemModal, setShowRedeemModal] = React.useState(false);
+
+    const handleTitleUpdate = (newTitle) => {
+        updateUserProfile({ tplTitle: newTitle });
+        setShowRedeemModal(false);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    };
 
     // Localized date
     const today = new Date();
@@ -193,9 +202,12 @@ export default function HomeScreen() {
                         style={styles.header}
                     >
                         <View>
-                            <Text style={[styles.greeting, { color: colors.text, fontSize: isDesktop ? rf(32) : rf(26) }]}>
-                                {t('home_greeting')}, {user.name.split(' ')[0]}
-                            </Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Text style={[styles.greeting, { color: colors.text, fontSize: isDesktop ? rf(32) : rf(26) }]}>
+                                    {t('home_greeting')}, {user.name.split(' ')[0]}
+                                </Text>
+                                <TPLTitle title={user.tplTitle} />
+                            </View>
                             <Text style={[styles.date, { color: colors.textMuted }]}>
                                 {dateString}
                             </Text>
@@ -226,7 +238,11 @@ export default function HomeScreen() {
 
                         {/* Left/Top: Balance Card */}
                         <View style={isDesktop ? { flex: 0.4, marginRight: SPACING.xl } : { width: '100%' }}>
-                            <BalanceCard />
+                            <BalanceCard
+                                onRedeem={() => setShowRedeemModal(true)}
+                                points={points}
+                                nfts={nfts}
+                            />
                         </View>
 
                         {/* Right/Bottom: Quick Actions */}
@@ -275,6 +291,13 @@ export default function HomeScreen() {
             <View style={styles.waterWrapper}>
                 <Water />
             </View>
+            <TPLRedeemModal
+                visible={showRedeemModal}
+                onClose={() => setShowRedeemModal(false)}
+                points={points}
+                currentTitle={user.tplTitle}
+                onUpdateTitle={handleTitleUpdate}
+            />
         </View>
     );
 }

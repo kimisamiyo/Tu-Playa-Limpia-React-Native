@@ -154,41 +154,6 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
                                     fullWidth
                                     style={{ justifyContent: 'center', alignItems: 'center' }}
                                 />
-
-                                {/* MetaMask Option */}
-                                <AnimatedButton
-                                    title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_metamask')}
-                                    onPress={() => {
-                                        if (Platform.OS === 'web') {
-                                            handleClaimPress('metamask');
-                                        } else {
-                                            onClose();
-                                            setTimeout(() => {
-                                                const metamaskUrl = 'metamask://';
-                                                Linking.canOpenURL(metamaskUrl).then(supported => {
-                                                    if (supported) {
-                                                        Linking.openURL(metamaskUrl);
-                                                    } else {
-                                                        Linking.openURL('https://metamask.app.link/dapp/tu-playa-limpia-url');
-                                                    }
-                                                }).catch(() => {
-                                                    Linking.openURL('https://metamask.io');
-                                                });
-                                            }, 500);
-                                        }
-                                    }}
-                                    variant="primary"
-                                    icon={
-                                        <Image
-                                            source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/MetaMask_Fox.svg/1024px-MetaMask_Fox.svg.png' }}
-                                            style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
-                                            resizeMode="contain"
-                                        />
-                                    }
-                                    disabled={nft.claimed || claiming}
-                                    fullWidth
-                                    style={{ justifyContent: 'center', alignItems: 'center' }}
-                                />
                             </View>
                         </View>
                     </Animated.View>
@@ -320,7 +285,7 @@ export default function RewardsScreen() {
             );
 
             const result = await Promise.race([
-                handleClaim(nft.id, walletType), // ⬅️ PASAMOS missionId Y walletType REAL
+                handleClaim(nft.id, walletType), // ⬅️ Deja que handleClaim obtenga la cuenta activa directamente
                 timeout
             ]);
 

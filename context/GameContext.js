@@ -24,6 +24,7 @@ export const GameProvider = ({ children }) => {
         avatar: null,
         initials: 'OG',
         hasChangedUsername: false,
+        tplTitle: 'Cleanup Rookie',
     });
 
     const loadGameState = async () => {
@@ -49,7 +50,7 @@ export const GameProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
-        AsyncStorage.setItem(GAME_KEYS.NFTS, JSON.stringify(nfts)).catch(() => {});
+        AsyncStorage.setItem(GAME_KEYS.NFTS, JSON.stringify(nfts)).catch(() => { });
     }, [nfts]);
 
     const generateNFTHash = () => {
