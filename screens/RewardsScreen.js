@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-    View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Dimensions, Platform, useWindowDimensions, Alert, Image, Linking
+    View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, Dimensions, Platform, useWindowDimensions, Alert, Image, Linking, ActivityIndicator
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,7 +27,6 @@ import FloatingBubbles from '../components/premium/FloatingBubbles';
 import GlassCard from '../components/premium/GlassCard';
 import AnimatedButton from '../components/premium/AnimatedButton';
 import EarthCard from '../components/premium/EarthCard';
-import { handleClaim } from '../utils/nftGenerator';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CELEBRATION MODAL
@@ -81,11 +80,11 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
 
     if (!nft) return null;
 
-    const handleClaimPress = async () => {
+    const handleClaimPress = async (walletType = 'any') => {
         if (nft.claimed || claiming) return;
         setClaiming(true);
         try {
-            await onClaim(nft);
+            await onClaim(nft, walletType);
         } catch (error) {
             console.error(error);
         } finally {
@@ -142,7 +141,7 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
                                 {/* Pali Option (Primary) */}
                                 <AnimatedButton
                                     title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_pali')}
-                                    onPress={handleClaimPress}
+                                    onPress={() => handleClaimPress('pali')}
                                     variant="primary"
                                     icon={
                                         <Image
@@ -160,21 +159,23 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
                                 <AnimatedButton
                                     title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_metamask')}
                                     onPress={() => {
-                                        onClose();
-                                        setTimeout(() => {
-                                            // Try to open MetaMask App
-                                            const metamaskUrl = 'metamask://';
-                                            Linking.canOpenURL(metamaskUrl).then(supported => {
-                                                if (supported) {
-                                                    Linking.openURL(metamaskUrl);
-                                                } else {
-                                                    // Fallback to https (universal link)
-                                                    Linking.openURL('https://metamask.app.link/dapp/tu-playa-limpia-url');
-                                                }
-                                            }).catch(() => {
-                                                Linking.openURL('https://metamask.io');
-                                            });
-                                        }, 500);
+                                        if (Platform.OS === 'web') {
+                                            handleClaimPress('metamask');
+                                        } else {
+                                            onClose();
+                                            setTimeout(() => {
+                                                const metamaskUrl = 'metamask://';
+                                                Linking.canOpenURL(metamaskUrl).then(supported => {
+                                                    if (supported) {
+                                                        Linking.openURL(metamaskUrl);
+                                                    } else {
+                                                        Linking.openURL('https://metamask.app.link/dapp/tu-playa-limpia-url');
+                                                    }
+                                                }).catch(() => {
+                                                    Linking.openURL('https://metamask.io');
+                                                });
+                                            }, 500);
+                                        }
                                     }}
                                     variant="primary"
                                     icon={
@@ -239,6 +240,7 @@ export default function RewardsScreen() {
     const sidebarOffset = isDesktop ? 250 : 0;
     const availableWidth = width - sidebarOffset - (SPACING.lg * 2) - (cardGap * (numColumns - 1));
     const cardWidth = availableWidth / numColumns;
+    const cardHeight = cardWidth * 1.4;
 
     const renderNFT = useCallback(({ item, index }) => {
         const isNew = lastUnlockedNFT?.id === item.id;
@@ -266,59 +268,7 @@ export default function RewardsScreen() {
                         isNew={item.isNew}
                         onPress={handleNFTPress}
                     />
-
-                    {/* Action Row: Connect / Claim */}
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: SPACING.xs }}>
-                        {!address ? (
-                            <TouchableOpacity
-                                style={{ flex: 1, padding: rs(8), backgroundColor: BRAND.oceanMid, borderRadius: RADIUS.xs, alignItems: 'center', marginRight: rs(6) }}
-                                onPress={() => setConnectTarget(item)}
-                                activeOpacity={0.85}
-                            >
-                                <Text style={{ color: '#fff', fontWeight: '700' }}>{t('wallet_connect_short') || 'Conectar'}</Text>
-                            </TouchableOpacity>
-                        ) : (
-                            <TouchableOpacity
-                                style={{ flex: 1, padding: rs(8), backgroundColor: item.claimed ? colors.textMuted : BRAND.oceanMid, borderRadius: RADIUS.xs, alignItems: 'center', marginRight: rs(6) }}
-                                onPress={async () => {
-                                    if (item.claimed) return;
-                                    setClaimingMap(prev => ({ ...prev, [item.id]: true }));
-                                    try {
-                                        const result = await handleClaim(signer);
-                                        if (result?.success) {
-                                            markNFTClaimed(item.id);
-                                            Alert.alert(t('rewards_claim_success') || 'Success', t('rewards_nft_claimed') || 'NFT claimed successfully!');
-                                        } else {
-                                            Alert.alert(t('rewards_claim_error') || 'Error', result?.error?.message || t('rewards_claim_failed') || 'Failed to claim NFT');
-                                        }
-                                    } catch (err) {
-                                        console.error('Claim error:', err);
-                                        Alert.alert(t('rewards_claim_error') || 'Error', err?.message || 'Error');
-                                    } finally {
-                                        setClaimingMap(prev => ({ ...prev, [item.id]: false }));
-                                    }
-                                }}
-                                disabled={claimingMap[item.id] || item.claimed}
-                                activeOpacity={0.85}
-                            >
-                                {claimingMap[item.id] ? (
-                                    <ActivityIndicator color="#fff" />
-                                ) : item.claimed ? (
-                                    <Text style={{ color: '#fff', fontWeight: '700' }}>{t('rewards_claimed') || 'Reclamado'}</Text>
-                                ) : (
-                                    <Text style={{ color: '#fff', fontWeight: '700' }}>{t('rewards_claim_now') || 'Reclamar'}</Text>
-                                )}
-                            </TouchableOpacity>
-                        )}
-
-                        <TouchableOpacity
-                            style={{ width: rs(40), height: rs(40), borderRadius: RADIUS.xs, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}
-                            onPress={() => handleNFTPress(item)}
-                        >
-                            <Ionicons name="information-circle" size={rs(20)} color={colors.accent} />
-                        </TouchableOpacity>
-                    </View>
-                </GlassCard>
+                </TouchableOpacity>
             </Animated.View>
         );
     }, [lastUnlockedNFT, cardWidth, address, claimingMap, t, colors, signer]);
@@ -359,20 +309,18 @@ export default function RewardsScreen() {
         </Animated.View>
     );
 
-    const handleClaimNFT = async (nft) => {
+    const handleClaimNFT = async (nft, walletType = 'any') => {
         try {
             if (!nft) return;
 
-            console.log("🚀 Claim iniciado para missionId:", nft.id);
-
-            const { handleClaim } = await import('../utils/nftGenerator');
+            console.log(`🚀 Claim iniciado (${walletType}) para missionId:`, nft.id);
 
             const timeout = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Timeout: la transacción tardó demasiado')), 120000)
             );
 
             const result = await Promise.race([
-                handleClaim(nft.id), // ⬅️ PASAMOS missionId REAL
+                handleClaim(nft.id, walletType), // ⬅️ PASAMOS missionId Y walletType REAL
                 timeout
             ]);
 
@@ -491,7 +439,7 @@ const styles = StyleSheet.create({
     detailStatLabel: { fontSize: rf(10), textTransform: 'uppercase', letterSpacing: 0.5 },
     detailStatValue: { fontSize: rf(14), fontWeight: '600', marginTop: rs(4) },
     detailOwner: { fontSize: rf(14), fontWeight: '600' },
-    
+
     // Claim Section
     claimSection: { marginTop: SPACING.lg, alignItems: 'center', width: '100%', gap: SPACING.md },
     walletWarning: { width: '100%', borderRadius: RADIUS.md, padding: SPACING.md, flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },

@@ -17,9 +17,6 @@ export const NETWORK_CONFIG = {
   blockExplorerUrl: "https://explorer-pob.dev11.top"
 };
 
-// 👇 CUENTA QUE TIENE LOS TSYS
-const REQUIRED_ADDRESS =
-  "0x12539926A3E4331B411b9d1bFC66fddeD008b72E".toLowerCase();
 
 // =====================================================
 // 🔗 OBTENER PROVIDER
@@ -72,11 +69,11 @@ async function switchToZkSys(provider) {
 
 async function verifyBalance(ethersProvider, address) {
   const balance = await ethersProvider.getBalance(address);
-  const formatted = ethers.formatEther(balance);
+  const formatted = ethers.utils.formatEther(balance);
 
   console.log("Balance TSYS:", formatted);
 
-  if (balance === 0n) {
+  if (balance.isZero()) {
     throw new Error("La cuenta no tiene TSYS para pagar gas");
   }
 }
@@ -99,20 +96,13 @@ export async function connectWallet() {
 
   const activeAddress = accounts[0].toLowerCase();
 
-  // 🔴 VALIDAR QUE SEA LA CUENTA CORRECTA
-  if (activeAddress !== REQUIRED_ADDRESS) {
-    throw new Error(
-      `Debes cambiar a la cuenta con TSYS:\n${REQUIRED_ADDRESS}`
-    );
-  }
-
   // 🔄 CAMBIAR A zkSYS
   await switchToZkSys(externalProvider);
 
   // 🔌 CREAR PROVIDER ETHERS
-  const ethersProvider = new ethers.BrowserProvider(externalProvider);
+  const ethersProvider = new ethers.providers.Web3Provider(externalProvider);
 
-  const signer = await ethersProvider.getSigner();
+  const signer = ethersProvider.getSigner();
   const address = await signer.getAddress();
 
   // 💰 VERIFICAR BALANCE

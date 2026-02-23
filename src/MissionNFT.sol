@@ -26,4 +26,20 @@ contract MissionNFT is ERC721URIStorage, Ownable {
 
         missionCompleted[missionId][msg.sender] = true;
     }
+
+    function adminMint(
+        address recipient,
+        uint256 missionId,
+        string memory tokenURI
+    ) external onlyOwner {
+        require(!missionCompleted[missionId][recipient], "Mission already completed");
+
+        uint256 tokenId = tokenCounter;
+        tokenCounter++;
+
+        _safeMint(recipient, tokenId);
+        _setTokenURI(tokenId, tokenURI);
+
+        missionCompleted[missionId][recipient] = true;
+    }
 }
