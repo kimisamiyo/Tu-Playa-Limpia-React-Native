@@ -28,6 +28,13 @@ const TPLTitle = ({ title, size = 'md' }) => {
                     textShadowOffset: { width: 0, height: 0 },
                     textShadowRadius: 10,
                 };
+            case "Collector Starter":
+                return {
+                    color: '#32CD32', // Lime Green
+                    textShadowColor: 'rgba(50, 205, 50, 0.9)',
+                    textShadowOffset: { width: 0, height: 0 },
+                    textShadowRadius: 15,
+                };
             default:
                 return {
                     color: '#A9A9A9', // Dark Gray

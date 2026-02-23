@@ -35,12 +35,14 @@ contract TPLToken is ERC20, Ownable {
     function getTitle(address user) public view returns (string memory) {
         uint256 balance = balanceOf(user) / 10**decimals();
 
-        if (balance >= 700) {
+        if (balance >= 300) {
             return "Golden Eco Legend";
-        } else if (balance >= 300) {
-            return "Ocean Protector";
         } else if (balance >= 100) {
+            return "Ocean Protector";
+        } else if (balance >= 50) {
             return "Beach Guardian";
+        } else if (balance >= 5) {
+            return "Collector Starter";
         } else {
             return "Cleanup Rookie";
         }

@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 import { NETWORK_CONFIG } from './networkConfig';
 
 // 📍 DIRECCIÓN DEL CONTRATO DESPLEGADO
-export const TPL_TOKEN_ADDRESS = "0xd4ef83786d4004c3a33ed30bacf3b8dfb7e37aa2";
+export const TPL_TOKEN_ADDRESS = "0xdbe03da0a41ac28939876416773bec40c3b6a042";
 
 // 📝 ABI SIMPLIFICADA (Para lo que necesitamos)
 export const TPL_TOKEN_ABI = [

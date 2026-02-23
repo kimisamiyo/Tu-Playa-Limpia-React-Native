@@ -53,6 +53,10 @@ export const GameProvider = ({ children }) => {
         AsyncStorage.setItem(GAME_KEYS.NFTS, JSON.stringify(nfts)).catch(() => { });
     }, [nfts]);
 
+    useEffect(() => {
+        AsyncStorage.setItem(GAME_KEYS.USER, JSON.stringify(user)).catch(() => { });
+    }, [user]);
+
     const generateNFTHash = () => {
         return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-6);
     };

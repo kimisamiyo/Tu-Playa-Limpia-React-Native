@@ -156,14 +156,30 @@ const BalanceCard = ({ onRedeem, points, nfts }) => {
 // MAIN HOME SCREEN
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { useWallet } from '../context/WalletContext';
+import { fetchTPLBalance } from '../utils/blockchain/tplToken';
+
 export default function HomeScreen() {
     const navigation = useNavigation();
     const { user, points, nfts, level, updateUserProfile } = useGame();
+    const { address } = useWallet();
     const { colors, shadows, isDark } = useTheme();
     const { t, language } = useLanguage();
     const { width } = useWindowDimensions();
     const isDesktop = width >= 1024;
     const [showRedeemModal, setShowRedeemModal] = React.useState(false);
+    const [tplBalance, setTplBalance] = React.useState(null);
+
+    // Sync Blockchain Balance for Titles
+    useEffect(() => {
+        const getBalance = async () => {
+            if (address) {
+                const bal = await fetchTPLBalance(address);
+                setTplBalance(parseFloat(bal));
+            }
+        };
+        getBalance();
+    }, [address]);
 
     const handleTitleUpdate = (newTitle) => {
         updateUserProfile({ tplTitle: newTitle });
@@ -294,7 +310,7 @@ export default function HomeScreen() {
             <TPLRedeemModal
                 visible={showRedeemModal}
                 onClose={() => setShowRedeemModal(false)}
-                points={points}
+                points={tplBalance !== null ? tplBalance : points}
                 currentTitle={user.tplTitle}
                 onUpdateTitle={handleTitleUpdate}
             />

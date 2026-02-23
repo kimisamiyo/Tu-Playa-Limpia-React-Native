@@ -22,23 +22,30 @@ const TITLES_CONFIG = [
     {
         id: 'legend',
         name: 'Golden Eco Legend',
-        min: 700,
+        min: 300,
         color: '#FFD700',
         desc: 'La leyenda definitiva de la conservación costera.',
     },
     {
         id: 'protector',
         name: 'Ocean Protector',
-        min: 300,
+        min: 100,
         color: '#00FFFF',
         desc: 'Un protector incansable de los ecosistemas marinos.',
     },
     {
         id: 'guardian',
         name: 'Beach Guardian',
-        min: 100,
+        min: 50,
         color: '#F4A460',
         desc: 'Vigilante ejemplar de nuestras playas.',
+    },
+    {
+        id: 'collector',
+        name: 'Collector Starter',
+        min: 5,
+        color: '#32CD32', // Lime Green
+        desc: 'Comenzando a coleccionar actos de impacto positivo.',
     },
     {
         id: 'rookie',
