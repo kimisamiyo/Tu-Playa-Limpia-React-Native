@@ -1,3 +1,4 @@
+import { ethers } from 'ethers';
 export const ZKSYS_POB_DEVNET = {
   chainId: '0xdf42', // 57042 en HEX
   chainName: 'zkSYS PoB Devnet',
@@ -32,4 +33,34 @@ export async function switchToZkSYSNetwork(ethereum) {
       throw switchError;
     }
   }
+}
+export async function connectMetaMask() {
+  if (!window.ethereum) {
+    throw new Error('MetaMask no instalado');
+  }
+
+  const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+  await switchToZkSYSNetwork(window.ethereum);
+
+  const provider = new ethers.providers.Web3Provider(window.ethereum);
+  const signer = provider.getSigner();
+  const address = accounts[0];
+
+  return { success: true, address, provider, signer };
+}
+
+export async function connectPali() {
+  const pali = window.pali || (window.ethereum?.isPaliWallet ? window.ethereum : null);
+  if (!pali) {
+    throw new Error('Pali Wallet no instalada');
+  }
+
+  const accounts = await pali.request({ method: 'eth_requestAccounts' });
+  await switchToZkSYSNetwork(pali);
+
+  const provider = new ethers.providers.Web3Provider(pali);
+  const signer = provider.getSigner();
+  const address = accounts[0];
+
+  return { success: true, address, provider, signer };
 }

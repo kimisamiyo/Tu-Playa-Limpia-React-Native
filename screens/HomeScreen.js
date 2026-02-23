@@ -157,11 +157,13 @@ const BalanceCard = ({ onRedeem, points, nfts }) => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useWallet } from '../context/WalletContext';
+import { useAuth } from '../context/AuthContext';
 import { fetchTPLBalance } from '../utils/blockchain/tplToken';
 
 export default function HomeScreen() {
     const navigation = useNavigation();
     const { user, points, nfts, level, updateUserProfile } = useGame();
+    const { username } = useAuth();
     const { address } = useWallet();
     const { colors, shadows, isDark } = useTheme();
     const { t, language } = useLanguage();
@@ -220,7 +222,7 @@ export default function HomeScreen() {
                         <View>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Text style={[styles.greeting, { color: colors.text, fontSize: isDesktop ? rf(32) : rf(26) }]}>
-                                    {t('home_greeting')}, {user.name.split(' ')[0]}
+                                    {t('home_greeting')}, {username || user.name.split(' ')[0]}
                                 </Text>
                                 <TPLTitle title={user.tplTitle} />
                             </View>

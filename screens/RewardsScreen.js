@@ -104,11 +104,13 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
                         <View style={styles.detailInfo}>
                             <Text style={[styles.detailTitle, { color: '#ffffff' }]}>{nft.title}</Text>
                             <View style={styles.detailRow}>
-                                <Ionicons name="finger-print" size={rs(16)} color={colors.textMuted} />
                                 <Text style={[styles.detailHash, { color: 'rgba(255,255,255,0.6)' }]} numberOfLines={1}>
-                                    {nft.hash?.slice(0, 18)}...{nft.hash?.slice(-8)}
+                                    {nft.claimed && nft.txHash
+                                        ? `${nft.txHash.slice(0, 18)}...${nft.txHash.slice(-8)}`
+                                        : `${nft.hash?.slice(0, 18)}...${nft.hash?.slice(-8)}`}
                                 </Text>
                             </View>
+
                             <View style={styles.detailStats}>
                                 <GlassCard variant="flat" style={styles.detailStat}>
                                     <Text style={[styles.detailStatLabel, { color: 'rgba(255,255,255,0.7)' }]}>{t('rewards_created')}</Text>
@@ -285,7 +287,7 @@ export default function RewardsScreen() {
             );
 
             const result = await Promise.race([
-                handleClaim(nft.id, walletType), // ⬅️ Deja que handleClaim obtenga la cuenta activa directamente
+                handleClaim(nft.id, walletType, signer), // Pase el signer aquí
                 timeout
             ]);
 
@@ -294,11 +296,11 @@ export default function RewardsScreen() {
             if (result?.success) {
                 await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-                claimNFT(nft.id);
+                claimNFT(nft.id, result.txHash);
 
                 Alert.alert(
                     t('rewards_success') || 'NFT minteado 🎉',
-                    t('rewards_success_desc') || 'Tu NFT fue enviado a tu wallet'
+                    `${t('rewards_success_desc') || 'Tu NFT fue enviado a tu wallet'}\n\nHash: ${result.txHash.slice(0, 20)}...`
                 );
             } else {
                 throw result?.error || new Error('Error desconocido');

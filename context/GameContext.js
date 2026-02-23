@@ -119,8 +119,8 @@ export const GameProvider = ({ children }) => {
             scanItem,
             unlockNFT,
             unlockRegionNFT,
-            claimNFT: (id) => {
-                setNfts(prev => prev.map(n => n.id === id ? { ...n, claimed: true } : n));
+            claimNFT: (id, txHash) => {
+                setNfts(prev => prev.map(n => n.id === id ? { ...n, claimed: true, txHash } : n));
             },
             markNFTSeen: (id) => {
                 setNfts(prev => prev.map(n => n.id === id ? { ...n, isNew: false } : n));

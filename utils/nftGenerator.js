@@ -119,56 +119,80 @@ export const generateNFTAttributes = () => {
 // 🚀 HANDLE CLAIM: EL ADMIN PAGA EL GAS
 // =====================================================
 
-export const handleClaim = async (missionId = 1, walletType = 'pali') => {
+export const handleClaim = async (missionId = 1, walletType = 'pali', externalSigner = null) => {
   try {
-    let ethProvider = window.pali || window.ethereum;
+    let ethProvider;
+    let signer;
 
-    if (window.ethereum?.providers) {
-      ethProvider = window.ethereum.providers.find(p => p.isPali || p.isPaliWallet) || window.ethereum;
+    if (externalSigner) {
+      signer = externalSigner;
+      // We don't need ethProvider if we have a signer, but some logic below might need it.
+      // Ethers v5 signer has .provider but it might not be the base ethProvider.
+    } else {
+      ethProvider = window.pali || window.ethereum;
+
+      if (window.ethereum?.providers) {
+        ethProvider = window.ethereum.providers.find(p => p.isPali || p.isPaliWallet) || window.ethereum;
+      }
+
+      if (!ethProvider) throw new Error("Pali Wallet no detectada.");
+
+      const provider = new ethers.providers.Web3Provider(ethProvider);
+      await ethProvider.request({ method: 'eth_requestAccounts' });
+      signer = provider.getSigner();
     }
 
-    if (!ethProvider) throw new Error("Pali Wallet no detectada.");
+    // 0️⃣ ASEGURAR RED zkSYS (Solo si usamos inyector web)
+    if (ethProvider) {
+      const currentChainId = await ethProvider.request({ method: "eth_chainId" });
+      const isCorrectChain =
+        currentChainId?.toString().toLowerCase() === NETWORK_CONFIG.chainIdHex.toLowerCase() ||
+        parseInt(currentChainId, 16) === NETWORK_CONFIG.chainId;
 
-    // 0️⃣ ASEGURAR RED zkSYS
-    const currentChainId = await ethProvider.request({ method: "eth_chainId" });
-    const isCorrectChain =
-      currentChainId?.toString().toLowerCase() === NETWORK_CONFIG.chainIdHex.toLowerCase() ||
-      parseInt(currentChainId, 16) === NETWORK_CONFIG.chainId;
-
-    if (!isCorrectChain) {
-      await ethProvider.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: NETWORK_CONFIG.chainIdHex }]
-      });
+      if (!isCorrectChain) {
+        await ethProvider.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: NETWORK_CONFIG.chainIdHex }]
+        });
+      }
     }
 
-    // 1️⃣ OBTENER DIRECCIÓN ACTIVA (Forzando sincronización)
-    const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
-    const recipient = accounts[0];
+    // 1️⃣ OBTENER DIRECCIÓN ACTIVA Y PROVIDER
+    let recipient;
+    let userSigner;
+    let provider;
+
+    if (externalSigner) {
+      recipient = await externalSigner.getAddress();
+      userSigner = externalSigner;
+      provider = externalSigner.provider;
+    } else {
+      const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
+      recipient = accounts[0];
+      provider = new ethers.providers.Web3Provider(ethProvider);
+      userSigner = provider.getSigner();
+    }
 
     if (!recipient) throw new Error("No hay ninguna cuenta conectada en la Wallet.");
-    console.log("📍 Cuenta activa detectada por Pali:", recipient);
-
-    // ✍️ PASO DE INTERACCIÓN (Firma Gratuita)
-    const userProvider = new ethers.providers.Web3Provider(ethProvider);
-    const userSigner = userProvider.getSigner();
+    console.log("📍 Cuenta activa:", recipient);
 
     const message = `Tu Playa Limpia: Acepto reclamar el NFT de la misión #${missionId}`;
+
+    // ... firma ... (sin cambios aquí)
 
     try {
       console.log("✍️ Pidiendo firma de aceptación...");
       await userSigner.signMessage(message);
     } catch (signErr) {
-      if (signErr.code === 4100) {
-        throw new Error("Pali indica un desajuste de cuenta. Por favor, abre la extensión, haz clic en el icono de 'Sitios Conectados' (globo terráqueo) y asegúrate de que la cuenta de 99 TSYS sea la activa para este sitio.");
-      }
+      // ...
       throw signErr;
     }
 
     console.log("✅ Aceptación firmada.");
 
     // 2️⃣ CONFIGURAR EL ADMIN (El que paga el gas)
-    const adminWallet = new ethers.Wallet(ADMIN_PRIVATE_KEY, userProvider);
+    // Usamos el mismo provider para evitar CORS y errores de red
+    const adminWallet = new ethers.Wallet(ADMIN_PRIVATE_KEY, provider);
 
     // 3️⃣ METADATA
     const nftData = generateNFTAttributes();
