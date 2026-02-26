@@ -22,6 +22,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import { useGame } from '../context/GameContext';
 import { useLanguage } from '../context/LanguageContext';
 import { rs, rf, rh, SPACING, RADIUS } from '../constants/responsive';
@@ -32,9 +33,10 @@ import DrawingPad from './DrawingPad';
 import LivingWater from './LivingWater';
 import FloatingBubbles from './premium/FloatingBubbles';
 import GlassCard from './premium/GlassCard';
-export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, onLogin, onImport, username: savedUsername }) {
+export default function AuthScreen({ onAuthenticated }) {
     const { colors, isDark } = useTheme();
-    const { user } = useGame();
+    const { register: onRegister, login: onLogin, isFirstTime, importAccount: onImport } = useAuth();
+    const { user, updateUserProfile, reloadGameState } = useGame();
     const { t } = useLanguage();
     const { height: winH } = useWindowDimensions();
     const [mode, setMode] = useState(isFirstTime ? 'choice' : 'login');
@@ -154,6 +156,11 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                 setStatusText(t('auth_creating_account'));
                 const result = await onRegister(regUsername, regPassword, strokes);
                 if (result.success) {
+                    updateUserProfile({
+                        name: regUsername,
+                        initials: regUsername.substring(0, 2).toUpperCase(),
+                        hasChangedUsername: false,
+                    });
                     onAuthenticated();
                 } else {
                     hapticError();
@@ -186,6 +193,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                 setStatusText(t('auth_creating_account'));
                 const result = await onImport(importFileContent, importFilePassword, importNewPassword, strokes);
                 if (result.success) {
+                    await reloadGameState();
                     onAuthenticated();
                 } else {
                     hapticError();
@@ -210,6 +218,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             const result = await onLogin(strokes);
             if (result.success) {
                 hapticSuccess();
+                await reloadGameState();
                 onAuthenticated();
             } else {
                 hapticError();
@@ -494,7 +503,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                             <View style={styles.formIconRow}>
                                 <Ionicons name="cloud-download-outline" size={rs(24)} color={colors.accent} />
                             </View>
-                            {}
+                            { }
                             <TouchableOpacity
                                 style={[styles.filePicker, { borderColor: colors.border, backgroundColor: colors.glass }]}
                                 onPress={handlePickFile}
@@ -505,7 +514,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                                     {importFileName || t('account_import_button')}
                                 </Text>
                             </TouchableOpacity>
-                            {}
+                            { }
                             <View style={styles.passwordContainer}>
                                 <TextInput
                                     style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
@@ -519,7 +528,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                                     <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
                                 </TouchableOpacity>
                             </View>
-                            {}
+                            { }
                             <View style={styles.sectionDivider}>
                                 <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
                                 <Text style={[styles.dividerText, { color: colors.textMuted }]}>{t('auth_new_credentials')}</Text>
@@ -599,7 +608,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                                 <FishBowlLoader size={winH < 700 ? 120 : 180} />
                             </View>
                         )}
-                        {}
+                        { }
                         <View style={styles.drawingArea}>
                             <DrawingPad
                                 key={mode}
@@ -612,7 +621,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                             <Text style={[styles.pinHint, { color: colors.textMuted, marginTop: rs(8) }]}>{statusText}</Text>
                             {errorText ? <Text style={[styles.pinError]}>{errorText}</Text> : null}
                         </View>
-                        {}
+                        { }
                         {(mode === 'create_drawing' || mode === 'import_drawing') && (
                             <TouchableOpacity
                                 style={styles.backButton}

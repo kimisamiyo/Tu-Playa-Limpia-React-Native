@@ -46,6 +46,12 @@ export const GameProvider = ({ children }) => {
     useEffect(() => {
         AsyncStorage.setItem(GAME_KEYS.USER, JSON.stringify(user)).catch(() => { });
     }, [user]);
+    useEffect(() => {
+        AsyncStorage.setItem(GAME_KEYS.POINTS, points.toString()).catch(() => { });
+    }, [points]);
+    useEffect(() => {
+        AsyncStorage.setItem(GAME_KEYS.ITEMS, JSON.stringify(scannedItems)).catch(() => { });
+    }, [scannedItems]);
     const generateNFTHash = () => {
         return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-6);
     };
@@ -59,12 +65,12 @@ export const GameProvider = ({ children }) => {
             lockedUntil: new Date(Date.now() + 86400000 * 30).toLocaleDateString(),
             owner: user.name,
             ownerInitials: user.initials,
-            ownerAvatar: user.avatar, 
-            isNew: true, 
-            claimed: false, 
-            acquisition: nftData.acquisition || 'nft_acq_default', 
-            ...generatedData, 
-            ...nftData, 
+            ownerAvatar: user.avatar,
+            isNew: true,
+            claimed: false,
+            acquisition: nftData.acquisition || 'nft_acq_default',
+            ...generatedData,
+            ...nftData,
         };
         setNfts(prev => [newNFT, ...prev]);
         return newNFT;
@@ -99,6 +105,7 @@ export const GameProvider = ({ children }) => {
             scanItem,
             unlockNFT,
             unlockRegionNFT,
+            reloadGameState: loadGameState,
             claimNFT: (id, txHash) => {
                 setNfts(prev => prev.map(n => n.id === id ? { ...n, claimed: true, txHash } : n));
             },
