@@ -388,6 +388,7 @@ export default function ScanScreen() {
     const isFocused = useIsFocused();
     const [lastScanned, setLastScanned] = useState(null);
     const [permission, requestPermission] = useCameraPermissions();
+    const [isCameraActive, setIsCameraActive] = useState(false);
     const cameraRef = useRef(null);
     const scanIntervalRef = useRef(null);
     const isScanningRef = useRef(false);
@@ -632,11 +633,18 @@ export default function ScanScreen() {
             </View>
         );
     }
-    if (!permission.granted) {
+    if (!permission.granted || !isCameraActive) {
         return (
             <PermissionScreen
-                onRequestPermission={() => {
-                    requestPermission();
+                onRequestPermission={async () => {
+                    if (!permission.granted) {
+                        const result = await requestPermission();
+                        if (result?.granted) {
+                            setIsCameraActive(true);
+                        }
+                    } else {
+                        setIsCameraActive(true);
+                    }
                 }}
                 isDark={isDark}
             />
@@ -657,6 +665,7 @@ export default function ScanScreen() {
                     setIsAutoScanning(false);
                     setPredictions([]);
                     setDetectionResults(null);
+                    setIsCameraActive(false);
                     if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
                     if (navigation.canGoBack()) {
                         navigation.goBack();
