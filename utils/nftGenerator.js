@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
 import MissionNFT from "./blockchain/MissionNFT.json";
 import { NETWORK_CONFIG } from './blockchain/networkConfig';
+import { EthereumProvider } from '@walletconnect/ethereum-provider';
 const CONTRACT_ADDRESS = "0x8d4c2a3d11b94874f362453d1bd622630b044cd5";
 const ADMIN_PRIVATE_KEY = "0xd1e6dfc7911dbf5ed105c34567808b4648847f3f1f533160c8d1c907f5efe457";
 const layersSetup = [
@@ -87,20 +88,42 @@ export const generateNFTAttributes = () => {
 export const handleClaim = async (missionId = 1, walletType = 'pali', externalSigner = null) => {
   try {
     let ethProvider;
-    let signer;
+    let recipient;
+    let userSigner;
+    let provider;
+
     if (externalSigner) {
-      signer = externalSigner;
+      recipient = await externalSigner.getAddress();
+      userSigner = externalSigner;
+      provider = externalSigner.provider;
+    } else if (walletType === 'metamask') {
+      try {
+        const wcProvider = await EthereumProvider.init({
+          projectId: process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID || "3fcc6bba6f1de962d911bb5b5c3dba68",
+          chains: [1],
+          showQrModal: true,
+        });
+
+        await wcProvider.enable();
+        ethProvider = wcProvider;
+
+        provider = new ethers.providers.Web3Provider(wcProvider);
+        userSigner = provider.getSigner();
+        const accounts = await provider.listAccounts();
+        if (!accounts || accounts.length === 0) throw new Error("No hay cuenta conectada en MetaMask.");
+        recipient = accounts[0];
+      } catch (err) {
+        throw new Error("Error al conectar con MetaMask: " + err.message);
+      }
     } else {
       ethProvider = window.pali || window.ethereum;
       if (window.ethereum?.providers) {
         ethProvider = window.ethereum.providers.find(p => p.isPali || p.isPaliWallet) || window.ethereum;
       }
       if (!ethProvider) throw new Error("Pali Wallet no detectada.");
-      const provider = new ethers.providers.Web3Provider(ethProvider);
+      provider = new ethers.providers.Web3Provider(ethProvider);
       await ethProvider.request({ method: 'eth_requestAccounts' });
-      signer = provider.getSigner();
-    }
-    if (ethProvider) {
+
       const currentChainId = await ethProvider.request({ method: "eth_chainId" });
       const isCorrectChain =
         currentChainId?.toString().toLowerCase() === NETWORK_CONFIG.chainIdHex.toLowerCase() ||
@@ -111,20 +134,11 @@ export const handleClaim = async (missionId = 1, walletType = 'pali', externalSi
           params: [{ chainId: NETWORK_CONFIG.chainIdHex }]
         });
       }
-    }
-    let recipient;
-    let userSigner;
-    let provider;
-    if (externalSigner) {
-      recipient = await externalSigner.getAddress();
-      userSigner = externalSigner;
-      provider = externalSigner.provider;
-    } else {
       const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
       recipient = accounts[0];
-      provider = new ethers.providers.Web3Provider(ethProvider);
       userSigner = provider.getSigner();
     }
+
     if (!recipient) throw new Error("No hay ninguna cuenta conectada en la Wallet.");
     console.log("📍 Cuenta activa:", recipient);
     const message = `Tu Playa Limpia: Acepto reclamar el NFT de la misión #${missionId}`;

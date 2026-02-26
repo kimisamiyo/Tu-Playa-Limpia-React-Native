@@ -64,7 +64,7 @@ const CelebrationModal = ({ visible, onClose, nft }) => {
         </Modal>
     );
 };
-const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
+const NFTDetailModal = ({ visible, onClose, nft, onClaim, isMobileWeb }) => {
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
     const [claiming, setClaiming] = useState(false);
@@ -126,22 +126,41 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
                                 </View>
                             )}
                             <View style={{ marginTop: SPACING.xl, width: '100%', gap: SPACING.md }}>
-                                {}
-                                <AnimatedButton
-                                    title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_pali')}
-                                    onPress={() => handleClaimPress('pali')}
-                                    variant="primary"
-                                    icon={
-                                        <Image
-                                            source={require('../assets/logo-pali.png')}
-                                            style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
-                                            resizeMode="contain"
-                                        />
-                                    }
-                                    disabled={nft.claimed || claiming}
-                                    fullWidth
-                                    style={{ justifyContent: 'center', alignItems: 'center' }}
-                                />
+                                { }
+                                {Platform.OS === 'web' && !isMobileWeb ? (
+                                    <AnimatedButton
+                                        title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_pali')}
+                                        onPress={() => handleClaimPress('pali')}
+                                        variant="primary"
+                                        icon={
+                                            <Image
+                                                source={require('../assets/logo-pali.png')}
+                                                style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
+                                                resizeMode="contain"
+                                            />
+                                        }
+                                        disabled={nft.claimed || claiming}
+                                        fullWidth
+                                        style={{ justifyContent: 'center', alignItems: 'center' }}
+                                    />
+                                ) : (
+                                    <AnimatedButton
+                                        title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_metamask')}
+                                        onPress={() => handleClaimPress('metamask')}
+                                        variant="primary"
+                                        icon={
+                                            <Ionicons
+                                                name="wallet"
+                                                size={rs(24)}
+                                                color="#fff"
+                                                style={{ marginRight: rs(8) }}
+                                            />
+                                        }
+                                        disabled={nft.claimed || claiming}
+                                        fullWidth
+                                        style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: '#F6851B' }}
+                                    />
+                                )}
                             </View>
                         </View>
                     </Animated.View>
@@ -163,6 +182,18 @@ export default function RewardsScreen() {
     const [claimingMap, setClaimingMap] = useState({});
     const { width } = useWindowDimensions();
     const isDesktop = width >= 1024;
+
+    // Detect mobile web to show MetaMask instead of Pali
+    const [isMobileWeb, setIsMobileWeb] = useState(false);
+    useEffect(() => {
+        if (Platform.OS === 'web' && typeof navigator !== 'undefined') {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            if (/android/i.test(userAgent) || /iPad|iPhone|iPod/.test(userAgent) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2)) {
+                setIsMobileWeb(true);
+            }
+        }
+    }, []);
+
     const handleNFTPress = (nft) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         if (nft.isNew) {
@@ -194,7 +225,7 @@ export default function RewardsScreen() {
                         description={item.description}
                         date={item.date}
                         attributes={item.attributes}
-                        id={item.id} 
+                        id={item.id}
                         image={item.image}
                         width={cardWidth}
                         height={cardHeight}
@@ -208,18 +239,18 @@ export default function RewardsScreen() {
     }, [lastUnlockedNFT, cardWidth, address, claimingMap, t, colors, signer]);
     const ListHeader = () => (
         <>
-            {}
+            { }
             <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('rewards_title')}</Text>
                 <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
                     {nfts.length} {t('rewards_collection_count')}
                 </Text>
             </Animated.View>
-            {}
+            { }
             <Animated.View entering={FadeInDown.delay(200).springify()}>
                 <Scoreboard />
             </Animated.View>
-            {}
+            { }
             {nfts.length > 0 && (
                 <Animated.View entering={FadeInUp.delay(400).springify()}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('rewards_your_collection')}</Text>
@@ -246,7 +277,7 @@ export default function RewardsScreen() {
                 setTimeout(() => reject(new Error('Timeout: la transacción tardó demasiado')), 120000)
             );
             const result = await Promise.race([
-                handleClaim(nft.id, walletType, signer), 
+                handleClaim(nft.id, walletType, signer),
                 timeout
             ]);
             console.log("Resultado del claim:", result);
@@ -303,6 +334,7 @@ export default function RewardsScreen() {
                 onClose={() => setShowDetail(false)}
                 nft={selectedNFT}
                 onClaim={handleClaimNFT}
+                isMobileWeb={isMobileWeb}
             />
         </View>
     );
@@ -312,7 +344,7 @@ const styles = StyleSheet.create({
     bgWater: { ...StyleSheet.absoluteFillObject, opacity: 0.2 },
     safeArea: { flex: 1 },
     listContent: { padding: SPACING.lg, paddingBottom: rh(120) },
-    row: { justifyContent: 'flex-start', gap: SPACING.sm }, 
+    row: { justifyContent: 'flex-start', gap: SPACING.sm },
     header: { marginBottom: SPACING.lg },
     headerTitle: { fontSize: rf(26), fontWeight: '700' },
     headerSubtitle: { fontSize: rf(14), marginTop: rs(4) },
