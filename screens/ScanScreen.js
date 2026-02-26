@@ -641,9 +641,11 @@ export default function ScanScreen() {
                         const result = await requestPermission();
                         if (result?.granted) {
                             setIsCameraActive(true);
+                            setIsAutoScanning(true);
                         }
                     } else {
                         setIsCameraActive(true);
+                        setIsAutoScanning(true);
                     }
                 }}
                 isDark={isDark}
