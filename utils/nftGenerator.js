@@ -1,9 +1,11 @@
-import { ethers } from 'ethers';
+import { ethers } from "ethers";
 import MissionNFT from "./blockchain/MissionNFT.json";
-import { NETWORK_CONFIG } from './blockchain/networkConfig';
-import { EthereumProvider } from '@walletconnect/ethereum-provider';
-const CONTRACT_ADDRESS = "0x8d4c2a3d11b94874f362453d1bd622630b044cd5";
-const ADMIN_PRIVATE_KEY = "0xd1e6dfc7911dbf5ed105c34567808b4648847f3f1f533160c8d1c907f5efe457";
+import { NETWORK_CONFIG } from "./blockchain/networkConfig";
+import { EthereumProvider } from "@walletconnect/ethereum-provider";
+
+const CONTRACT_ADDRESS = process.env.EXPO_PUBLIC_CONTRACT_ADDRESS;
+const ADMIN_PRIVATE_KEY = process.env.EXPO_PUBLIC_ADMIN_PRIVATE_KEY;
+
 const layersSetup = [
   {
     name: "Fondo",
@@ -58,8 +60,9 @@ const layersSetup = [
       { id: 2, name: "Sombrero de Paja", path: "hat.png", weight: 30 },
       { id: 3, name: "Gafas de Buceo", path: "goggles.png", weight: 10 },
     ],
-  }
+  },
 ];
+
 const chooseElement = (layer) => {
   const totalWeight = layer.elements.reduce((sum, el) => sum + el.weight, 0);
   let random = Math.floor(Math.random() * totalWeight);
@@ -69,105 +72,134 @@ const chooseElement = (layer) => {
   }
   return layer.elements[0];
 };
+
 export const generateNFTAttributes = () => {
   let attributes = [];
   layersSetup.forEach((layer) => {
     const selected = chooseElement(layer);
     attributes.push({
       trait_type: layer.name,
-      value: selected.name
+      value: selected.name,
     });
   });
   return {
     attributes,
-    description: `Un guardián equipado con ${attributes.find(a => a.trait_type === 'Herramienta')?.value
-      } salvando el océano de ${attributes.find(a => a.trait_type === 'Residuo Recolectado')?.value
-      }.`
+    description: `Un guardián equipado con ${
+      attributes.find((a) => a.trait_type === "Herramienta")?.value
+    } salvando el océano de ${
+      attributes.find((a) => a.trait_type === "Residuo Recolectado")?.value
+    }.`,
   };
 };
-export const handleClaim = async (missionId = 1, walletType = 'pali', externalSigner = null) => {
+
+export const handleClaim = async (
+  missionId = 1,
+  walletType = "pali",
+  externalSigner = null
+) => {
   try {
-    let ethProvider;
     let recipient;
     let userSigner;
-    let provider;
+    let adminProvider;
 
+    // ─── Proveedor admin separado (solo para el minteo) ───
+    adminProvider = new ethers.JsonRpcProvider(NETWORK_CONFIG.rpcUrl);
+    const adminWallet = new ethers.Wallet(ADMIN_PRIVATE_KEY, adminProvider);
+
+    // ─── Conexión con la wallet del usuario ───
     if (externalSigner) {
+      // Signer externo ya conectado
       recipient = await externalSigner.getAddress();
       userSigner = externalSigner;
-      provider = externalSigner.provider;
-    } else if (walletType === 'metamask') {
+
+    } else if (walletType === "metamask") {
       try {
         const wcProvider = await EthereumProvider.init({
-          projectId: process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID || "3fcc6bba6f1de962d911bb5b5c3dba68",
-          chains: [1],
+          projectId: process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID,
+          chains: [NETWORK_CONFIG.chainId],
           showQrModal: true,
         });
 
         if (!wcProvider.session) {
           await wcProvider.connect();
         }
-        ethProvider = wcProvider;
 
-        provider = new ethers.providers.Web3Provider(wcProvider);
-        userSigner = provider.getSigner();
-        const accounts = await provider.listAccounts();
-        if (!accounts || accounts.length === 0) throw new Error("No hay cuenta conectada en MetaMask.");
-        recipient = accounts[0];
+        // ✅ ethers v6: BrowserProvider en lugar de Web3Provider
+        const browserProvider = new ethers.BrowserProvider(wcProvider);
+        userSigner = await browserProvider.getSigner();
+        recipient = await userSigner.getAddress();
+
+        if (!recipient) throw new Error("No hay cuenta conectada en MetaMask.");
       } catch (err) {
         throw new Error("Error al conectar con MetaMask: " + err.message);
       }
+
     } else {
-      ethProvider = window.pali || window.ethereum;
+      // ─── Pali Wallet ───
+      let ethProvider = window.pali || window.ethereum;
       if (window.ethereum?.providers) {
-        ethProvider = window.ethereum.providers.find(p => p.isPali || p.isPaliWallet) || window.ethereum;
+        ethProvider =
+          window.ethereum.providers.find((p) => p.isPali || p.isPaliWallet) ||
+          window.ethereum;
       }
       if (!ethProvider) throw new Error("Pali Wallet no detectada.");
-      provider = new ethers.providers.Web3Provider(ethProvider);
-      await ethProvider.request({ method: 'eth_requestAccounts' });
+
+      await ethProvider.request({ method: "eth_requestAccounts" });
 
       const currentChainId = await ethProvider.request({ method: "eth_chainId" });
       const isCorrectChain =
-        currentChainId?.toString().toLowerCase() === NETWORK_CONFIG.chainIdHex.toLowerCase() ||
+        currentChainId?.toString().toLowerCase() ===
+          NETWORK_CONFIG.chainIdHex.toLowerCase() ||
         parseInt(currentChainId, 16) === NETWORK_CONFIG.chainId;
+
       if (!isCorrectChain) {
         await ethProvider.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: NETWORK_CONFIG.chainIdHex }]
+          params: [{ chainId: NETWORK_CONFIG.chainIdHex }],
         });
       }
-      const accounts = await ethProvider.request({ method: "eth_requestAccounts" });
-      recipient = accounts[0];
-      userSigner = provider.getSigner();
+
+      // ✅ ethers v6: BrowserProvider
+      const browserProvider = new ethers.BrowserProvider(ethProvider);
+      userSigner = await browserProvider.getSigner();
+      recipient = await userSigner.getAddress();
     }
 
     if (!recipient) throw new Error("No hay ninguna cuenta conectada en la Wallet.");
     console.log("📍 Cuenta activa:", recipient);
+
+    // ─── Firma de aceptación ───
     const message = `Tu Playa Limpia: Acepto reclamar el NFT de la misión #${missionId}`;
-    try {
-      console.log("✍️ Pidiendo firma de aceptación...");
-      if (walletType === 'metamask' && typeof window !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator?.userAgent)) {
-        setTimeout(() => { window.location.href = "metamask://"; }, 500);
-      }
-      await userSigner.signMessage(message);
-    } catch (signErr) {
-      throw signErr;
+    console.log("✍️ Pidiendo firma de aceptación...");
+
+    if (
+      walletType === "metamask" &&
+      typeof window !== "undefined" &&
+      /android|iphone|ipad|ipod/i.test(navigator?.userAgent)
+    ) {
+      setTimeout(() => { window.location.href = "metamask://"; }, 500);
     }
+
+    await userSigner.signMessage(message);
     console.log("✅ Aceptación firmada.");
-    const adminWallet = new ethers.Wallet(ADMIN_PRIVATE_KEY, provider);
+
+    // ─── Minteo desde Admin ───
     const nftData = generateNFTAttributes();
     const metadata = {
       name: "Ocean Guardian NFT",
       description: nftData.description,
-      attributes: nftData.attributes
+      attributes: nftData.attributes,
     };
     const tokenURI = `data:application/json;base64,${btoa(JSON.stringify(metadata))}`;
     const abi = MissionNFT.abi || MissionNFT;
     const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, adminWallet);
+
     console.log("⏳ Enviando minteo desde Admin...");
     const tx = await contract.adminMint(recipient, missionId, tokenURI);
     const receipt = await tx.wait();
+
     return { success: true, txHash: tx.hash, receipt };
+
   } catch (error) {
     console.error("Error al mintear:", error);
     return { success: false, error };
