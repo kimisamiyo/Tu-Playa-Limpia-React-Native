@@ -736,7 +736,7 @@ export default function ScanScreen() {
                     { }
                     <CameraView
                         ref={cameraRef}
-                        style={styles.cameraInFrame}
+                        style={[styles.cameraInFrame, { width: scannerSize, height: scannerSize }]}
                         facing="back"
                     />
                     { }
@@ -1026,6 +1026,9 @@ const styles = StyleSheet.create({
     cameraInFrame: {
         ...StyleSheet.absoluteFillObject,
         borderRadius: RADIUS.md,
+        flex: 1,
+        width: '100%',
+        height: '100%',
     },
     cornerOverlay: {
         ...StyleSheet.absoluteFillObject,
