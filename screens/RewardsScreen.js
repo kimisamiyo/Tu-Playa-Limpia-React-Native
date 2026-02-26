@@ -149,16 +149,15 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim, isMobileWeb }) => {
                                         onPress={() => handleClaimPress('metamask')}
                                         variant="primary"
                                         icon={
-                                            <Ionicons
-                                                name="wallet"
-                                                size={rs(24)}
-                                                color="#fff"
-                                                style={{ marginRight: rs(8) }}
+                                            <Image
+                                                source={require('../assets/logo-metamask.png')}
+                                                style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
+                                                resizeMode="contain"
                                             />
                                         }
                                         disabled={nft.claimed || claiming}
                                         fullWidth
-                                        style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: '#F6851B' }}
+                                        style={{ justifyContent: 'center', alignItems: 'center' }}
                                     />
                                 )}
                             </View>
