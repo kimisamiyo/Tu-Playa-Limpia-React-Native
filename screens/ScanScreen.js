@@ -432,7 +432,7 @@ export default function ScanScreen() {
     }, [scannerSize]);
     // Continuous scanning effect with locking logic
     useEffect(() => {
-        if (permission?.granted && isAutoScanning && cameraRef.current && isFocused) {
+        if (permission?.granted && isCameraActive && isAutoScanning && cameraRef.current && isFocused) {
             console.log('Starting continuous scan loop...');
             // Clear existing interval
             if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
@@ -450,7 +450,7 @@ export default function ScanScreen() {
                 }
             };
         }
-    }, [permission?.granted, isAutoScanning]);
+    }, [permission?.granted, isCameraActive, isAutoScanning, isFocused]);
     const scanLineStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: scanLineY.value }],
     }));
@@ -734,11 +734,13 @@ export default function ScanScreen() {
                     pulseStyle
                 ]}>
                     { }
-                    <CameraView
-                        ref={cameraRef}
-                        style={[styles.cameraInFrame, { width: scannerSize, height: scannerSize }]}
-                        facing="back"
-                    />
+                    <View style={{ flex: 1, width: '100%', height: '100%' }}>
+                        <CameraView
+                            ref={cameraRef}
+                            style={[styles.cameraInFrame]}
+                            facing="back"
+                        />
+                    </View>
                     { }
                     <View style={styles.cornerOverlay}>
                         <CornerBracket position="topLeft" color={scannerColor} size={rs(32)} />
