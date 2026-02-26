@@ -1,7 +1,3 @@
-// ═══════════════════════════════════════════════════════════════════════════
-// TRANSLATIONS - 7 Most Spoken Languages
-// Auto-detected from device, manually overridable in Profile
-// ═══════════════════════════════════════════════════════════════════════════
 
 export const LANGUAGES = {
     ES: 'es',
@@ -12,7 +8,6 @@ export const LANGUAGES = {
     FR: 'fr',
     PT: 'pt',
 };
-
 export const LANGUAGE_LABELS = {
     es: { label: 'Español', code: 'pe' },
     en: { label: 'English', code: 'us' },
@@ -22,8 +17,6 @@ export const LANGUAGE_LABELS = {
     fr: { label: 'Français', code: 'fr' },
     pt: { label: 'Português', code: 'br' },
 };
-
-// Localized labels for claim button states (7 supported languages)
 export const REWARDS_CLAIM_LABELS = {
     es: {
         claim: 'Canjear',
@@ -61,13 +54,8 @@ export const REWARDS_CLAIM_LABELS = {
         alreadyClaimed: 'Já resgatado',
     }
 };
-
 const translations = {
-    // ═══════════════════════════════════════════
-    // ESPAÑOL (default)
-    // ═══════════════════════════════════════════
     es: {
-        // Auth
         auth_welcome: 'Bienvenido',
         auth_welcome_back: 'Bienvenido',
         auth_your_impact: 'Tu impacto comienza hoy',
@@ -113,8 +101,6 @@ const translations = {
         auth_enter_session_password: 'Ingresa tu contraseña de sesión',
         auth_invalid_session_password: 'Contraseña de sesión incorrecta',
         auth_file_password_label: 'Contraseña del archivo de exportación',
-
-        // Home
         home_greeting: 'Hola',
         home_total_balance: 'BALANCE TOTAL',
         home_this_week: '+12% esta semana',
@@ -128,8 +114,6 @@ const translations = {
         home_profile: 'Perfil',
         home_rewards: 'Premios',
         home_redeem_tpl: 'Canjear TPL',
-
-        // Profile
         profile_title: 'Mi Perfil',
         profile_level: 'NIVEL',
         profile_scans: 'Escaneos',
@@ -166,12 +150,8 @@ const translations = {
         profile_theme_dark: 'Oscuro',
         profile_theme_light: 'Claro',
         profile_theme_system: 'Sistema',
-
-        // Profile Toast Messages
         profile_toast_theme: 'Tema',
         profile_toast_lang: 'Idioma',
-
-        // Export Modal
         export_title: 'Exportar Perfil',
         export_desc_intro: 'Se generará un archivo JSON encriptado con:',
         export_desc_points: 'Todos tus TPL',
@@ -195,8 +175,6 @@ const translations = {
         export_error_match: 'Las contraseñas no coinciden',
         export_error_share: 'Error al compartir archivo',
         export_success: 'Perfil exportado correctamente',
-
-        // Scanner
         scan_last_scan: 'Último Escaneo',
         scan_width: 'Ancho',
         scan_height: 'Alto',
@@ -230,8 +208,6 @@ const translations = {
         scan_button: 'Escanear',
         scan_camera_permission: 'Permiso de Cámara',
         scan_camera_permission_desc: 'Necesitamos acceso a tu cámara para identificar residuos plásticos y otorgarte puntos.',
-
-        // Account Security
         account_security: 'Seguridad de Cuenta',
         account_export: 'Exportar Cuenta',
         account_export_desc: 'Descarga tu perfil cifrado como JSON',
@@ -250,8 +226,6 @@ const translations = {
         account_import_error: 'Error al importar. Verifica la contraseña.',
         account_password_mismatch: 'Las contraseñas no coinciden',
         account_password_short: 'La contraseña debe tener al menos 6 caracteres',
-
-        // Wallet
         wallet_connect_title: 'Conectar Billetera',
         wallet_connect_desc: 'Selecciona un proveedor para conectar tu billetera Web3',
         wallet_success: '¡Billetera Conectada!',
@@ -260,8 +234,6 @@ const translations = {
         wallet_metamask_desc: 'La forma más segura de conectar',
         wallet_walletconnect_desc: 'Conectar otras billeteras',
         wallet_info_text: 'Tu dirección de billetera se mantendrá segura y se usará solo para transacciones autorizadas.',
-
-        // Rewards
         rewards_title: 'Mis Recompensas',
         rewards_collection_count: 'NFTs en tu colección',
         rewards_coming_soon: 'Próximamente',
@@ -281,8 +253,6 @@ const translations = {
         rewards_claim_pali: 'RECLAMAR CON PALI',
         rewards_claim_metamask: 'RECLAMAR CON METAMASK',
         rewards_processing: 'Procesando...',
-
-        // Promotions
         promos_title: 'Promociones Especiales',
         promos_exclusive: 'Exclusivo para Nivel',
         promos_with_nfts: 'con',
@@ -294,12 +264,8 @@ const translations = {
         promos_locked_title: 'Promociones Bloqueadas',
         promos_locked_desc: 'Alcanza Nivel 2 (4 NFTs) para desbloquear',
         promos_locked_hint: '¡Sigue escaneando y canjeando recompensas!',
-
-        // Scoreboard
         score_progress: 'Progreso al Nivel {level}',
         score_collected: '{count}/{total} NFTs recolectados',
-
-        // Scan
         scan_camera_permission: 'Permiso de Cámara',
         scan_camera_permission_desc: 'Necesitamos acceso a tu cámara para escanear residuos.',
         scan_searching: 'Buscando residuos...',
@@ -309,19 +275,13 @@ const translations = {
         scan_aim_camera: 'Apunta tu cámara a los residuos',
         scan_waste_found: 'Residuo encontrado',
         scan_points_earned: 'TPL ganados',
-
-        // Map
         map_no_beaches: 'No se encontraron playas',
         map_no_beaches_desc: 'Intenta con otros términos de búsqueda',
         map_explore: 'Explorar',
-
-        // Celebration
         celebration_thanks: '¡MUCHAS GRACIAS!',
         celebration_nft_unlocked: 'Has conseguido un NFT:',
         celebration_see_rewards: 'Puedes verlo en el apartado de recompensas.',
         celebration_continue: 'CONTINUAR',
-
-        // NFT badges & acquisition
         nft_badge_new: 'NUEVO',
         nft_discovered_on: 'DESCUBIERTO EL',
         nft_acq_default: 'Recompensa de misión',
@@ -331,21 +291,15 @@ const translations = {
         nft_acq_points_20: 'Obtenido por alcanzar 20 TPL',
         nft_acq_region: 'Encontrado explorando',
         nft_unlocked_toast: 'NFT Desbloqueado',
-
-        // Carousel celebration
         carousel_congrats: '¡FELICIDADES!',
         carousel_achievement: 'Has alcanzado {count} NFTs',
         carousel_level_up: '¡NIVEL 2 DESBLOQUEADO!',
         carousel_proud: 'Estamos muy orgullosos de ti por ayudar al planeta',
         carousel_sub_proud: 'Cada NFT representa tu compromiso con el medio ambiente',
         carousel_promos_unlocked: '¡Promociones Especiales Desbloqueadas!',
-
-        // Profile
         profile_name_change_denied: 'Solo puedes cambiar tu nombre una vez.',
         profile_name_invalid: 'El nombre debe tener al menos 3 caracteres.',
         profile_name_saved: 'Nombre guardado',
-
-        // Astronaut Card & Promotions
         astro_coming_soon: 'Próximamente',
         astro_follow_us: 'Síguenos en X',
         promo_eco_title: '20% Descuento en Eco-Tienda',
@@ -390,10 +344,6 @@ const translations = {
         map_suggestion_district: 'Distrito',
         map_suggestion_zone: 'Zona',
     },
-
-    // ═══════════════════════════════════════════
-    // ENGLISH
-    // ═══════════════════════════════════════════
     en: {
         auth_welcome: 'Welcome',
         auth_welcome_back: 'Welcome',
@@ -440,7 +390,6 @@ const translations = {
         auth_enter_session_password: 'Enter your session password',
         auth_invalid_session_password: 'Incorrect session password',
         auth_file_password_label: 'Export file password',
-
         home_greeting: 'Hello',
         home_total_balance: 'TOTAL BALANCE',
         home_this_week: '+12% this week',
@@ -454,7 +403,6 @@ const translations = {
         home_profile: 'Profile',
         home_rewards: 'Rewards',
         home_redeem_tpl: 'Redeem TPL',
-
         profile_title: 'My Profile',
         profile_level: 'LEVEL',
         profile_scans: 'Scans',
@@ -491,12 +439,8 @@ const translations = {
         profile_theme_dark: 'Dark',
         profile_theme_light: 'Light',
         profile_theme_system: 'System',
-
-        // Profile Toast Messages
         profile_toast_theme: 'Theme',
         profile_toast_lang: 'Language',
-
-        // Export Modal
         export_title: 'Export Profile',
         export_desc_intro: 'An encrypted JSON file will be generated with:',
         export_desc_points: 'All your TPL',
@@ -520,8 +464,6 @@ const translations = {
         export_error_match: 'Passwords do not match',
         export_error_share: 'Error sharing file',
         export_success: 'Profile exported successfully',
-
-        // Scanner
         scan_last_scan: 'Last Scan',
         scan_width: 'Width',
         scan_height: 'Height',
@@ -555,7 +497,6 @@ const translations = {
         scan_button: 'Scan',
         scan_camera_permission: 'Camera Permission',
         scan_camera_permission_desc: 'We need access to your camera to identify plastic waste and award you points.',
-
         account_security: 'Account Security',
         account_export: 'Export Account',
         account_export_desc: 'Download your encrypted profile as JSON',
@@ -574,8 +515,6 @@ const translations = {
         account_import_error: 'Import error. Check the password.',
         account_password_mismatch: 'Passwords do not match',
         account_password_short: 'Password must be at least 6 characters',
-
-        // Wallet
         wallet_connect_title: 'Connect Wallet',
         wallet_connect_desc: 'Select a provider to connect your Web3 wallet',
         wallet_success: 'Wallet Connected!',
@@ -584,7 +523,6 @@ const translations = {
         wallet_metamask_desc: 'The most secure way to connect',
         wallet_walletconnect_desc: 'Connect other wallets',
         wallet_info_text: 'Your wallet address will remain secure and will only be used for authorized transactions.',
-
         rewards_title: 'My Rewards',
         rewards_collection_count: 'NFTs in your collection',
         rewards_coming_soon: 'Coming Soon',
@@ -604,7 +542,6 @@ const translations = {
         rewards_claim_pali: 'CLAIM WITH PALI',
         rewards_claim_metamask: 'CLAIM WITH METAMASK',
         rewards_processing: 'Processing...',
-
         promos_title: 'Special Promotions',
         promos_exclusive: 'Exclusive for Level',
         promos_with_nfts: 'with',
@@ -616,11 +553,8 @@ const translations = {
         promos_locked_title: 'Promotions Locked',
         promos_locked_desc: 'Reach Level 2 (4 NFTs) to unlock',
         promos_locked_hint: 'Keep scanning and redeeming rewards!',
-
-        // Scoreboard
         score_progress: 'Progress to Level {level}',
         score_collected: '{count}/{total} NFTs collected',
-
         scan_camera_permission: 'Camera Permission',
         scan_camera_permission_desc: 'We need camera access to scan waste.',
         scan_searching: 'Searching for waste...',
@@ -630,16 +564,13 @@ const translations = {
         scan_aim_camera: 'Point your camera at the waste',
         scan_waste_found: 'Waste found',
         scan_points_earned: 'TPL earned',
-
         map_no_beaches: 'No beaches found',
         map_no_beaches_desc: 'Try other search terms',
         map_explore: 'Explore',
-
         celebration_thanks: 'THANK YOU!',
         celebration_nft_unlocked: 'You got an NFT:',
         celebration_see_rewards: 'You can see it in the rewards section.',
         celebration_continue: 'CONTINUE',
-
         nft_badge_new: 'NEW',
         nft_discovered_on: 'DISCOVERED ON',
         nft_acq_default: 'Mission reward',
@@ -649,21 +580,15 @@ const translations = {
         nft_acq_points_20: 'Earned by reaching 20 TPL',
         nft_acq_region: 'Found exploring',
         nft_unlocked_toast: 'NFT Unlocked',
-
-        // Carousel celebration
         carousel_congrats: 'CONGRATULATIONS!',
         carousel_achievement: 'You have reached {count} NFTs',
         carousel_level_up: 'LEVEL 2 UNLOCKED!',
         carousel_proud: 'We are so proud of you for helping the planet',
         carousel_sub_proud: 'Each NFT represents your commitment to the environment',
         carousel_promos_unlocked: 'Special Promotions Unlocked!',
-
-        // Profile
         profile_name_change_denied: 'You can only change your name once.',
         profile_name_invalid: 'Name must be at least 3 characters.',
         profile_name_saved: 'Name saved',
-
-        // Astronaut Card & Promotions
         astro_coming_soon: 'Coming Soon',
         astro_follow_us: 'Follow us on X',
         promo_eco_title: '20% Discount at Eco-Store',
@@ -708,10 +633,6 @@ const translations = {
         map_suggestion_district: 'District',
         map_suggestion_zone: 'Zone',
     },
-
-    // ═══════════════════════════════════════════
-    // 中文 (Chinese Mandarin)
-    // ═══════════════════════════════════════════
     zh: {
         auth_welcome: '欢迎',
         auth_welcome_back: '欢迎回来',
@@ -758,7 +679,6 @@ const translations = {
         auth_enter_session_password: '输入你的会话密码',
         auth_invalid_session_password: '会话密码不正确',
         auth_file_password_label: '导出文件密码',
-
         home_greeting: '你好',
         home_total_balance: '总余额',
         home_this_week: '本周+12%',
@@ -772,7 +692,6 @@ const translations = {
         home_profile: '资料',
         home_rewards: '奖励',
         home_redeem_tpl: '兑换 TPL',
-
         profile_title: '我的资料',
         profile_level: '等级',
         profile_scans: '扫描次数',
@@ -798,8 +717,6 @@ const translations = {
         profile_cancel: '取消',
         profile_photo_updated: '头像已更新',
         profile_name_saved: '名称已保存',
-
-        // Astronaut Card & Promotions
         astro_coming_soon: '即将推出',
         astro_follow_us: '在 X 上关注我们',
         promo_eco_title: '生态商店 8 折优惠',
@@ -822,12 +739,8 @@ const translations = {
         profile_theme_dark: '深色',
         profile_theme_light: '浅色',
         profile_theme_system: '系统',
-
-        // Profile Toast Messages
         profile_toast_theme: '主题',
         profile_toast_lang: '语言',
-
-        // Export Modal
         export_title: '导出个人资料',
         export_desc_intro: '将生成一个加密的JSON文件，包含：',
         export_desc_points: '你所有的积分',
@@ -851,8 +764,6 @@ const translations = {
         export_error_match: '密码不匹配',
         export_error_share: '分享文件错误',
         export_success: '个人资料导出成功',
-
-        // Scanner
         scan_last_scan: '最后扫描',
         scan_width: '宽度',
         scan_height: '高度',
@@ -886,7 +797,6 @@ const translations = {
         scan_button: '扫描',
         scan_camera_permission: '相机权限',
         scan_camera_permission_desc: '我们需要访问您的相机以识别塑料垃圾并奖励积分。',
-
         account_security: '账户安全',
         account_export: '导出账户',
         account_export_desc: '下载加密的JSON个人资料',
@@ -905,8 +815,6 @@ const translations = {
         account_import_error: '导入错误。请检查密码。',
         account_password_mismatch: '密码不匹配',
         account_password_short: '密码至少需要6个字符',
-
-        // Wallet
         wallet_connect_title: '连接钱包',
         wallet_connect_desc: '选择一个提供商来连接你的Web3钱包',
         wallet_success: '钱包已连接！',
@@ -915,7 +823,6 @@ const translations = {
         wallet_metamask_desc: '最安全的连接方式',
         wallet_walletconnect_desc: '连接其他钱包',
         wallet_info_text: '你的钱包地址将保持安全，仅用于授权交易。',
-
         rewards_title: '我的奖励',
         rewards_collection_count: '你收藏的NFT',
         rewards_coming_soon: '即将推出',
@@ -932,7 +839,6 @@ const translations = {
         rewards_claim_metamask: '使用 METAMASK 领取',
         rewards_processing: '处理中...',
         rewards_owner: '所有者',
-
         promos_title: '特别促销',
         promos_exclusive: '等级专属',
         promos_with_nfts: '拥有',
@@ -944,11 +850,8 @@ const translations = {
         promos_locked_title: '促销已锁定',
         promos_locked_desc: '达到等级2（4个NFT）解锁',
         promos_locked_hint: '继续扫描和兑换奖励！',
-
-        // Scoreboard
         score_progress: '升级至第 {level} 级',
         score_collected: '已收集 {count}/{total} 个 NFT',
-
         scan_camera_permission: '相机权限',
         scan_camera_permission_desc: '我们需要相机权限来扫描垃圾。',
         scan_searching: '正在搜索垃圾...',
@@ -958,16 +861,13 @@ const translations = {
         scan_aim_camera: '将相机对准垃圾',
         scan_waste_found: '发现垃圾',
         scan_points_earned: '获得 TPL',
-
         map_no_beaches: '未找到海滩',
         map_no_beaches_desc: '尝试其他搜索词',
         map_explore: '探索',
-
         celebration_thanks: '非常感谢！',
         celebration_nft_unlocked: '你获得了一个NFT：',
         celebration_see_rewards: '你可以在奖励板块查看。',
         celebration_continue: '继续',
-
         nft_badge_new: '新',
         nft_discovered_on: '发现于',
         nft_acq_default: '任务奖励',
@@ -977,16 +877,12 @@ const translations = {
         nft_acq_points_20: '通过达到20 TPL获得',
         nft_acq_region: '探索时发现',
         nft_unlocked_toast: 'NFT已解锁',
-
-        // Carousel celebration
         carousel_congrats: '恭喜！',
         carousel_achievement: '你已获得 {count} 个NFT',
         carousel_level_up: '等级2已解锁！',
         carousel_proud: '我们为你帮助地球感到骄傲',
         carousel_sub_proud: '每个NFT代表你对环境的承诺',
         carousel_promos_unlocked: '特别促销已解锁！',
-
-        // Profile
         profile_name_change_denied: '你只能更改一次名字。',
         profile_name_invalid: '名字至少需要3个字符。',
         profile_name_saved: '名字已保存',
@@ -1023,10 +919,6 @@ const translations = {
         map_suggestion_district: '地区',
         map_suggestion_zone: '区域',
     },
-
-    // ═══════════════════════════════════════════
-    // हिन्दी (Hindi)
-    // ═══════════════════════════════════════════
     hi: {
         auth_welcome: 'स्वागत है',
         auth_welcome_back: 'वापसी पर स्वागत है',
@@ -1073,7 +965,6 @@ const translations = {
         auth_enter_session_password: 'अपना सत्र पासवर्ड दर्ज करें',
         auth_invalid_session_password: 'गलत सत्र पासवर्ड',
         auth_file_password_label: 'निर्यात फ़ाइल पासवर्ड',
-
         home_greeting: 'नमस्ते',
         home_total_balance: 'कुल शेष',
         home_this_week: 'इस सप्ताह +12%',
@@ -1087,7 +978,6 @@ const translations = {
         home_profile: 'प्रोफ़ाइल',
         home_rewards: 'पुरस्कार',
         home_redeem_tpl: 'TPL भुनाएं',
-
         profile_title: 'मेरी प्रोफाइल',
         profile_level: 'स्तर',
         profile_scans: 'स्कैन',
@@ -1113,8 +1003,6 @@ const translations = {
         profile_cancel: 'रद्द करें',
         profile_photo_updated: 'प्रोफ़ाइल फ़ोटो अपडेट',
         profile_name_saved: 'नाम सहेजा गया',
-
-        // Astronaut Card & Promotions
         astro_coming_soon: 'जल्द आ रहा है',
         astro_follow_us: 'X पर हमें फॉलो करें',
         promo_eco_title: 'इको-स्टोर पर 20% की छूट',
@@ -1137,12 +1025,8 @@ const translations = {
         profile_theme_dark: 'डार्क',
         profile_theme_light: 'लाइट',
         profile_theme_system: 'सिस्टम',
-
-        // Profile Toast Messages
         profile_toast_theme: 'थीम',
         profile_toast_lang: 'भाषा',
-
-        // Export Modal
         export_title: 'प्रोफ़ाइल निर्यात',
         export_desc_intro: 'एक एन्क्रिप्टेड JSON फ़ाइल उत्पन्न की जाएगी जिसमें:',
         export_desc_points: 'आपके सभी अंक',
@@ -1166,8 +1050,6 @@ const translations = {
         export_error_match: 'पासवर्ड मेल नहीं खाते',
         export_error_share: 'फ़ाइल साझा करने में त्रुटि',
         export_success: 'प्रोफ़ाइल सफलतापूर्वक निर्यात की गई',
-
-        // Scanner
         scan_last_scan: 'अंतिम स्कैन',
         scan_width: 'चौड़ाई',
         scan_height: 'ऊंचाई',
@@ -1201,7 +1083,6 @@ const translations = {
         scan_button: 'स्कैन करें',
         scan_camera_permission: 'कैमरा अनुमति',
         scan_camera_permission_desc: 'प्लास्टिक कचरे की पहचान करने और आपको अंक देने के लिए हमें आपके कैमरे तक पहुंच की आवश्यकता है।',
-
         account_security: 'खाता सुरक्षा',
         account_export: 'खाता निर्यात',
         account_export_desc: 'एन्क्रिप्टेड JSON प्रोफ़ाइल डाउनलोड करें',
@@ -1220,8 +1101,6 @@ const translations = {
         account_import_error: 'आयात त्रुटि। पासवर्ड जांचें।',
         account_password_mismatch: 'पासवर्ड मेल नहीं खाते',
         account_password_short: 'पासवर्ड कम से कम 6 अक्षर का होना चाहिए',
-
-        // Wallet
         wallet_connect_title: 'वॉलेट कनेक्ट करें',
         wallet_connect_desc: 'अपने Web3 वॉलेट को कनेक्ट करने के लिए एक प्रदाता चुनें',
         wallet_success: 'वॉलेट जुड़ गया!',
@@ -1230,7 +1109,6 @@ const translations = {
         wallet_metamask_desc: 'कनेक्ट करने का सबसे सुरक्षित तरीका',
         wallet_walletconnect_desc: 'अन्य वॉलेट कनेक्ट करें',
         wallet_info_text: 'आपका वॉलेट पता सुरक्षित रहेगा और केवल अधिकृत लेनदेन के लिए उपयोग किया जाएगा।',
-
         rewards_title: 'मेरे पुरस्कार',
         rewards_collection_count: 'आपके संग्रह में NFTs',
         rewards_coming_soon: 'जल्द आ रहा है',
@@ -1247,7 +1125,6 @@ const translations = {
         rewards_owner: 'स्वामी',
         rewards_claim_pali: 'PALI के साथ दावा करें',
         rewards_claim_metamask: 'METAMASK के साथ दावा करें',
-
         promos_title: 'विशेष प्रचार',
         promos_exclusive: 'स्तर के लिए विशेष',
         promos_with_nfts: 'के साथ',
@@ -1259,11 +1136,8 @@ const translations = {
         promos_locked_title: 'प्रचार लॉक',
         promos_locked_desc: 'अनलॉक करने के लिए स्तर 2 (4 NFTs) प्राप्त करें',
         promos_locked_hint: 'स्कैन और भुनाना जारी रखें!',
-
-        // Scoreboard
         score_progress: 'स्तर {level} के लिए प्रगति',
         score_collected: '{count}/{total} NFTs एकत्र किए गए',
-
         scan_camera_permission: 'कैमरा अनुमति',
         scan_camera_permission_desc: 'कचरा स्कैन करने के लिए हमें कैमरा एक्सेस चाहिए।',
         scan_searching: 'कचरा खोज रहे हैं...',
@@ -1273,16 +1147,13 @@ const translations = {
         scan_aim_camera: 'कैमरा कचरे की ओर करें',
         scan_waste_found: 'कचरा मिला',
         scan_points_earned: 'TPL अर्जित',
-
         map_no_beaches: 'कोई समुद्र तट नहीं मिला',
         map_no_beaches_desc: 'अन्य खोज शब्दों के साथ प्रयास करें',
         map_explore: 'अन्वेषण',
-
         celebration_thanks: 'बहुत धन्यवाद!',
         celebration_nft_unlocked: 'आपने एक NFT प्राप्त किया:',
         celebration_see_rewards: 'आप इसे पुरस्कार अनुभाग में देख सकते हैं।',
         celebration_continue: 'जारी रखें',
-
         nft_badge_new: 'नया',
         nft_discovered_on: 'खोजा गया',
         nft_acq_default: 'मिशन इनाम',
@@ -1292,16 +1163,12 @@ const translations = {
         nft_acq_points_20: '20 TPL प्राप्त करके अर्जित',
         nft_acq_region: 'अन्वेषण करते हुए पाया',
         nft_unlocked_toast: 'NFT अनलॉक',
-
-        // Carousel celebration
         carousel_congrats: 'बधाई!',
         carousel_achievement: 'आपने {count} NFT प्राप्त किए',
         carousel_level_up: 'लेवल 2 अनलॉक!',
         carousel_proud: 'ग्रह की मदद करने के लिए हमें आप पर गर्व है',
         carousel_sub_proud: 'प्रत्येक NFT पर्यावरण के प्रति आपकी प्रतिबद्धता का प्रतीक है',
         carousel_promos_unlocked: 'विशेष प्रचार अनलॉक!',
-
-        // Profile
         profile_name_change_denied: 'आप केवल एक बार नाम बदल सकते हैं।',
         profile_name_invalid: 'नाम कम से कम 3 अक्षर का होना चाहिए।',
         profile_name_saved: 'नाम सहेजा गया',
@@ -1338,10 +1205,6 @@ const translations = {
         map_suggestion_district: 'जिला',
         map_suggestion_zone: 'क्षेत्र',
     },
-
-    // ═══════════════════════════════════════════
-    // العربية (Arabic)
-    // ═══════════════════════════════════════════
     ar: {
         auth_welcome: 'مرحباً',
         auth_welcome_back: 'مرحباً بعودتك',
@@ -1388,7 +1251,6 @@ const translations = {
         auth_enter_session_password: 'أدخل كلمة مرور الجلسة',
         auth_invalid_session_password: 'كلمة مرور الجلسة غير صحيحة',
         auth_file_password_label: 'كلمة مرور ملف التصدير',
-
         home_greeting: 'مرحباً',
         home_total_balance: 'الرصيد الإجمالي',
         home_this_week: '+12% هذا الأسبوع',
@@ -1402,7 +1264,6 @@ const translations = {
         home_profile: 'الملف الشخصي',
         home_rewards: 'الجوائز',
         home_redeem_tpl: 'استبدال TPL',
-
         profile_title: 'ملفي الشخصي',
         profile_level: 'المستوى',
         profile_scans: 'عمليات المسح',
@@ -1412,12 +1273,8 @@ const translations = {
         profile_dark_mode: 'الوضع الداكن',
         profile_theme_light: 'فاتح',
         profile_theme_system: 'النظام',
-
-        // Profile Toast Messages
         profile_toast_theme: 'المظهر',
         profile_toast_lang: 'اللغة',
-
-        // Export Modal
         export_title: 'تصدير الملف الشخصي',
         export_desc_intro: 'سيتم إنشاء ملف JSON مشفر يحتوي على:',
         export_desc_points: 'جميع نقاطك',
@@ -1441,8 +1298,6 @@ const translations = {
         export_error_match: 'كلمات المرور غير متطابقة',
         export_error_share: 'خطأ في مشاركة الملف',
         export_success: 'تم تصدير الملف الشخصي بنجاح',
-
-        // Scanner
         scan_last_scan: 'آخر مسح',
         scan_width: 'عرض',
         scan_height: 'ارتفاع',
@@ -1494,8 +1349,6 @@ const translations = {
         profile_cancel: 'إلغاء',
         profile_photo_updated: 'تم تحديث صورة الملف الشخصي',
         profile_name_saved: 'تم حفظ الاسم',
-
-        // Astronaut Card & Promotions
         astro_coming_soon: 'قريباً',
         astro_follow_us: 'تابعنا على X',
         promo_eco_title: 'خصم 20% في المتجر البيئي',
@@ -1517,7 +1370,6 @@ const translations = {
         profile_theme_auto: 'تلقائي',
         profile_theme_dark: 'داكن',
         profile_theme_light: 'فاتح',
-
         account_security: 'أمان الحساب',
         account_export: 'تصدير الحساب',
         account_export_desc: 'تحميل ملفك الشخصي المشفر كـ JSON',
@@ -1536,8 +1388,6 @@ const translations = {
         account_import_error: 'خطأ في الاستيراد. تحقق من كلمة المرور.',
         account_password_mismatch: 'كلمات المرور غير متطابقة',
         account_password_short: 'يجب أن تكون كلمة المرور 6 أحرف على الأقل',
-
-        // Wallet
         wallet_connect_title: 'ربط المحفظة',
         wallet_connect_desc: 'اختر مزودًا لربط محفظة Web3 الخاصة بك',
         wallet_success: 'تم ربط المحفظة!',
@@ -1546,7 +1396,6 @@ const translations = {
         wallet_metamask_desc: 'الطريقة الأكثر أماناً للربط',
         wallet_walletconnect_desc: 'ربط محافظ أخرى',
         wallet_info_text: 'ستبقى عنوان محفظتك آمناً وسيتم استخدامه فقط للمعاملات المصرح بها.',
-
         rewards_title: 'مكافآتي',
         rewards_collection_count: 'NFTs في مجموعتك',
         rewards_coming_soon: 'قريباً',
@@ -1563,7 +1412,6 @@ const translations = {
         rewards_owner: 'المالك',
         rewards_claim_pali: 'المطالبة باستخدام PALI',
         rewards_claim_metamask: 'المطالبة باستخدام METAMASK',
-
         promos_title: 'عروض خاصة',
         promos_exclusive: 'حصري للمستوى',
         promos_with_nfts: 'مع',
@@ -1575,11 +1423,8 @@ const translations = {
         promos_locked_title: 'العروض مقفلة',
         promos_locked_desc: 'اوصل للمستوى 2 (4 NFTs) لفتح',
         promos_locked_hint: 'واصل المسح واستبدال المكافآت!',
-
-        // Scoreboard
         score_progress: 'التقدم إلى المستوى {level}',
         score_collected: 'تم جمع {count}/{total} من NFTs',
-
         scan_camera_permission: 'إذن الكاميرا',
         scan_camera_permission_desc: 'نحتاج الوصول إلى الكاميرا لمسح النفايات.',
         scan_searching: 'البحث عن نفايات...',
@@ -1589,16 +1434,13 @@ const translations = {
         scan_aim_camera: 'وجّه الكاميرا نحو النفايات',
         scan_waste_found: 'تم العثور على نفايات',
         scan_points_earned: 'TPL مكتسبة',
-
         map_no_beaches: 'لم يتم العثور على شواطئ',
         map_no_beaches_desc: 'جررب مصطلحات بحث أخرى',
         map_explore: 'استكشاف',
-
         celebration_thanks: 'شكراً جزيلاً!',
         celebration_nft_unlocked: 'لقد حصلت على NFT:',
         celebration_see_rewards: 'يمكنك رؤيته في قسم المكافآت.',
         celebration_continue: 'متابعة',
-
         nft_badge_new: 'جديد',
         nft_discovered_on: 'اكتشف في',
         nft_acq_default: 'مكافأة المهمة',
@@ -1608,16 +1450,12 @@ const translations = {
         nft_acq_points_20: 'حصلت عليه ببلوغ 20 TPL',
         nft_acq_region: 'وُجد أثناء استكشاف',
         nft_unlocked_toast: 'تم فتح NFT',
-
-        // Carousel celebration
         carousel_congrats: 'تهانينا!',
         carousel_achievement: 'لقد حصلت على {count} NFT',
         carousel_level_up: 'تم فتح المستوى 2!',
         carousel_proud: 'نحن فخورون جداً بك لمساعدتك للكوكب',
         carousel_sub_proud: 'كل NFT يمثل التزامك تجاه البيئة',
         carousel_promos_unlocked: 'تم فتح عروض خاصة!',
-
-        // Profile
         profile_name_change_denied: 'يمكنك تغيير اسمك مرة واحدة فقط.',
         profile_name_invalid: 'يجب أن يكون الاسم 3 أحرف على الأقل.',
         profile_name_saved: 'تم حفظ الاسم',
@@ -1654,10 +1492,6 @@ const translations = {
         map_suggestion_district: 'منطقة',
         map_suggestion_zone: 'منطقة',
     },
-
-    // ═══════════════════════════════════════════
-    // FRANÇAIS (French)
-    // ═══════════════════════════════════════════
     fr: {
         auth_welcome: 'Bienvenue',
         auth_welcome_back: 'Bienvenue',
@@ -1704,7 +1538,6 @@ const translations = {
         auth_enter_session_password: 'Entrez votre mot de passe de session',
         auth_invalid_session_password: 'Mot de passe de session incorrect',
         auth_file_password_label: 'Mot de passe du fichier d\'exportation',
-
         home_greeting: 'Bonjour',
         home_total_balance: 'SOLDE TOTAL',
         home_this_week: '+12% cette semaine',
@@ -1718,7 +1551,6 @@ const translations = {
         home_profile: 'Profil',
         home_rewards: 'Récompenses',
         home_redeem_tpl: 'Échanger TPL',
-
         profile_title: 'Mon Profil',
         profile_level: 'NIVEAU',
         profile_scans: 'Scans',
@@ -1744,8 +1576,6 @@ const translations = {
         profile_cancel: 'Annuler',
         profile_photo_updated: 'Photo de profil mise à jour',
         profile_name_saved: 'Nom enregistré',
-
-        // Astronaut Card & Promotions
         astro_coming_soon: 'Bientôt disponible',
         astro_follow_us: 'Suivez-nous sur X',
         promo_eco_title: '20% de réduction à l\'Éco-Boutique',
@@ -1768,12 +1598,8 @@ const translations = {
         profile_theme_dark: 'Sombre',
         profile_theme_light: 'Clair',
         profile_theme_system: 'Système',
-
-        // Profile Toast Messages
         profile_toast_theme: 'Thème',
         profile_toast_lang: 'Langue',
-
-        // Export Modal
         export_title: 'Exporter le Profil',
         export_desc_intro: 'Un fichier JSON chiffré sera généré avec :',
         export_desc_points: 'Tous vos points',
@@ -1797,8 +1623,6 @@ const translations = {
         export_error_match: 'Les mots de passe ne correspondent pas',
         export_error_share: 'Erreur lors du partage du fichier',
         export_success: 'Profil exporté avec succès',
-
-        // Scanner
         scan_last_scan: 'Dernier Scan',
         scan_width: 'Largeur',
         scan_height: 'Hauteur',
@@ -1832,7 +1656,6 @@ const translations = {
         scan_button: 'Scanner',
         scan_camera_permission: 'Autorisation Caméra',
         scan_camera_permission_desc: 'Nous avons besoin d\'accéder à votre caméra pour identifier les déchets plastiques et vous attribuer des points.',
-
         account_security: 'Sécurité du Compte',
         account_export: 'Exporter le Compte',
         account_export_desc: 'Téléchargez votre profil chiffré en JSON',
@@ -1851,8 +1674,6 @@ const translations = {
         account_import_error: 'Erreur d\'importation. Vérifiez le mot de passe.',
         account_password_mismatch: 'Les mots de passe ne correspondent pas',
         account_password_short: 'Le mot de passe doit comporter au moins 6 caractères',
-
-        // Wallet
         wallet_connect_title: 'Connecter Portefeuille',
         wallet_connect_desc: 'Sélectionnez un fournisseur pour connecter votre portefeuille Web3',
         wallet_success: 'Portefeuille Connecté!',
@@ -1861,7 +1682,6 @@ const translations = {
         wallet_metamask_desc: 'Le moyen le plus sûr de se connecter',
         wallet_walletconnect_desc: 'Connecter d\'autres portefeuilles',
         wallet_info_text: 'L\'adresse de votre portefeuille restera sécurisée et ne sera utilisée que pour les transactions autorisées.',
-
         rewards_title: 'Mes Récompenses',
         rewards_collection_count: 'NFTs dans votre collection',
         rewards_coming_soon: 'Bientôt Disponible',
@@ -1878,7 +1698,6 @@ const translations = {
         rewards_owner: 'Propriétaire',
         rewards_claim_pali: 'RÉCLAMER AVEC PALI',
         rewards_claim_metamask: 'RÉCLAMER AVEC METAMASK',
-
         promos_title: 'Promotions Spéciales',
         promos_exclusive: 'Exclusif pour le Niveau',
         promos_with_nfts: 'avec',
@@ -1890,11 +1709,8 @@ const translations = {
         promos_locked_title: 'Promotions Verrouillées',
         promos_locked_desc: 'Atteignez le Niveau 2 (4 NFTs) pour débloquer',
         promos_locked_hint: 'Continuez à scanner et à échanger des récompenses !',
-
-        // Scoreboard
         score_progress: 'Progression vers le niveau {level}',
         score_collected: '{count}/{total} NFTs collectés',
-
         scan_camera_permission: 'Permission Caméra',
         scan_camera_permission_desc: 'Nous avons besoin de la caméra pour scanner les déchets.',
         scan_searching: 'Recherche de déchets...',
@@ -1904,16 +1720,13 @@ const translations = {
         scan_aim_camera: 'Pointez votre caméra vers les déchets',
         scan_waste_found: 'Déchet trouvé',
         scan_points_earned: 'TPL gagnés',
-
         map_no_beaches: 'Aucune plage trouvée',
         map_no_beaches_desc: 'Essayez d\'autres termes de recherche',
         map_explore: 'Explorer',
-
         celebration_thanks: 'MERCI BEAUCOUP !',
         celebration_nft_unlocked: 'Vous avez obtenu un NFT :',
         celebration_see_rewards: 'Vous pouvez le voir dans la section récompenses.',
         celebration_continue: 'CONTINUER',
-
         nft_badge_new: 'NOUVEAU',
         nft_discovered_on: 'DÉCOUVERT LE',
         nft_acq_default: 'Récompense de mission',
@@ -1923,16 +1736,12 @@ const translations = {
         nft_acq_points_20: 'Obtenu en atteignant 20 TPL',
         nft_acq_region: 'Trouvé en explorant',
         nft_unlocked_toast: 'NFT Débloqué',
-
-        // Carousel celebration
         carousel_congrats: 'FÉLICITATIONS !',
         carousel_achievement: 'Vous avez atteint {count} NFTs',
         carousel_level_up: 'NIVEAU 2 DÉBLOQUÉ !',
         carousel_proud: 'Nous sommes très fiers de vous pour aider la planète',
         carousel_sub_proud: "Chaque NFT représente votre engagement envers l'environnement",
         carousel_promos_unlocked: 'Promotions Spéciales Débloquées !',
-
-        // Profile
         profile_name_change_denied: "Vous ne pouvez changer votre nom qu'une seule fois.",
         profile_name_invalid: 'Le nom doit comporter au moins 3 caractères.',
         profile_name_saved: 'Nom enregistré',
@@ -1970,10 +1779,6 @@ const translations = {
         map_suggestion_zone: 'Zone',
         map_explore: 'Explorer',
     },
-
-    // ═══════════════════════════════════════════
-    // PORTUGUÊS (Portuguese)
-    // ═══════════════════════════════════════════
     pt: {
         auth_welcome: 'Bem-vindo',
         auth_welcome_back: 'Bem-vindo de volta',
@@ -2020,7 +1825,6 @@ const translations = {
         auth_enter_session_password: 'Insira sua senha de sessão',
         auth_invalid_session_password: 'Senha de sessão incorreta',
         auth_file_password_label: 'Senha do arquivo de exportação',
-
         home_greeting: 'Olá',
         home_total_balance: 'SALDO TOTAL',
         home_this_week: '+12% esta semana',
@@ -2034,7 +1838,6 @@ const translations = {
         home_profile: 'Perfil',
         home_rewards: 'Prêmios',
         home_redeem_tpl: 'Resgatar TPL',
-
         profile_title: 'Meu Perfil',
         profile_level: 'NÍVEL',
         profile_scans: 'Escaneamentos',
@@ -2060,8 +1863,6 @@ const translations = {
         profile_cancel: 'Cancelar',
         profile_photo_updated: 'Foto do perfil atualizada',
         profile_name_saved: 'Nome salvo',
-
-        // Astronaut Card & Promotions
         astro_coming_soon: 'Em Breve',
         astro_follow_us: 'Siga-nos no X',
         promo_eco_title: '20% de Desconto na Eco-Loja',
@@ -2084,12 +1885,8 @@ const translations = {
         profile_theme_dark: 'Escuro',
         profile_theme_light: 'Claro',
         profile_theme_system: 'Sistema',
-
-        // Profile Toast Messages
         profile_toast_theme: 'Tema',
         profile_toast_lang: 'Idioma',
-
-        // Export Modal
         export_title: 'Exportar Perfil',
         export_desc_intro: 'Um arquivo JSON criptografado será gerado com:',
         export_desc_points: 'Todos os seus pontos',
@@ -2113,8 +1910,6 @@ const translations = {
         export_error_match: 'As senhas não coincidem',
         export_error_share: 'Erro ao compartilhar arquivo',
         export_success: 'Perfil exportado com sucesso',
-
-        // Scanner
         scan_last_scan: 'Último Escaneamento',
         scan_width: 'Largura',
         scan_height: 'Altura',
@@ -2148,7 +1943,6 @@ const translations = {
         scan_button: 'Escanear',
         scan_camera_permission: 'Permissão da Câmera',
         scan_camera_permission_desc: 'Precisamos de acesso à sua câmera para identificar resíduos plásticos e conceder pontos.',
-
         account_security: 'Segurança da Conta',
         account_export: 'Exportar Conta',
         account_export_desc: 'Baixe seu perfil criptografado como JSON',
@@ -2167,8 +1961,6 @@ const translations = {
         account_import_error: 'Erro na importação. Verifique a senha.',
         account_password_mismatch: 'As senhas não coincidem',
         account_password_short: 'A senha deve ter pelo menos 6 caracteres',
-
-        // Wallet
         wallet_connect_title: 'Conectar Carteira',
         wallet_connect_desc: 'Selecione um provedor para conectar sua carteira Web3',
         wallet_success: 'Carteira Conectada!',
@@ -2177,7 +1969,6 @@ const translations = {
         wallet_metamask_desc: 'A forma mais segura de conectar',
         wallet_walletconnect_desc: 'Conectar outras carteiras',
         wallet_info_text: 'Seu endereço de carteira permanecerá seguro e será usado apenas para transações autorizadas.',
-
         rewards_title: 'Minhas Recompensas',
         rewards_collection_count: 'NFTs na sua coleção',
         rewards_coming_soon: 'Em Breve',
@@ -2194,7 +1985,6 @@ const translations = {
         rewards_owner: 'Proprietário',
         rewards_claim_pali: 'REIVINDICAR COM PALI',
         rewards_claim_metamask: 'REIVINDICAR COM METAMASK',
-
         promos_title: 'Promoções Especiais',
         promos_exclusive: 'Exclusivo para Nível',
         promos_with_nfts: 'com',
@@ -2206,11 +1996,8 @@ const translations = {
         promos_locked_title: 'Promoções Bloqueadas',
         promos_locked_desc: 'Alcance o Nível 2 (4 NFTs) para desbloquear',
         promos_locked_hint: 'Continue escaneando e resgatando recompensas!',
-
-        // Scoreboard
         score_progress: 'Progresso para o Nível {level}',
         score_collected: '{count}/{total} NFTs coletados',
-
         scan_camera_permission: 'Permissão da Câmera',
         scan_camera_permission_desc: 'Precisamos de acesso à câmera para escanear resíduos.',
         scan_searching: 'Procurando resíduos...',
@@ -2220,16 +2007,13 @@ const translations = {
         scan_aim_camera: 'Aponte sua câmera para os resíduos',
         scan_waste_found: 'Resíduo encontrado',
         scan_points_earned: 'TPL ganhos',
-
         map_no_beaches: 'Nenhuma praia encontrada',
         map_no_beaches_desc: 'Tente outros termos de pesquisa',
         map_explore: 'Explorar',
-
         celebration_thanks: 'MUITO OBRIGADO!',
         celebration_nft_unlocked: 'Você conseguiu um NFT:',
         celebration_see_rewards: 'Você pode vê-lo na seção de recompensas.',
         celebration_continue: 'CONTINUAR',
-
         nft_badge_new: 'NOVO',
         nft_discovered_on: 'DESCOBERTO EM',
         nft_acq_default: 'Recompensa de missão',
@@ -2239,16 +2023,12 @@ const translations = {
         nft_acq_points_20: 'Obtido por alcançar 20 TPL',
         nft_acq_region: 'Encontrado explorando',
         nft_unlocked_toast: 'NFT Desbloqueado',
-
-        // Carousel celebration
         carousel_congrats: 'PARABÉNS!',
         carousel_achievement: 'Você alcançou {count} NFTs',
         carousel_level_up: 'NÍVEL 2 DESBLOQUEADO!',
         carousel_proud: 'Estamos muito orgulhosos de você por ajudar o planeta',
         carousel_sub_proud: 'Cada NFT representa seu compromisso com o meio ambiente',
         carousel_promos_unlocked: 'Promoções Especiais Desbloqueadas!',
-
-        // Profile
         profile_name_change_denied: 'Você só pode alterar seu nome uma vez.',
         profile_name_invalid: 'O nome deve ter pelo menos 3 caracteres.',
         profile_name_saved: 'Nome salvo',
@@ -2287,5 +2067,4 @@ const translations = {
         map_explore: 'Explorar',
     },
 };
-
 export default translations;

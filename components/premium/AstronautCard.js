@@ -3,12 +3,9 @@ import { Animated, Linking, Easing, View, StyleSheet, Image, Text, Pressable, Pl
 import Svg, { Path } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLanguage } from '../../context/LanguageContext';
-
 const SocialCard = () => {
-    // Animation for the astronaut (Move)
     const moveAnim = useRef(new Animated.Value(0)).current;
     const { t } = useLanguage();
-
     useEffect(() => {
         Animated.loop(
             Animated.sequence([
@@ -39,36 +36,29 @@ const SocialCard = () => {
             ])
         ).start();
     }, [moveAnim]);
-
-    // Interpolation of movements
     const translateY = moveAnim.interpolate({
         inputRange: [0, 1, 2, 3],
         outputRange: [0, -15, 15, -18],
     });
-
     const translateX = moveAnim.interpolate({
         inputRange: [0, 1, 2, 3],
         outputRange: [0, -15, -15, 15],
     });
-
     const rotate = moveAnim.interpolate({
         inputRange: [0, 1, 3],
         outputRange: ['0deg', '-10deg', '10deg'],
     });
-
     return (
         <View style={styles.container}>
-            {/* Outer Border with Gradient/Color */}
+            {}
             <View style={styles.outerBorder}>
                 <View style={styles.cardContainer}>
-                    {/* Backgrounds */}
+                    {}
                     <View style={styles.glowBackground} />
                     <StarField />
-
                     <View style={styles.cardContent}>
-                        {/* Purple Glow behind text/image area */}
+                        {}
                         <View style={styles.purpleGlow} />
-
                         <Animated.Image
                             source={{ uri: 'https://uiverse.io/astronaut.png' }}
                             resizeMode="contain"
@@ -83,14 +73,12 @@ const SocialCard = () => {
                                 }
                             ]}
                         />
-
                         <Text style={styles.heading}>{t('astro_coming_soon')}</Text>
                         <Text style={styles.subText}>{t('astro_follow_us')}</Text>
-
                         <View style={styles.iconsRow}>
                             <SocialButton
                                 url="https://twitter.com/LimpiaPlayadev"
-                                color="#000000" // X Icon Color
+                                color="#000000" 
                                 iconPath="M19.8003 3L13.5823 10.105L19.9583 19.106C20.3923 19.719 20.6083 20.025 20.5983 20.28C20.594 20.3896 20.5657 20.4969 20.5154 20.5943C20.4651 20.6917 20.3941 20.777 20.3073 20.844C20.1043 21 19.7293 21 18.9793 21H17.2903C16.8353 21 16.6083 21 16.4003 20.939C16.2168 20.8847 16.0454 20.7957 15.8953 20.677C15.7253 20.544 15.5943 20.358 15.3313 19.987L10.6813 13.421L4.64033 4.894C4.20733 4.281 3.99033 3.975 4.00033 3.72C4.00478 3.61035 4.03323 3.50302 4.08368 3.40557C4.13414 3.30812 4.20536 3.22292 4.29233 3.156C4.49433 3 4.87033 3 5.62033 3H7.30833C7.76333 3 7.99033 3 8.19733 3.061C8.38119 3.1152 8.55295 3.20414 8.70333 3.323C8.87333 3.457 9.00433 3.642 9.26733 4.013L13.5833 10.105M4.05033 21L10.6823 13.421"
                                 viewBox="0 0 24 24"
                             />
@@ -101,12 +89,9 @@ const SocialCard = () => {
         </View>
     );
 };
-
-// --- ANIMATED BUTTON COMPONENT ---
 const SocialButton = ({ url, color, iconPath, viewBox }) => {
     const [pressed, setPressed] = useState(false);
     const scaleAnim = useRef(new Animated.Value(0)).current;
-
     useEffect(() => {
         Animated.timing(scaleAnim, {
             toValue: pressed ? 1 : 0,
@@ -115,21 +100,17 @@ const SocialButton = ({ url, color, iconPath, viewBox }) => {
             easing: Easing.inOut(Easing.ease)
         }).start();
     }, [pressed]);
-
     const backgroundScale = scaleAnim.interpolate({
         inputRange: [0, 1],
-        outputRange: [0.1, 4] // Expands to fill button
+        outputRange: [0.1, 4] 
     });
-
     const iconScale = scaleAnim.interpolate({
         inputRange: [0, 1],
         outputRange: [1, 1.25]
     });
-
     const openLink = () => {
         Linking.openURL(url).catch((err) => console.error("Couldn't load page", err));
     };
-
     return (
         <Pressable
             onPressIn={() => setPressed(true)}
@@ -138,7 +119,7 @@ const SocialButton = ({ url, color, iconPath, viewBox }) => {
             style={styles.pressable}
         >
             <View style={styles.iconWrapper}>
-                {/* White background that grows on press */}
+                {}
                 <Animated.View
                     style={[
                         styles.animatedIconBackground,
@@ -148,7 +129,7 @@ const SocialButton = ({ url, color, iconPath, viewBox }) => {
                         }
                     ]}
                 />
-                {/* Icon that changes color and size */}
+                {}
                 <Animated.View style={{ transform: [{ scale: iconScale }] }}>
                     <Svg width={24} height={24} viewBox={viewBox} fill="none">
                         <Path
@@ -164,17 +145,12 @@ const SocialButton = ({ url, color, iconPath, viewBox }) => {
         </Pressable>
     );
 };
-
-// --- STAR FIELD COMPONENT ---
-// Recreating the CSS star field with absolute positioned Views
 const Star = ({ top, left, opacity }) => (
     <View style={[styles.star, { top, left, opacity }]} />
 );
-
 const StarSmall = ({ top, left }) => (
     <View style={[styles.starSmall, { top, left }]} />
 );
-
 const StarField = () => (
     <View style={StyleSheet.absoluteFill}>
         <Star top={20} left={140} opacity={0.8} />
@@ -186,24 +162,22 @@ const StarField = () => (
         <Star top={50} left={520} opacity={0.4} />
         <Star top={330} left={490} opacity={0.6} />
         <Star top={300} left={420} opacity={0.5} />
-
         <StarSmall top={100} left={200} />
         <StarSmall top={250} left={100} />
         <StarSmall top={40} left={40} />
     </View>
 );
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'transparent', // Let parent handle bg
+        backgroundColor: 'transparent', 
     },
     outerBorder: {
         padding: 3,
         borderRadius: 20,
-        backgroundColor: '#2a2a2a', // Outer border color
+        backgroundColor: '#2a2a2a', 
     },
     cardContainer: {
         width: 300,
@@ -244,7 +218,7 @@ const styles = StyleSheet.create({
         textAlign: 'center'
     },
     subText: {
-        color: '#a8c5d4', // biolum equivalent
+        color: '#a8c5d4', 
         fontSize: 14,
         textAlign: 'center',
         marginBottom: 20,
@@ -274,7 +248,6 @@ const styles = StyleSheet.create({
         gap: 16,
     },
     pressable: {
-        // padding handled by wrapper
     },
     iconWrapper: {
         width: 40,
@@ -282,8 +255,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
-        overflow: 'hidden', // Changed to hidden so the white bg doesn't spill out visibly square-ish
-        borderRadius: 20, // Make wrapper round
+        overflow: 'hidden', 
+        borderRadius: 20, 
     },
     animatedIconBackground: {
         position: 'absolute',
@@ -291,7 +264,7 @@ const styles = StyleSheet.create({
         height: 12,
         backgroundColor: 'white',
         borderRadius: 20,
-        top: 14, // Center manually (40-12)/2 = 14
+        top: 14, 
         left: 14,
         zIndex: -1,
         elevation: 5,
@@ -311,5 +284,4 @@ const styles = StyleSheet.create({
         opacity: 0.5,
     },
 });
-
 export default SocialCard;

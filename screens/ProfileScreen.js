@@ -31,23 +31,14 @@ import ScalePressable from '../components/ScalePressable';
 import { mintNFT } from "../utils/blockchain/missionNFT";
 import { generateNFTAttributes } from "../utils/nftGenerator";
 import TPLTitle from '../components/premium/TPLTitle';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PREMIUM PROFILE SCREEN
-// ═══════════════════════════════════════════════════════════════════════════
-
 import { useWindowDimensions } from 'react-native';
-
 export default function ProfileScreen({ navigation }) {
     const { width } = useWindowDimensions();
     const isDesktop = width >= 1024;
     const { user, updateUserProfile, nfts, points, level, scannedItems, unlockNFT } = useGame();
-    // ... existing hooks ...
     const { colors, shadows, isDark, themeMode, setDarkMode, setLightMode, setSystemMode, THEME_MODES } = useTheme();
     const { t, language, setLanguage, LANGUAGES, LANGUAGE_LABELS, isAutoMode } = useLanguage();
-    const { verifySessionPassword, exportAccount } = useAuth(); // Import auth methods
-
-    // ... existing state ...
+    const { verifySessionPassword, exportAccount } = useAuth(); 
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState(user.name);
     const [showImagePicker, setShowImagePicker] = useState(false);
@@ -55,19 +46,16 @@ export default function ProfileScreen({ navigation }) {
     const [successMessage, setSuccessMessage] = useState('');
     const [showCelebration, setShowCelebration] = useState(false);
     const [celebrationMessage, setCelebrationMessage] = useState('');
-
     // Export State
     const [showExportModal, setShowExportModal] = useState(false);
-    const [exportStep, setExportStep] = useState('verify_session'); // verify_session -> create_file_pass -> ready
+    const [exportStep, setExportStep] = useState('verify_session'); 
     const [sessionPassword, setSessionPassword] = useState('');
     const [filePassword, setFilePassword] = useState('');
     const [filePasswordConfirm, setFilePasswordConfirm] = useState('');
     const [exportError, setExportError] = useState('');
     const [isExporting, setIsExporting] = useState(false);
-
     // Visibility State
     const [showPassword, setShowPassword] = useState(false);
-
     // ── Milestone Checks ──
     useEffect(() => {
         const checkMilestones = async () => {
@@ -82,7 +70,6 @@ export default function ProfileScreen({ navigation }) {
                         acquisition: 'nft_acq_profile_visit',
                         description: 'Awarded for visiting your profile for the first time.',
                     });
-
                     if (newNft) {
                         setCelebrationMessage(`${t('celebration_thanks')}\n\n${t('celebration_nft_unlocked')}\n${newNft.title}\n\n${t('celebration_see_rewards')}`);
                         setShowCelebration(true);
@@ -93,15 +80,11 @@ export default function ProfileScreen({ navigation }) {
                 }
             }
         };
-
         const timer = setTimeout(checkMilestones, 1000);
         return () => clearTimeout(timer);
     }, [user]);
-
-    // Animation values
     const toastOpacity = useSharedValue(0);
     const toastY = useSharedValue(rs(-50));
-
     const showSuccess = (message) => {
         setSuccessMessage(message);
         setShowSuccessToast(true);
@@ -113,15 +96,12 @@ export default function ProfileScreen({ navigation }) {
             setTimeout(() => setShowSuccessToast(false), 300);
         }, 2500);
     };
-
-    // Image picker functions
     const pickImage = async () => {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
             Alert.alert(t('profile_permission_required'), t('profile_gallery_permission'));
             return;
         }
-
         const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
@@ -129,7 +109,6 @@ export default function ProfileScreen({ navigation }) {
             quality: 0.5,
             base64: true,
         });
-
         if (!result.canceled) {
             const base64Img = `data:image/jpeg;base64,${result.assets[0].base64}`;
             updateUserProfile({ avatar: base64Img });
@@ -137,21 +116,18 @@ export default function ProfileScreen({ navigation }) {
         }
         setShowImagePicker(false);
     };
-
     const takePhoto = async () => {
         const { status } = await ImagePicker.requestCameraPermissionsAsync();
         if (status !== 'granted') {
             Alert.alert(t('profile_permission_required'), t('profile_camera_permission'));
             return;
         }
-
         const result = await ImagePicker.launchCameraAsync({
             allowsEditing: true,
             aspect: [1, 1],
             quality: 0.5,
             base64: true,
         });
-
         if (!result.canceled) {
             const base64Img = `data:image/jpeg;base64,${result.assets[0].base64}`;
             updateUserProfile({ avatar: base64Img });
@@ -159,37 +135,30 @@ export default function ProfileScreen({ navigation }) {
         }
         setShowImagePicker(false);
     };
-
     const handleSaveName = () => {
         if (user.hasChangedUsername) {
             Alert.alert(t('profile_name_change_denied'), t('profile_name_change_denied'));
             setIsEditingName(false);
             return;
         }
-
         const trimmedName = newName.trim();
         if (trimmedName.length < 3) {
             Alert.alert(t('profile_name_invalid'), t('profile_name_invalid'));
             return;
         }
-
         if (trimmedName === user.name) {
             setIsEditingName(false);
             return;
         }
-
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         const { unlockedNFT } = updateUserProfile({ name: trimmedName });
         setIsEditingName(false);
         showSuccess(t('profile_name_saved'));
-
         if (unlockedNFT) {
             setCelebrationMessage(`${t('celebration_thanks')}\n\n${t('celebration_nft_unlocked')}\n${unlockedNFT.title}\n\n${t('celebration_see_rewards')}`);
             setShowCelebration(true);
         }
     };
-
-    // Theme mode selector
     const handleThemeChange = (mode) => {
         if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         if (mode === 'dark') setDarkMode();
@@ -197,22 +166,16 @@ export default function ProfileScreen({ navigation }) {
         else setSystemMode();
         showSuccess(`${t('profile_toast_theme')}: ${mode === 'system' ? t('profile_theme_auto') : mode === 'dark' ? t('profile_theme_dark') : t('profile_theme_light')}`);
     };
-
-    // Language selector
     const handleLanguageChange = (lang) => {
         if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         setLanguage(lang);
         const label = LANGUAGE_LABELS[Object.keys(LANGUAGES).find(key => LANGUAGES[key] === lang)];
         showSuccess(`${t('profile_toast_lang')}: ${label || lang}`);
     };
-
-    // Export Logic
     const handleExportProfile = async () => {
         setExportError('');
         setIsExporting(true);
-
         if (exportStep === 'verify_session') {
-            // Step 1: Verify current session password
             const isValid = await verifySessionPassword(sessionPassword);
             if (!isValid) {
                 setExportError(t('export_error_session'));
@@ -223,7 +186,6 @@ export default function ProfileScreen({ navigation }) {
             setExportStep('create_file_pass');
             setIsExporting(false);
         } else if (exportStep === 'create_file_pass') {
-            // Step 2: Validate new file password
             if (filePassword.length < 6) {
                 setExportError(t('export_error_length'));
                 setIsExporting(false);
@@ -234,8 +196,6 @@ export default function ProfileScreen({ navigation }) {
                 setIsExporting(false);
                 return;
             }
-            // Step 3: Generate and Share
-            // Collect live data
             const liveAccountData = {
                 points,
                 nfts,
@@ -243,14 +203,11 @@ export default function ProfileScreen({ navigation }) {
                 level
             };
             const liveProfileData = user;
-
             const result = await exportAccount(sessionPassword, filePassword, liveAccountData, liveProfileData);
             if (result.success) {
                 try {
                     const fileName = `tpl_profile_${user.name.replace(/\s+/g, '_')}_${Date.now()}.json`;
-
                     if (Platform.OS === 'web') {
-                        // Web download
                         const blob = new Blob([result.data], { type: 'application/json' });
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
@@ -260,13 +217,10 @@ export default function ProfileScreen({ navigation }) {
                         URL.revokeObjectURL(url);
                         showSuccess(t('export_success'));
                     } else {
-                        // Native share
                         const FileSystem = require('expo-file-system');
                         const Sharing = require('expo-sharing');
-
                         const fileUri = FileSystem.documentDirectory + fileName;
                         await FileSystem.writeAsStringAsync(fileUri, result.data, { encoding: FileSystem.EncodingType.UTF8 });
-
                         if (await Sharing.isAvailableAsync()) {
                             await Sharing.shareAsync(fileUri);
                             showSuccess(t('export_success'));
@@ -285,7 +239,6 @@ export default function ProfileScreen({ navigation }) {
             setIsExporting(false);
         }
     };
-
     const closeExportModal = () => {
         setShowExportModal(false);
         setExportStep('verify_session');
@@ -294,12 +247,10 @@ export default function ProfileScreen({ navigation }) {
         setFilePasswordConfirm('');
         setExportError('');
     };
-
     const toastStyle = useAnimatedStyle(() => ({
         opacity: toastOpacity.value,
         transform: [{ translateY: toastY.value }],
     }));
-
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Background */}
@@ -313,12 +264,11 @@ export default function ProfileScreen({ navigation }) {
             <View style={styles.bgContainer}>
                 <LivingWater />
             </View>
-
             <ScrollView
                 contentContainerStyle={[styles.scrollContent, isDesktop && { width: '100%', maxWidth: 800, alignSelf: 'center' }]}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Header */}
+                {}
                 <Animated.View
                     entering={FadeInDown.delay(100).springify()}
                     style={styles.header}
@@ -332,8 +282,7 @@ export default function ProfileScreen({ navigation }) {
                     <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile_title')}</Text>
                     <View style={{ width: rs(44) }} />
                 </Animated.View>
-
-                {/* Avatar */}
+                {}
                 <Animated.View entering={FadeInUp.delay(200).springify()}>
                     <ScalePressable
                         style={styles.avatarContainer}
@@ -358,8 +307,7 @@ export default function ProfileScreen({ navigation }) {
                         </View>
                     </ScalePressable>
                 </Animated.View>
-
-                {/* Username */}
+                {}
                 <Animated.View
                     entering={FadeInUp.delay(300).springify()}
                     style={styles.nameContainer}
@@ -403,8 +351,7 @@ export default function ProfileScreen({ navigation }) {
                         </Text>
                     )}
                 </Animated.View>
-
-                {/* Level Badge */}
+                {}
                 <Animated.View entering={FadeInUp.delay(350).springify()}>
                     <LinearGradient
                         colors={BRAND.goldShimmer ? [BRAND.sandGold, BRAND.goldShimmer] : ['#e8d5b5', '#FFD700']}
@@ -413,8 +360,7 @@ export default function ProfileScreen({ navigation }) {
                         <Text style={styles.levelText}>{t('profile_level')} {level}</Text>
                     </LinearGradient>
                 </Animated.View>
-
-                {/* Stats Grid */}
+                {}
                 <Animated.View entering={FadeInUp.delay(400).springify()}>
                     <GlassCard variant="elevated" style={styles.statsCard}>
                         <View style={styles.statsGrid}>
@@ -435,12 +381,11 @@ export default function ProfileScreen({ navigation }) {
                         </View>
                     </GlassCard>
                 </Animated.View>
-
-                {/* Theme Settings Section */}
+                {}
                 <Animated.View entering={FadeInUp.delay(450).springify()}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('profile_appearance')}</Text>
                     <GlassCard variant="default" style={styles.settingsCard}>
-                        {/* Theme Toggle */}
+                        {}
                         <View style={styles.themeRow}>
                             <View style={styles.themeInfo}>
                                 <Ionicons name={isDark ? 'moon' : 'sunny'} size={rs(22)} color={colors.accent} />
@@ -489,8 +434,7 @@ export default function ProfileScreen({ navigation }) {
                                 </ScalePressable>
                             ))}
                         </View>
-
-                        {/* Language Toggle */}
+                        {}
                         <View style={[styles.sectionDivider, { backgroundColor: colors.border }]} />
                         <View style={styles.themeRow}>
                             <View style={styles.themeInfo}>
@@ -503,7 +447,6 @@ export default function ProfileScreen({ navigation }) {
                                 </View>
                             </View>
                         </View>
-
                         <View style={styles.langGrid}>
                             <ScalePressable
                                 style={[
@@ -556,11 +499,9 @@ export default function ProfileScreen({ navigation }) {
                                 </ScalePressable>
                             ))}
                         </View>
-
                     </GlassCard>
                 </Animated.View>
-
-                {/* Profile Info Cards */}
+                {}
                 <Animated.View entering={FadeInUp.delay(500).springify()}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('profile_private_info')}</Text>
                     <GlassCard variant="default" style={styles.infoCard}>
@@ -570,7 +511,6 @@ export default function ProfileScreen({ navigation }) {
                             <Text style={[styles.infoValue, { color: colors.text }]}>{user.joinDate}</Text>
                         </View>
                     </GlassCard>
-
                     <GlassCard variant="default" style={[styles.infoCard, { marginTop: SPACING.sm }]}>
                         <Ionicons name="shield-checkmark-outline" size={rs(20)} color={colors.accent} />
                         <View style={styles.infoContent}>
@@ -578,7 +518,6 @@ export default function ProfileScreen({ navigation }) {
                             <Text style={[styles.infoValue, { color: colors.text }]}>{t('profile_verified')}</Text>
                         </View>
                     </GlassCard>
-
                     <ScalePressable onPress={() => setShowExportModal(true)}>
                         <GlassCard variant="default" style={[styles.infoCard, { marginTop: SPACING.sm }]}>
                             <Ionicons name="download-outline" size={rs(20)} color={colors.accent} />
@@ -591,36 +530,29 @@ export default function ProfileScreen({ navigation }) {
                             </View>
                         </GlassCard>
                     </ScalePressable>
-
-                    {/* Wallet Section Removed */}
+                    {}
                 </Animated.View>
-
-                {/* Privacy Notice */}
+                {}
                 <Animated.View entering={FadeInUp.delay(550).springify()} style={styles.privacyNotice}>
                     <Ionicons name="lock-closed" size={rs(14)} color={colors.textMuted} />
                     <Text style={[styles.privacyText, { color: colors.textMuted }]}>
                         {t('profile_privacy_notice')}
                     </Text>
                 </Animated.View>
-
             </ScrollView>
-
-            {/* Image Picker Modal */}
+            {}
             <Modal visible={showImagePicker} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
                         <Text style={[styles.modalTitle, { color: colors.text }]}>{t('profile_change_photo')}</Text>
-
                         <ScalePressable style={styles.modalOption} onPress={takePhoto}>
                             <Ionicons name="camera" size={rs(24)} color={colors.accent} />
                             <Text style={[styles.modalOptionText, { color: colors.text }]}>{t('profile_take_photo')}</Text>
                         </ScalePressable>
-
                         <ScalePressable style={styles.modalOption} onPress={pickImage}>
                             <Ionicons name="images" size={rs(24)} color={colors.accent} />
                             <Text style={[styles.modalOptionText, { color: colors.text }]}>{t('profile_choose_gallery')}</Text>
                         </ScalePressable>
-
                         <ScalePressable
                             style={[styles.modalCancel, { backgroundColor: colors.glass }]}
                             onPress={() => setShowImagePicker(false)}
@@ -630,8 +562,7 @@ export default function ProfileScreen({ navigation }) {
                     </View>
                 </View>
             </Modal>
-
-            {/* Export Profile Modal */}
+            {}
             <Modal visible={showExportModal} transparent animationType="fade">
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
@@ -641,7 +572,6 @@ export default function ProfileScreen({ navigation }) {
                                 <Ionicons name="close" size={rs(24)} color={colors.text} />
                             </ScalePressable>
                         </View>
-
                         <Text style={[styles.modalDesc, { color: colors.textSecondary }]}>
                             {t('export_desc_intro')}
                             {'\n'}• {t('export_desc_points')} ({points})
@@ -650,7 +580,6 @@ export default function ProfileScreen({ navigation }) {
                             {'\n'}• {t('export_desc_recent')}
                             {'\n\n'}{t('export_desc_outro')}
                         </Text>
-
                         {exportStep === 'verify_session' ? (
                             <View style={styles.exportStep}>
                                 <Text style={[styles.inputLabel, { color: colors.text }]}>{t('export_step_verify')}</Text>
@@ -686,7 +615,6 @@ export default function ProfileScreen({ navigation }) {
                                         {t('export_step_create_warning')}
                                     </Text>
                                 </View>
-
                                 <Text style={[styles.inputLabel, { color: colors.text }]}>{t('export_step_create_label')}</Text>
                                 <View style={styles.passwordContainer}>
                                     <TextInput
@@ -701,7 +629,6 @@ export default function ProfileScreen({ navigation }) {
                                         <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
                                     </ScalePressable>
                                 </View>
-
                                 <Text style={[styles.inputLabel, { color: colors.text }]}>{t('export_step_confirm_label')}</Text>
                                 <View style={styles.passwordContainer}>
                                     <TextInput
@@ -716,7 +643,6 @@ export default function ProfileScreen({ navigation }) {
                                         <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.textSecondary} />
                                     </ScalePressable>
                                 </View>
-
                                 <ScalePressable
                                     style={[styles.actionButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.oceanDark }]}
                                     onPress={handleExportProfile}
@@ -729,25 +655,20 @@ export default function ProfileScreen({ navigation }) {
                                 </ScalePressable>
                             </View>
                         )}
-
                         {exportError ? (
                             <Text style={styles.errorText}>{exportError}</Text>
                         ) : null}
-
                     </View>
                 </View>
             </Modal>
-
-            {/* Wallet Modal Removed */}
-
-            {/* CELEBRATION MODAL */}
+            {}
+            {}
             <CelebrationModal
                 visible={showCelebration}
                 onClose={() => setShowCelebration(false)}
                 message={celebrationMessage}
             />
-
-            {/* Success Toast */}
+            {}
             {showSuccessToast && (
                 <Animated.View style={[styles.toastCard, { backgroundColor: colors.surface }, shadows.lg, toastStyle]}>
                     <LinearGradient colors={isDark ? [BRAND.oceanLight, BRAND.oceanMid] : [BRAND.success, '#388e3c']} style={styles.toastIconGradient}>
@@ -762,7 +683,6 @@ export default function ProfileScreen({ navigation }) {
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: { flex: 1 },
     bgContainer: { ...StyleSheet.absoluteFillObject, opacity: 0.2 },
@@ -785,8 +705,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     headerTitle: { fontSize: rf(20), fontWeight: '700' },
-
-    // Avatar
     avatarContainer: { alignSelf: 'center', marginBottom: SPACING.lg },
     avatarBorder: {
         width: rs(124),
@@ -821,8 +739,6 @@ const styles = StyleSheet.create({
         borderWidth: 2,
         borderColor: '#fff',
     },
-
-    // Name
     nameContainer: { alignItems: 'center', marginBottom: SPACING.md },
     nameDisplay: { flexDirection: 'row', alignItems: 'center' },
     userName: { fontSize: rf(24), fontWeight: '700' },
@@ -851,8 +767,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-
-    // Level Badge
     levelBadge: {
         alignSelf: 'center',
         paddingVertical: SPACING.sm,
@@ -866,16 +780,12 @@ const styles = StyleSheet.create({
         color: BRAND.oceanDark,
         letterSpacing: 2,
     },
-
-    // Stats
     statsCard: { marginBottom: SPACING.xl, padding: SPACING.lg },
     statsGrid: { flexDirection: 'row', justifyContent: 'space-around' },
     statItem: { flex: 1, alignItems: 'center' },
     statValue: { fontSize: rf(24), fontWeight: '700' },
     statLabel: { fontSize: rf(12), marginTop: rs(4), textTransform: 'uppercase' },
     statDivider: { width: 1, height: '80%', alignSelf: 'center', backgroundColor: '#000', opacity: 0.1 },
-
-    // Theme & Language
     sectionDivider: { height: 1, marginVertical: SPACING.md, opacity: 0.1 },
     themeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: SPACING.md },
     themeInfo: { flexDirection: 'row', alignItems: 'center' },
@@ -894,8 +804,6 @@ const styles = StyleSheet.create({
         gap: rs(6),
     },
     themeButtonText: { fontSize: rf(12), fontWeight: '600' },
-
-    // Language Grid (New)
     langGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -914,16 +822,12 @@ const styles = StyleSheet.create({
     },
     langButtonText: { fontSize: rf(14), fontWeight: '600' },
     statDivider: { width: 1, height: '80%', alignSelf: 'center' },
-
-    // Section
     sectionTitle: {
         fontSize: rf(16),
         fontWeight: '700',
         marginBottom: SPACING.md,
         marginTop: SPACING.sm,
     },
-
-    // Theme Settings
     settingsCard: { marginBottom: SPACING.lg, padding: SPACING.md },
     themeRow: { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.md },
     themeInfo: { flexDirection: 'row', alignItems: 'center' },
@@ -942,8 +846,6 @@ const styles = StyleSheet.create({
         gap: rs(6),
     },
     themeButtonText: { fontSize: rf(12), fontWeight: '600' },
-
-    // Info Cards
     infoCard: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -959,8 +861,6 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.sm,
     },
     connectText: { color: '#fff', fontSize: rf(10), fontWeight: '700' },
-
-    // Privacy
     privacyNotice: {
         flexDirection: 'row',
         alignItems: 'flex-start',
@@ -968,8 +868,6 @@ const styles = StyleSheet.create({
         gap: SPACING.sm,
     },
     privacyText: { flex: 1, fontSize: rf(11), lineHeight: rf(16) },
-
-    // Modal
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.6)',
@@ -997,8 +895,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     modalCancelText: { fontSize: rf(16), fontWeight: '600' },
-
-    // Toast
     toastCard: {
         position: 'absolute',
         top: Platform.OS === 'ios' ? rh(60) : rh(40),
@@ -1019,8 +915,6 @@ const styles = StyleSheet.create({
     toastTextBox: { marginLeft: SPACING.md },
     toastTitle: { fontSize: rf(12), fontWeight: '700' },
     toastMessage: { fontSize: rf(11), marginTop: rs(2) },
-
-    // Language Scroll
     langScroll: { gap: SPACING.sm, paddingVertical: SPACING.sm },
     langButton: {
         minWidth: rs(40),
@@ -1032,8 +926,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
     },
     langButtonText: { fontSize: rf(12), fontWeight: '600' },
-
-    // Export & Action Button
     exportButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1042,8 +934,6 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.sm,
     },
     exportButtonText: { color: '#fff', fontSize: rf(10), fontWeight: '700' },
-
-    // Export Modal Styles
     modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md },
     modalDesc: { fontSize: rf(13), marginBottom: SPACING.xl, lineHeight: rf(20) },
     exportStep: { gap: SPACING.md },

@@ -27,39 +27,19 @@ import { useLanguage } from '../context/LanguageContext';
 import { rs, rf, rh, SPACING, RADIUS } from '../constants/responsive';
 import { SPRING, DURATION } from '../constants/animations';
 import { BRAND } from '../constants/theme';
-
-// Modular Components
 import FishBowlLoader from './FishBowlLoader';
 import DrawingPad from './DrawingPad';
 import LivingWater from './LivingWater';
 import FloatingBubbles from './premium/FloatingBubbles';
 import GlassCard from './premium/GlassCard';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PREMIUM AUTH SCREEN - Multi-step registration, login, and import flows
-//
-// Modes:
-//   choice           → "Create Account" / "Import Account"
-//   register_name    → Username input
-//   register_password → Password (x2)
-//   create_drawing   → Drawing creation (x2)
-//   login            → "Welcome, [username]" + Drawing entry
-//   import_file      → File picker + file password + new password
-//   import_drawing   → Drawing creation after import
-// ═══════════════════════════════════════════════════════════════════════════
-
 export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, onLogin, onImport, username: savedUsername }) {
     const { colors, isDark } = useTheme();
     const { user } = useGame();
     const { t } = useLanguage();
     const { height: winH } = useWindowDimensions();
-
-    // Multi-step state
     const [mode, setMode] = useState(isFirstTime ? 'choice' : 'login');
     const [drawingStrokes, setDrawingStrokes] = useState(null);
     const [showEmailModal, setShowEmailModal] = useState(false);
-
-    // Missing state variables
     const [statusText, setStatusText] = useState('');
     const [errorText, setErrorText] = useState('');
     const [regUsername, setRegUsername] = useState('');
@@ -72,17 +52,14 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
     const [importNewPassword, setImportNewPassword] = useState('');
     const [importNewPasswordConfirm, setImportNewPasswordConfirm] = useState('');
     const [firstDrawing, setFirstDrawing] = useState(null);
-
     const shake = useSharedValue(0);
     const contentOpacity = useSharedValue(0);
     const contentY = useSharedValue(rs(30));
-
     // Entrance animation
     useEffect(() => {
         contentOpacity.value = withTiming(1, { duration: 600 });
         contentY.value = withSpring(0, SPRING.smooth);
     }, []);
-
     // Update status text when mode changes
     useEffect(() => {
         setErrorText('');
@@ -116,8 +93,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                 break;
         }
     }, [mode, t]);
-
-    // Try biometrics on login
     useEffect(() => {
         if (mode === 'login') {
             const checkBiometrics = async () => {
@@ -133,7 +108,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             checkBiometrics();
         }
     }, [mode]);
-
     const authenticateBiometric = async () => {
         try {
             const result = await LocalAuthentication.authenticateAsync({
@@ -148,7 +122,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             console.warn("Biometric auth failed:", err);
         }
     };
-
     const triggerShake = () => {
         shake.value = withSequence(
             withSpring(rs(12), { velocity: 100, stiffness: 500 }),
@@ -158,37 +131,25 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             withSpring(0, { velocity: 50, stiffness: 500 })
         );
     };
-
     const hapticLight = () => {
         if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     };
-
     const hapticSuccess = () => {
         if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     };
-
     const hapticError = () => {
         if (Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     };
-
-    // ═══════════════════════════════════════════
-    // DRAWING HANDLERS
-    // ═══════════════════════════════════════════
     const handleDrawingSubmit = async (strokes) => {
         setDrawingStrokes(strokes);
-
         if (mode === 'create_drawing') {
-            // First drawing — save and ask user to repeat
             setFirstDrawing(strokes);
             setMode('confirm_drawing');
         } else if (mode === 'confirm_drawing') {
-            // Compare both drawings using fuzzy fingerprint matching
             const { hashDrawing, compareFingerprints } = require('../utils/crypto');
             const fp1 = await hashDrawing(firstDrawing);
             const fp2 = await hashDrawing(strokes);
-
             if (compareFingerprints(fp1, fp2)) {
-                // Shapes match — proceed to register
                 hapticSuccess();
                 setStatusText(t('auth_creating_account'));
                 const result = await onRegister(regUsername, regPassword, strokes);
@@ -204,7 +165,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                     }, 1200);
                 }
             } else {
-                // Shapes don't match — ask to retry
                 hapticError();
                 triggerShake();
                 setErrorText(t('auth_pin_mismatch'));
@@ -215,15 +175,12 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                 }, 1200);
             }
         } else if (mode === 'import_drawing') {
-            // First drawing for import — save and ask to repeat
             setFirstDrawing(strokes);
             setMode('import_confirm_drawing');
         } else if (mode === 'import_confirm_drawing') {
-            // Compare both drawings using fuzzy fingerprint matching
             const { hashDrawing, compareFingerprints } = require('../utils/crypto');
             const fp1 = await hashDrawing(firstDrawing);
             const fp2 = await hashDrawing(strokes);
-
             if (compareFingerprints(fp1, fp2)) {
                 hapticSuccess();
                 setStatusText(t('auth_creating_account'));
@@ -261,10 +218,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             }
         }
     };
-
-    // ═══════════════════════════════════════════
-    // REGISTRATION HANDLERS
-    // ═══════════════════════════════════════════
     const handleRegisterNameNext = () => {
         const trimmed = regUsername.trim();
         if (trimmed.length < 3) {
@@ -276,7 +229,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
         setErrorText('');
         setMode('register_password');
     };
-
     const handleRegisterPasswordNext = () => {
         if (regPassword.length < 6) {
             setErrorText(t('auth_password_short'));
@@ -292,10 +244,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
         setErrorText('');
         setMode('create_drawing');
     };
-
-    // ═══════════════════════════════════════════
-    // IMPORT HANDLERS
-    // ═══════════════════════════════════════════
     const handlePickFile = async () => {
         try {
             const result = await DocumentPicker.getDocumentAsync({
@@ -306,7 +254,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                 const file = result.assets[0];
                 setImportFileName(file.name);
                 if (Platform.OS === 'web') {
-                    // Web file reading
                     fetch(file.uri)
                         .then(res => res.text())
                         .then(text => setImportFileContent(text))
@@ -320,7 +267,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             setErrorText('Error: ' + e.message);
         }
     };
-
     const handleImportNext = () => {
         if (!importFileContent) {
             setErrorText(t('auth_select_file'));
@@ -344,15 +290,10 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
         setErrorText('');
         setMode('import_drawing');
     };
-
     const contentStyle = useAnimatedStyle(() => ({
         opacity: contentOpacity.value,
         transform: [{ translateY: contentY.value }],
     }));
-
-    // ═══════════════════════════════════════════
-    // DYNAMIC HEADER
-    // ═══════════════════════════════════════════
     const getTitle = () => {
         switch (mode) {
             case 'choice': return t('auth_welcome');
@@ -367,7 +308,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             default: return t('auth_welcome');
         }
     };
-
     const getSubtitle = () => {
         switch (mode) {
             case 'choice': return t('auth_your_impact');
@@ -382,15 +322,10 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             default: return '';
         }
     };
-
     // ═══════════════════════════════════════════
     // DRAWING MODES — show drawing canvas
     // ═══════════════════════════════════════════
     const isDrawingMode = ['create_drawing', 'confirm_drawing', 'login', 'import_drawing', 'import_confirm_drawing'].includes(mode);
-
-    // ═══════════════════════════════════════════
-    // HEADER COMPONENT
-    // ═══════════════════════════════════════════
     const renderHeader = () => (
         <View style={styles.header}>
             <Text style={[styles.title, { color: isDark ? colors.accent : colors.primary }]}>
@@ -401,10 +336,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             </Text>
         </View>
     );
-
-    // ═══════════════════════════════════════════
-    // RENDER FORM CONTENT (non-drawing modes)
-    // ═══════════════════════════════════════════
     const renderFormContent = () => {
         const content = (() => {
             if (mode === 'choice') {
@@ -438,7 +369,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                                 </View>
                             </GlassCard>
                         </TouchableOpacity>
-
                         <TouchableOpacity
                             activeOpacity={0.9}
                             onPress={() => { hapticLight(); setMode('import_file'); }}
@@ -470,7 +400,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                     </Animated.View>
                 );
             }
-
             if (mode === 'register_name') {
                 return (
                     <Animated.View entering={SlideInRight.springify()} style={styles.formContainer}>
@@ -500,7 +429,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                                 <Ionicons name="arrow-forward" size={rs(18)} color="#fff" />
                             </TouchableOpacity>
                         </GlassCard>
-
                         <TouchableOpacity style={styles.backButton} onPress={() => { setMode('choice'); setErrorText(''); }}>
                             <Ionicons name="arrow-back" size={rs(18)} color={colors.textSecondary} />
                             <Text style={[styles.backButtonText, { color: colors.textSecondary }]}>{t('auth_back')}</Text>
@@ -508,7 +436,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                     </Animated.View>
                 );
             }
-
             if (mode === 'register_password') {
                 return (
                     <Animated.View entering={SlideInRight.springify()} style={styles.formContainer}>
@@ -553,7 +480,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                                 <Ionicons name="arrow-forward" size={rs(18)} color="#fff" />
                             </TouchableOpacity>
                         </GlassCard>
-
                         <TouchableOpacity style={styles.backButton} onPress={() => { setMode('register_name'); setErrorText(''); }}>
                             <Ionicons name="arrow-back" size={rs(18)} color={colors.textSecondary} />
                             <Text style={[styles.backButtonText, { color: colors.textSecondary }]}>{t('auth_back')}</Text>
@@ -561,7 +487,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                     </Animated.View>
                 );
             }
-
             if (mode === 'import_file') {
                 return (
                     <Animated.View entering={SlideInRight.springify()} style={styles.formContainer}>
@@ -569,8 +494,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                             <View style={styles.formIconRow}>
                                 <Ionicons name="cloud-download-outline" size={rs(24)} color={colors.accent} />
                             </View>
-
-                            {/* File picker */}
+                            {}
                             <TouchableOpacity
                                 style={[styles.filePicker, { borderColor: colors.border, backgroundColor: colors.glass }]}
                                 onPress={handlePickFile}
@@ -581,8 +505,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                                     {importFileName || t('account_import_button')}
                                 </Text>
                             </TouchableOpacity>
-
-                            {/* File password */}
+                            {}
                             <View style={styles.passwordContainer}>
                                 <TextInput
                                     style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
@@ -596,14 +519,12 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                                     <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
                                 </TouchableOpacity>
                             </View>
-
-                            {/* New session password */}
+                            {}
                             <View style={styles.sectionDivider}>
                                 <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
                                 <Text style={[styles.dividerText, { color: colors.textMuted }]}>{t('auth_new_credentials')}</Text>
                                 <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
                             </View>
-
                             <View style={styles.passwordContainer}>
                                 <TextInput
                                     style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
@@ -617,7 +538,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                                     <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
                                 </TouchableOpacity>
                             </View>
-
                             <TextInput
                                 style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
                                 placeholder={t('auth_password_confirm_placeholder')}
@@ -629,11 +549,9 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                             <Text style={[styles.hintText, { color: colors.textMuted }]}>
                                 {t('auth_password_hint')}
                             </Text>
-
                             {errorText ? (
                                 <Text style={styles.errorText}>{errorText}</Text>
                             ) : null}
-
                             <TouchableOpacity
                                 style={[styles.nextButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.oceanDark }]}
                                 onPress={handleImportNext}
@@ -643,7 +561,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                                 <Ionicons name="arrow-forward" size={rs(18)} color="#fff" />
                             </TouchableOpacity>
                         </GlassCard>
-
                         <TouchableOpacity style={styles.backButton} onPress={() => { setMode('choice'); setErrorText(''); }}>
                             <Ionicons name="arrow-back" size={rs(18)} color={colors.textSecondary} />
                             <Text style={[styles.backButtonText, { color: colors.textSecondary }]}>{t('auth_back')}</Text>
@@ -653,7 +570,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             }
             return null;
         })();
-
         return (
             <Animated.View entering={FadeIn.duration(500)} style={{ flex: 1, alignItems: 'center' }}>
                 {renderHeader()}
@@ -661,10 +577,6 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
             </Animated.View>
         );
     };
-
-    // ═══════════════════════════════════════════
-    // MAIN RENDER
-    // ═══════════════════════════════════════════
     return (
         <View style={[styles.mainContainer, { backgroundColor: colors.background }]}>
             <LinearGradient
@@ -674,26 +586,20 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                 }
                 style={StyleSheet.absoluteFill}
             />
-
             <FloatingBubbles count={8} minSize={6} maxSize={16} pointerEvents="none" />
-
             <View style={styles.bgContainer} pointerEvents="none">
                 <LivingWater />
             </View>
-
             <SafeAreaView style={styles.safeContainer}>
                 {isDrawingMode ? (
-                    /* ═══ Drawing mode layout ═══ */
                     <Animated.View style={[styles.contentWrapper, contentStyle]}>
                         {renderHeader()}
-
                         {(mode === 'create_drawing' || mode === 'confirm_drawing') && (
                             <View style={{ alignItems: 'center', paddingVertical: winH < 700 ? rs(4) : rs(10) }}>
                                 <FishBowlLoader size={winH < 700 ? 120 : 180} />
                             </View>
                         )}
-
-                        {/* Drawing Canvas */}
+                        {}
                         <View style={styles.drawingArea}>
                             <DrawingPad
                                 key={mode}
@@ -706,8 +612,7 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
                             <Text style={[styles.pinHint, { color: colors.textMuted, marginTop: rs(8) }]}>{statusText}</Text>
                             {errorText ? <Text style={[styles.pinError]}>{errorText}</Text> : null}
                         </View>
-
-                        {/* Back button for drawing modes during registration/import */}
+                        {}
                         {(mode === 'create_drawing' || mode === 'import_drawing') && (
                             <TouchableOpacity
                                 style={styles.backButton}
@@ -731,14 +636,11 @@ export default function AuthScreen({ onAuthenticated, isFirstTime, onRegister, o
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     mainContainer: { flex: 1 },
     bgContainer: { ...StyleSheet.absoluteFillObject, opacity: 0.3 },
     safeContainer: { flex: 1 },
     contentWrapper: { flex: 1 },
-
-    // Header
     header: {
         alignItems: 'center',
         paddingVertical: rh(30),
@@ -758,16 +660,10 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         textAlign: 'center',
     },
-
-    // Fish
     centerStage: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-
-    // Drawing area
     drawingArea: { flex: 3, justifyContent: 'center', alignItems: 'center', paddingBottom: rh(10) },
     pinHint: { fontSize: rf(12), marginTop: rs(8), letterSpacing: rs(0.5), textAlign: 'center' },
     pinError: { fontSize: rf(11), marginTop: rs(6), color: '#ef4444', textAlign: 'center', fontWeight: '600' },
-
-    // ═══ CHOICE CARDS ═══
     choiceContainer: { width: '100%', gap: SPACING.lg, paddingHorizontal: SPACING.md },
     choiceCard: {
         borderRadius: rs(24),
@@ -808,12 +704,9 @@ const styles = StyleSheet.create({
         lineHeight: rf(18),
         paddingHorizontal: SPACING.sm,
     },
-
-    // ═══ GENERAL FORM ═══
     formContainer: { width: '100%', paddingHorizontal: SPACING.md },
     formCard: { padding: SPACING.xl, borderRadius: rs(24) },
     formIconRow: { alignItems: 'center', marginBottom: SPACING.lg },
-
     input: {
         height: rs(54),
         borderWidth: 1,
@@ -825,7 +718,6 @@ const styles = StyleSheet.create({
     passwordContainer: { position: 'relative', marginBottom: SPACING.md },
     passwordInput: { marginBottom: 0, paddingRight: rs(50) },
     eyeIcon: { position: 'absolute', right: rs(16), top: rs(16), padding: 4 },
-
     nextButton: {
         flexDirection: 'row',
         height: rs(54),
@@ -845,7 +737,6 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         marginRight: SPACING.sm,
     },
-
     backButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -856,8 +747,6 @@ const styles = StyleSheet.create({
     backButtonText: { marginLeft: SPACING.xs, fontSize: rf(14), fontWeight: '600' },
     errorText: { color: '#ef4444', textAlign: 'center', marginBottom: SPACING.md, fontSize: rf(13) },
     hintText: { fontSize: rf(12), textAlign: 'center', marginBottom: SPACING.md },
-
-    // File Picker
     filePicker: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -873,7 +762,6 @@ const styles = StyleSheet.create({
     },
     dividerLine: { flex: 1, height: 1, opacity: 0.3 },
     dividerText: { marginHorizontal: SPACING.md, fontSize: rf(12), textTransform: 'uppercase' },
-
     emailButton: { marginTop: rs(16), padding: rs(12), alignItems: 'center' },
     emailButtonText: { fontSize: rf(14), fontWeight: '600', textDecorationLine: 'underline' },
 });

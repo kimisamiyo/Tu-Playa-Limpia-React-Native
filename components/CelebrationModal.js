@@ -6,16 +6,12 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import AnimatedDog from './AnimatedDog';
 import LiquidButton from './LiquidButton';
-
 const { width, height } = Dimensions.get('window');
-
 export default function CelebrationModal({ visible, onClose, message }) {
     const { colors, isDark } = useTheme();
     const { t } = useLanguage();
     const [isAwake, setIsAwake] = useState(false);
-
     const displayMessage = message || t('celebration_thanks');
-
     useEffect(() => {
         if (visible) {
             setTimeout(() => {
@@ -25,7 +21,6 @@ export default function CelebrationModal({ visible, onClose, message }) {
             setIsAwake(false);
         }
     }, [visible]);
-
     return (
         <Modal
             visible={visible}
@@ -33,7 +28,7 @@ export default function CelebrationModal({ visible, onClose, message }) {
             animationType="fade"
         >
             <View style={styles.overlay}>
-                {/* Gradient Backdrop - Ocean themed */}
+                {}
                 <LinearGradient
                     colors={[
                         isDark ? 'rgba(0,51,78,0.97)' : 'rgba(0,51,78,0.95)',
@@ -41,9 +36,8 @@ export default function CelebrationModal({ visible, onClose, message }) {
                     ]}
                     style={StyleSheet.absoluteFill}
                 />
-
                 <View style={styles.contentContainer}>
-                    {/* Speech Bubble */}
+                    {}
                     {isAwake && (
                         <View style={[
                             styles.bubble,
@@ -64,13 +58,10 @@ export default function CelebrationModal({ visible, onClose, message }) {
                             ]} />
                         </View>
                     )}
-
-                    {/* Character */}
+                    {}
                     <AnimatedDog isAwake={isAwake} />
-
                     <View style={{ height: 40 }} />
-
-                    {/* Action — simply close modal */}
+                    {}
                     <LiquidButton
                         onPress={() => {
                             if (onClose) onClose();
@@ -82,7 +73,6 @@ export default function CelebrationModal({ visible, onClose, message }) {
         </Modal>
     );
 }
-
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,

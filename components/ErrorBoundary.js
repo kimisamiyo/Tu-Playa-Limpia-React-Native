@@ -1,21 +1,17 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-
 export class ErrorBoundary extends Component {
     constructor(props) {
         super(props);
         this.state = { hasError: false, error: null, errorInfo: null };
     }
-
     static getDerivedStateFromError(error) {
         return { hasError: true, error };
     }
-
     componentDidCatch(error, errorInfo) {
         console.error("ErrorBoundary caught an error", error, errorInfo);
         this.setState({ errorInfo });
     }
-
     render() {
         if (this.state.hasError) {
             return (
@@ -38,11 +34,9 @@ export class ErrorBoundary extends Component {
                 </View>
             );
         }
-
         return this.props.children;
     }
 }
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,

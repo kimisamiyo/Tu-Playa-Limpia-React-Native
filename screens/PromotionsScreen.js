@@ -19,14 +19,8 @@ import { rs, rf, rh, SPACING, RADIUS, SCREEN } from '../constants/responsive';
 import { SPRING } from '../constants/animations';
 import LivingWater from '../components/LivingWater';
 import FloatingBubbles from '../components/premium/FloatingBubbles';
-
 import AstronautCard from '../components/premium/AstronautCard';
-
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SAMPLE PROMOTIONS DATA
-// ═══════════════════════════════════════════════════════════════════════════
 const PROMOTIONS = [
     {
         id: 1,
@@ -69,31 +63,21 @@ const PROMOTIONS = [
         gradient: ['#3a1c71', '#d76d77'],
     },
 ];
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PROMOTION CARD
-// ═══════════════════════════════════════════════════════════════════════════
 const PromotionCard = ({ promo, index, t }) => {
     const { colors, shadows } = useTheme();
     const scale = useSharedValue(1);
-
     const handlePressIn = () => {
         scale.value = withSpring(0.97, SPRING.snappy);
     };
-
     const handlePressOut = () => {
         scale.value = withSpring(1, SPRING.smooth);
     };
-
     const handlePress = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        // TODO: Navigate to promo detail
     };
-
     const cardStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
     }));
-
     return (
         <AnimatedPressable
             onPressIn={handlePressIn}
@@ -108,22 +92,19 @@ const PromotionCard = ({ promo, index, t }) => {
                     end={{ x: 1, y: 1 }}
                     style={[styles.promoCard, shadows.lg]}
                 >
-                    {/* Shine overlay */}
+                    {}
                     <View style={styles.cardShine} />
-
-                    {/* Icon */}
+                    {}
                     <View style={styles.iconContainer}>
                         <Ionicons name={`${promo.icon}-outline`} size={rs(40)} color="rgba(255,255,255,0.9)" />
                     </View>
-
-                    {/* Discount badge */}
+                    {}
                     <View style={styles.discountBadge}>
                         <Text style={styles.discountText}>
                             {promo.discountKey ? t(promo.discountKey) : promo.discount}
                         </Text>
                     </View>
-
-                    {/* Content */}
+                    {}
                     <View style={styles.promoContent}>
                         <Text style={styles.partnerName}>{promo.partner}</Text>
                         <Text style={styles.promoTitle}>{t(promo.titleKey)}</Text>
@@ -133,8 +114,7 @@ const PromotionCard = ({ promo, index, t }) => {
                             <Text style={styles.validUntil}>{promo.validUntil}</Text>
                         </View>
                     </View>
-
-                    {/* Use button */}
+                    {}
                     <TouchableOpacity style={styles.useButton} activeOpacity={0.8}>
                         <Text style={styles.useButtonText}>{t('promos_redeem')}</Text>
                     </TouchableOpacity>
@@ -143,18 +123,13 @@ const PromotionCard = ({ promo, index, t }) => {
         </AnimatedPressable>
     );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN PROMOTIONS SCREEN
-// ═══════════════════════════════════════════════════════════════════════════
 export default function PromotionsScreen() {
     const { user, level, nfts } = useGame();
     const { colors, isDark } = useTheme();
     const { t } = useLanguage();
-
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
-            {/* Background */}
+            {}
             {isDark && (
                 <LinearGradient
                     colors={[BRAND.oceanDeep, BRAND.oceanDark]}
@@ -165,13 +140,12 @@ export default function PromotionsScreen() {
             <View style={styles.bgWater}>
                 <LivingWater />
             </View>
-
             <SafeAreaView style={styles.safeArea} edges={['top']}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Header */}
+                    {}
                     <Animated.View entering={FadeInDown.delay(100).springify()}>
                         <Text style={[styles.headerTitle, { color: colors.text }]}>
                             {t('promos_title')}
@@ -180,10 +154,7 @@ export default function PromotionsScreen() {
                             {t('promos_exclusive')} {level}+ {t('promos_with_nfts')} {nfts.length} NFTs
                         </Text>
                     </Animated.View>
-
-
-
-                    {/* Promotions List or Coming Soon */}
+                    {}
                     {level >= 2 ? (
                         <View style={{ paddingVertical: SPACING.xl }}>
                             <AstronautCard />
@@ -195,8 +166,7 @@ export default function PromotionsScreen() {
                             ))}
                         </View>
                     )}
-
-                    {/* Footer hint */}
+                    {}
                     <Animated.View entering={FadeInUp.delay(600).springify()} style={styles.footer}>
                         <Ionicons name="information-circle-outline" size={rs(16)} color={colors.textMuted} />
                         <Text style={[styles.footerText, { color: colors.textMuted }]}>
@@ -208,7 +178,6 @@ export default function PromotionsScreen() {
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: { flex: 1 },
     bgWater: { ...StyleSheet.absoluteFillObject, opacity: 0.2 },
@@ -217,8 +186,6 @@ const styles = StyleSheet.create({
         padding: SPACING.lg,
         paddingBottom: rh(120),
     },
-
-    // Header
     headerTitle: {
         fontSize: rf(26),
         fontWeight: '700',
@@ -228,10 +195,6 @@ const styles = StyleSheet.create({
         marginTop: rs(4),
         marginBottom: SPACING.lg,
     },
-
-
-
-    // Promos
     promosList: {
         gap: SPACING.md,
     },
@@ -313,8 +276,6 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         letterSpacing: 1,
     },
-
-    // Footer
     footer: {
         flexDirection: 'row',
         alignItems: 'center',

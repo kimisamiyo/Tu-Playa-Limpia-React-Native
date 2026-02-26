@@ -10,20 +10,12 @@ import { useGame } from '../context/GameContext';
 import { useLanguage } from '../context/LanguageContext';
 import { BRAND, GRADIENTS } from '../constants/theme';
 import { rs, rf, rh, SPACING, RADIUS, SIDEBAR_WIDTH } from '../constants/responsive';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// DESKTOP SIDEBAR NAVIGATION
-// Replaces Bottom Tabs on large screens
-// ═══════════════════════════════════════════════════════════════════════════
-
 const SidebarItem = ({ icon, label, routeName, isActive, onPress, index }) => {
     const { colors, isDark } = useTheme();
     const scale = useSharedValue(1);
-
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
     }));
-
     return (
         <Animated.View entering={FadeInLeft.delay(index * 50).springify()}>
             <Pressable
@@ -63,14 +55,11 @@ const SidebarItem = ({ icon, label, routeName, isActive, onPress, index }) => {
         </Animated.View>
     );
 };
-
 export default function DesktopSidebar() {
     const navigation = useNavigation();
     const { colors, isDark } = useTheme();
     const { user, level } = useGame();
     const { t } = useLanguage();
-
-    // Mapping tab names to routes with translated labels
     const navItems = [
         { label: t('sidebar_home'), icon: 'home', route: 'Inicio' },
         { label: t('sidebar_map'), icon: 'map', route: 'Mapa' },
@@ -78,11 +67,7 @@ export default function DesktopSidebar() {
         { label: t('sidebar_rewards'), icon: 'trophy', route: 'Premios' },
         { label: t('sidebar_promos'), icon: 'gift', route: 'Promos', locked: level < 2 },
     ];
-
-    // Detect active tab from navigation state to keep in sync
     const activeRoute = useNavigationState(state => {
-        // Search for the active tab inside the nested navigator
-        // The structure is RootStack -> Main (TabNavigator) -> Tab.Navigator
         const mainRoute = state?.routes[state.index];
         if (mainRoute?.state?.routes) {
             const tabRoute = mainRoute.state.routes[mainRoute.state.index];
@@ -90,16 +75,12 @@ export default function DesktopSidebar() {
         }
         return 'Inicio';
     });
-
     const handleNavigate = (routeName) => {
-        // Robust navigation: Using navigate with nested screen structure
-        // This is the most reliable way to target tabs from a parent navigator
         navigation.navigate('MainTabs', {
             screen: routeName,
-            params: { timestamp: Date.now() } // Force refresh/re-focus
+            params: { timestamp: Date.now() } 
         });
     };
-
     return (
         <View style={[
             styles.container,
@@ -108,7 +89,7 @@ export default function DesktopSidebar() {
                 borderRightColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
             }
         ]}>
-            {/* Logo Area */}
+            {}
             <Pressable
                 style={({ pressed }) => [
                     styles.logoContainer,
@@ -126,8 +107,7 @@ export default function DesktopSidebar() {
                 </LinearGradient>
                 <Text style={[styles.appName, { color: colors.text }]}>Tu Playa</Text>
             </Pressable>
-
-            {/* User Profile Summary */}
+            {}
             <Pressable
                 style={({ pressed }) => [
                     styles.profileCard,
@@ -153,8 +133,7 @@ export default function DesktopSidebar() {
                 </View>
                 <Ionicons name="chevron-forward" size={rs(16)} color={colors.textMuted} />
             </Pressable>
-
-            {/* Navigation Items */}
+            {}
             <ScrollView style={styles.navContainer} showsVerticalScrollIndicator={false}>
                 <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('sidebar_menu')}</Text>
                 {navItems.map((item, index) => (
@@ -169,8 +148,7 @@ export default function DesktopSidebar() {
                     />
                 ))}
             </ScrollView>
-
-            {/* Footer / Settings Link */}
+            {}
             <View style={styles.footer}>
                 <Pressable
                     style={({ pressed }) => [
@@ -189,7 +167,6 @@ export default function DesktopSidebar() {
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         width: SIDEBAR_WIDTH,
@@ -272,11 +249,9 @@ const styles = StyleSheet.create({
         marginBottom: SPACING.xs,
         borderRadius: RADIUS.md,
         gap: SPACING.md,
-        // Web-specific cursor
         cursor: 'pointer',
     },
     sidebarItemActive: {
-        // Active bg managed inline for theme awareness
     },
     iconContainer: {
         width: rs(36),
@@ -291,7 +266,7 @@ const styles = StyleSheet.create({
     },
     activeIndicator: {
         position: 'absolute',
-        right: -SPACING.lg, // Align to edge
+        right: -SPACING.lg, 
         width: 4,
         height: '60%',
         borderRadius: 2,

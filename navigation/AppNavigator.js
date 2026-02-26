@@ -9,8 +9,6 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { BRAND } from '../constants/theme';
 import { rs, rh, SPACING, RADIUS, HEIGHT } from '../constants/responsive';
-
-// Screens
 import HomeScreen from '../screens/HomeScreen';
 import RewardsScreen from '../screens/RewardsScreen';
 import AuthScreen from '../components/AuthScreen';
@@ -19,17 +17,11 @@ import PromotionsScreen from '../screens/PromotionsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import BeachMapScreen from '../screens/BeachMapScreen';
 import AnimatedTabIcon from './AnimatedTabIcon';
-
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LOCKED PROMOTIONS SCREEN
-// ═══════════════════════════════════════════════════════════════════════════
 function LockedPromotionsScreen() {
     const { colors, isDark } = useTheme();
     const { t } = useLanguage();
-
     return (
         <View style={[styles.lockedContainer, { backgroundColor: colors.background }]}>
             {isDark && (
@@ -39,7 +31,6 @@ function LockedPromotionsScreen() {
                 />
             )}
             <View style={styles.lockedOverlay} />
-
             <View style={styles.lockContent}>
                 <Ionicons name="lock-closed" size={rs(60)} color={colors.textMuted} />
                 <Text style={[styles.lockTitle, { color: colors.text }]}>
@@ -52,7 +43,6 @@ function LockedPromotionsScreen() {
                     {t('promos_locked_hint')}
                 </Text>
             </View>
-
             <View style={styles.previewContainer}>
                 {[1, 2, 3].map((i) => (
                     <View
@@ -71,13 +61,8 @@ function LockedPromotionsScreen() {
         </View>
     );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LOCKED TAB ICON
-// ═══════════════════════════════════════════════════════════════════════════
 function LockedTabIcon({ name, size, focused, isLocked }) {
     const { colors, isDark } = useTheme();
-
     return (
         <View style={styles.tabIconContainer}>
             <Ionicons
@@ -96,36 +81,26 @@ function LockedTabIcon({ name, size, focused, isLocked }) {
         </View>
     );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PREMIUM FLOATING TAB BAR (MOBILE) & SIDEBAR (DESKTOP)
-// ═══════════════════════════════════════════════════════════════════════════
 import { useWindowDimensions } from 'react-native';
 import DesktopSidebar from '../components/DesktopSidebar';
 import { isDesktop } from '../constants/responsive';
-
 function TabNavigator() {
     const { level } = useGame();
     const { colors, shadows, isDark } = useTheme();
     const { width } = useWindowDimensions();
     const isPromotionsLocked = level < 2;
-
-    // Check if desktop view (width > 1024)
     const showSidebar = width >= 1024;
-
     return (
         <View style={{ flex: 1, flexDirection: 'row' }}>
-            {/* Desktop Sidebar (Left) */}
+            {}
             {showSidebar && <DesktopSidebar />}
-
-            {/* Main Content Area (Right) */}
+            {}
             <View style={{ flex: 1 }}>
                 <Tab.Navigator
                     screenOptions={{
                         headerShown: false,
                         tabBarShowLabel: false,
                         lazy: false,
-                        // Hide bottom tab bar if sidebar is shown
                         tabBarBackground: () => (
                             !isDark && (
                                 <LinearGradient
@@ -158,7 +133,6 @@ function TabNavigator() {
                             )
                         }}
                     />
-
                     <Tab.Screen
                         name="Mapa"
                         component={BeachMapScreen}
@@ -168,7 +142,6 @@ function TabNavigator() {
                             )
                         }}
                     />
-
                     <Tab.Screen
                         name="Escanear"
                         component={ScanScreen}
@@ -178,7 +151,6 @@ function TabNavigator() {
                             )
                         }}
                     />
-
                     <Tab.Screen
                         name="Premios"
                         component={RewardsScreen}
@@ -188,7 +160,6 @@ function TabNavigator() {
                             )
                         }}
                     />
-
                     <Tab.Screen
                         name="Promos"
                         component={isPromotionsLocked ? LockedPromotionsScreen : PromotionsScreen}
@@ -208,10 +179,6 @@ function TabNavigator() {
         </View>
     );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN NAVIGATOR
-// ═══════════════════════════════════════════════════════════════════════════
 export default function AppNavigator({ isAuthenticated, isFirstTime, onRegister, onLogin, onImport, username }) {
     if (!isAuthenticated) {
         return (
@@ -220,7 +187,7 @@ export default function AppNavigator({ isAuthenticated, isFirstTime, onRegister,
                     {props => (
                         <AuthScreen
                             {...props}
-                            onAuthenticated={() => { }} // Auth context handles this
+                            onAuthenticated={() => { }} 
                             isFirstTime={isFirstTime}
                             onRegister={onRegister}
                             onLogin={onLogin}
@@ -232,7 +199,6 @@ export default function AppNavigator({ isAuthenticated, isFirstTime, onRegister,
             </Stack.Navigator>
         );
     }
-
     return (
         <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
             <Stack.Screen name="MainTabs" component={TabNavigator} />
@@ -244,7 +210,6 @@ export default function AppNavigator({ isAuthenticated, isFirstTime, onRegister,
         </Stack.Navigator>
     );
 }
-
 const styles = StyleSheet.create({
     tabBar: {
         position: 'absolute',
@@ -259,10 +224,8 @@ const styles = StyleSheet.create({
         paddingTop: 0,
         elevation: 0,
     },
-
     tabIconContainer: { alignItems: 'center', justifyContent: 'center' },
     lockBadge: { position: 'absolute', top: rs(-4), right: rs(-8) },
-
     lockedContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     lockedOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)' },
     lockContent: { alignItems: 'center', zIndex: 10, padding: SPACING.xl },

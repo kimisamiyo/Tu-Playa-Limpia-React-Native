@@ -1,13 +1,6 @@
 import React, { useMemo } from 'react';
 import Svg, { Defs, LinearGradient, Stop, Rect, Circle, Path, G } from 'react-native-svg';
 import { rs } from '../constants/responsive';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SHARED GENERATIVE ART COMPONENT
-// procedural SVG patterns based on ID seed
-// ═══════════════════════════════════════════════════════════════════════════
-
-// Generate pattern from ID
 export const generatePatternFromId = (id) => {
     const hash = id?.toString() || Math.random().toString();
     const seed = hash.split('').reduce((acc, char, i) => acc + char.charCodeAt(0) * (i + 1), 0);
@@ -17,7 +10,6 @@ export const generatePatternFromId = (id) => {
         rotation: (seed * 37) % 360,
     };
 };
-
 // Color palettes
 export const NFT_PALETTES = [
     { primary: '#0d4a6f', secondary: '#1a6b8f', accent: '#4a9bb8', bg: '#072d45' },
@@ -25,21 +17,16 @@ export const NFT_PALETTES = [
     { primary: '#d4a574', secondary: '#e8c4a0', accent: '#f5dcc4', bg: '#8b6342' },
     { primary: '#7c3aed', secondary: '#a78bfa', accent: '#c4b5fd', bg: '#4c1d95' },
 ];
-
 const GenerativeArt = ({ id, size, isDark, pattern: providedPattern }) => {
-    // Determine pattern either from prop or generate from ID
     const pattern = useMemo(() => {
         if (providedPattern) return providedPattern;
         return generatePatternFromId(id);
     }, [id, providedPattern]);
-
     const palette = NFT_PALETTES[pattern.colorVariant];
-    const artSize = size; // No padding logic here, caller handles padding or we adjust? 
-    // Wait, original subtracted 8rs from size. Let's assume input size is the drawing area size.
-
+    const artSize = size; 
     const renderPattern = () => {
         switch (pattern.patternType) {
-            case 0: // Waves
+            case 0: 
                 return (
                     <G>
                         {[0, 1, 2, 3].map((i) => (
@@ -54,7 +41,7 @@ const GenerativeArt = ({ id, size, isDark, pattern: providedPattern }) => {
                         ))}
                     </G>
                 );
-            case 1: // Shell
+            case 1: 
                 return (
                     <G transform={`rotate(${pattern.rotation}, ${artSize / 2}, ${artSize / 2})`}>
                         {[0, 1, 2, 3, 4].map((i) => (
@@ -68,7 +55,7 @@ const GenerativeArt = ({ id, size, isDark, pattern: providedPattern }) => {
                         ))}
                     </G>
                 );
-            case 2: // Coral
+            case 2: 
                 return (
                     <G>
                         <Path
@@ -87,7 +74,7 @@ const GenerativeArt = ({ id, size, isDark, pattern: providedPattern }) => {
                         ))}
                     </G>
                 );
-            case 3: // Starfish
+            case 3: 
                 const outerR = 28;
                 const innerR = 10;
                 let star = '';
@@ -121,7 +108,7 @@ const GenerativeArt = ({ id, size, isDark, pattern: providedPattern }) => {
                         <Circle cx={artSize * 0.8} cy={15} r={12} fill="#fbbf24" opacity={0.9} />
                     </G>
                 );
-            case 5: // Jellyfish
+            case 5: 
                 return (
                     <G>
                         <Path
@@ -146,7 +133,6 @@ const GenerativeArt = ({ id, size, isDark, pattern: providedPattern }) => {
                 return null;
         }
     };
-
     return (
         <Svg width={artSize} height={artSize} viewBox={`0 0 ${artSize} ${artSize}`}>
             <Defs>
@@ -160,5 +146,4 @@ const GenerativeArt = ({ id, size, isDark, pattern: providedPattern }) => {
         </Svg>
     );
 };
-
 export default GenerativeArt;

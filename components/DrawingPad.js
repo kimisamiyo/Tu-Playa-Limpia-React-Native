@@ -16,40 +16,13 @@ import { useTheme } from '../context/ThemeContext';
 import { rs, rf, SPACING } from '../constants/responsive';
 import { SPRING } from '../constants/animations';
 import { BRAND } from '../constants/theme';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// DRAWING PAD - Premium SVG canvas for drawing-based authentication
-//
-// Captures user drawings and extracts behavioral features for hashing.
-// The user draws a memorable symbol/pattern that can be reproduced
-// approximately — the system uses fuzzy matching on quantized features.
-// ═══════════════════════════════════════════════════════════════════════════
-
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-/**
- * Extract behavioral fingerprint from strokes.
- *
- * PER-STROKE ORIENTATION — classifies each stroke individually:
- *  H = Horizontal line   (|dx| >> |dy|)
- *  V = Vertical line     (|dy| >> |dx|)
- *  D = Diagonal line     (|dx| ≈ |dy|)
- *  C = Closed shape      (endpoint near start → circle, loop)
- *
- * Sorted alphabetically → position & order independent.
- *
- * Format: "strokeCount-aspectRatio-complexity-orientations"
- * Example: "3-S-M-HHV"
- */
 export function extractBehavioralFingerprint(strokes) {
     if (!strokes || strokes.length === 0) return '';
-
     const allPoints = strokes.flatMap(s => s);
     if (allPoints.length < 3) return '';
-
     // ── 1. Exact stroke count
     const strokeCount = strokes.length;
-
     // ── 2. Coarse aspect ratio (3 bins)
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const p of allPoints) {
@@ -62,8 +35,6 @@ export function extractBehavioralFingerprint(strokes) {
     const bboxH = Math.max(maxY - minY, 1);
     const aspectRatio = bboxW / bboxH;
     const arBin = aspectRatio < 0.6 ? 'T' : aspectRatio < 1.7 ? 'S' : 'W';
-
-    // ── 3. Coarse complexity (3 bins)
     let totalDist = 0;
     for (const stroke of strokes) {
         for (let i = 1; i < stroke.length; i++) {
@@ -75,31 +46,22 @@ export function extractBehavioralFingerprint(strokes) {
     const diag = Math.sqrt(bboxW * bboxW + bboxH * bboxH);
     const normDist = totalDist / Math.max(diag, 1);
     const cxBin = normDist < 4 ? 'S' : normDist < 12 ? 'M' : 'C';
-
-    // ── 4. Per-stroke orientation
     const orientations = [];
     for (const stroke of strokes) {
         if (stroke.length < 2) { orientations.push('P'); continue; }
-
-        // Path length of this stroke
         let pathLen = 0;
         for (let i = 1; i < stroke.length; i++) {
             const dx = stroke[i].x - stroke[i - 1].x;
             const dy = stroke[i].y - stroke[i - 1].y;
             pathLen += Math.sqrt(dx * dx + dy * dy);
         }
-
-        // Vector from start to end
         const sdx = stroke[stroke.length - 1].x - stroke[0].x;
         const sdy = stroke[stroke.length - 1].y - stroke[0].y;
         const endDist = Math.sqrt(sdx * sdx + sdy * sdy);
         const closedness = endDist / Math.max(pathLen, 1);
-
         if (closedness < 0.35) {
-            // Endpoint near start → closed shape (circle, loop, triangle)
             orientations.push('C');
         } else {
-            // Open stroke → classify by direction
             const absDx = Math.abs(sdx);
             const absDy = Math.abs(sdy);
             const ratio = Math.min(absDx, absDy) / Math.max(absDx, absDy, 1);
@@ -110,10 +72,6 @@ export function extractBehavioralFingerprint(strokes) {
             }
         }
     }
-
-    // ── Sort by spatial position (top→bottom, left→right) instead of alphabetical.
-    // This preserves the arrangement: eyes-above-mouth ≠ mouth-above-eyes.
-    // Normalize centers within bounding box for position independence.
     const strokeInfos = orientations.map((orient, idx) => {
         const stroke = strokes[idx];
         const cx = stroke.reduce((s, p) => s + p.x, 0) / stroke.length;
@@ -123,15 +81,12 @@ export function extractBehavioralFingerprint(strokes) {
         return { orient, normY, normX };
     });
     strokeInfos.sort((a, b) => {
-        // If centers differ by more than 15% of bbox height → different row
         if (Math.abs(a.normY - b.normY) > 0.15) return a.normY - b.normY;
-        return a.normX - b.normX; // same row → sort left to right
+        return a.normX - b.normX; 
     });
     const orientSig = strokeInfos.map(s => s.orient).join('');
-
     return `${strokeCount}-${arBin}-${cxBin}-${orientSig}`;
 }
-
 /**
  * Convert strokes array to SVG path data for rendering
  */
@@ -150,17 +105,14 @@ function strokesToPath(stroke) {
     }
     return d;
 }
-
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIRM BUTTON - Animated button to submit drawing
 // ═══════════════════════════════════════════════════════════════════════════
 const ConfirmButton = ({ onPress, label, disabled, isDark }) => {
     const scale = useSharedValue(1);
-
     const animStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
     }));
-
     return (
         <AnimatedPressable
             onPressIn={() => { scale.value = withSpring(0.95, SPRING.snappy); }}
@@ -181,17 +133,14 @@ const ConfirmButton = ({ onPress, label, disabled, isDark }) => {
         </AnimatedPressable>
     );
 };
-
 // ═══════════════════════════════════════════════════════════════════════════
 // CLEAR BUTTON
 // ═══════════════════════════════════════════════════════════════════════════
 const ClearButton = ({ onPress, label, isDark, colors }) => {
     const scale = useSharedValue(1);
-
     const animStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
     }));
-
     return (
         <AnimatedPressable
             onPressIn={() => { scale.value = withSpring(0.95, SPRING.snappy); }}
@@ -210,7 +159,6 @@ const ClearButton = ({ onPress, label, isDark, colors }) => {
         </AnimatedPressable>
     );
 };
-
 // ═══════════════════════════════════════════════════════════════════════════
 // MAIN DRAWING PAD COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
@@ -224,48 +172,36 @@ export default function DrawingPad({
 }) {
     const { colors, isDark } = useTheme();
     const { width: winW, height: winH } = useWindowDimensions();
-
-    // ── Responsive canvas dimensions ──
     const { canvasWidth, canvasHeight, maxCardWidth } = useMemo(() => {
         const isDesktop = winW >= 1024;
         const isTablet = winW >= 600 && winW < 1024;
         const horizontalPad = rs(64);
         let w, h, maxCard;
-
         if (isDesktop) {
-            // Desktop: constrained max, centered
             w = Math.min(winW * 0.3, 420);
             h = Math.min(winH * 0.35, w * 0.85);
             maxCard = w + rs(32);
         } else if (isTablet) {
-            // Tablet: generous but not oversized
             w = Math.min(winW - horizontalPad, 400);
             h = Math.min(winH * 0.3, w * 0.85);
             maxCard = w + rs(32);
         } else {
-            // Phone: fill available width, clamp height  
             w = Math.min(winW - horizontalPad, rs(320));
             h = Math.min(winH * 0.30, w * 0.85);
             maxCard = w + rs(32);
         }
-
         return { canvasWidth: w, canvasHeight: h, maxCardWidth: maxCard };
     }, [winW, winH]);
-
     const [strokes, setStrokes] = useState([]);
     const [currentStroke, setCurrentStroke] = useState([]);
     const [isDrawing, setIsDrawing] = useState(false);
     const svgRef = useRef(null);
     const containerRef = useRef(null);
     const layoutRef = useRef({ x: 0, y: 0, width: 300, height: 255 });
-
-    // Animated stroke counter
     const counterScale = useSharedValue(1);
-
     const counterStyle = useAnimatedStyle(() => ({
         transform: [{ scale: counterScale.value }],
     }));
-
     const getRelativePosition = useCallback((pageX, pageY) => {
         const layout = layoutRef.current;
         return {
@@ -273,25 +209,21 @@ export default function DrawingPad({
             y: Math.max(0, Math.min(pageY - layout.y, layout.height)),
         };
     }, []);
-
     const handleTouchStart = useCallback((e) => {
         const touch = e.nativeEvent;
         const pos = getRelativePosition(touch.pageX, touch.pageY);
         setCurrentStroke([pos]);
         setIsDrawing(true);
     }, [getRelativePosition]);
-
     const handleTouchMove = useCallback((e) => {
         if (!isDrawing) return;
         const touch = e.nativeEvent;
         const pos = getRelativePosition(touch.pageX, touch.pageY);
         setCurrentStroke(prev => [...prev, pos]);
     }, [isDrawing, getRelativePosition]);
-
     const handleTouchEnd = useCallback(() => {
         if (currentStroke.length >= 2) {
             setStrokes(prev => [...prev, currentStroke]);
-            // Animate counter
             counterScale.value = withSequence(
                 withSpring(1.3, { damping: 8, stiffness: 400 }),
                 withSpring(1, SPRING.snappy)
@@ -303,7 +235,6 @@ export default function DrawingPad({
         setCurrentStroke([]);
         setIsDrawing(false);
     }, [currentStroke, counterScale]);
-
     const handleClear = useCallback(() => {
         setStrokes([]);
         setCurrentStroke([]);
@@ -311,7 +242,6 @@ export default function DrawingPad({
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         }
     }, []);
-
     const handleSubmit = useCallback(() => {
         if (strokes.length < minStrokes) return;
         if (Platform.OS !== 'web') {
@@ -319,9 +249,7 @@ export default function DrawingPad({
         }
         onSubmit?.(strokes);
     }, [strokes, minStrokes, onSubmit]);
-
     const handleLayout = useCallback((e) => {
-        // Using measure for accurate page coordinates
         if (containerRef.current) {
             containerRef.current.measureInWindow?.((x, y, width, height) => {
                 if (typeof x === 'number') {
@@ -330,12 +258,8 @@ export default function DrawingPad({
             });
         }
     }, []);
-
-    // Also measure after small delay (for web compat)
     const handleContainerLayout = useCallback((e) => {
         const { width, height } = e.nativeEvent.layout;
-        // Fallback: try to use pageX/pageY from first touch to calibrate
-        // For now, use measure
         setTimeout(() => {
             if (containerRef.current?.measureInWindow) {
                 containerRef.current.measureInWindow((x, y, w, h) => {
@@ -346,17 +270,11 @@ export default function DrawingPad({
             }
         }, 100);
     }, []);
-
-    // ── Web: block browser pull-to-refresh & scroll during drawing
-    // React Native Web doesn't support { passive: false } on touch listeners,
-    // so we must attach native DOM listeners directly.
     useEffect(() => {
         if (Platform.OS !== 'web') return;
         const node = containerRef.current;
-        // In RNW the ref may have a _nativeTag or the actual DOM node
         const el = node && (node._nativeTag ? document.getElementById(String(node._nativeTag)) : node);
         if (!el?.addEventListener) return;
-
         const prevent = (e) => { e.preventDefault(); };
         el.addEventListener('touchstart', prevent, { passive: false });
         el.addEventListener('touchmove', prevent, { passive: false });
@@ -365,11 +283,8 @@ export default function DrawingPad({
             el.removeEventListener('touchmove', prevent);
         };
     }, []);
-
     const totalStrokes = strokes.length;
     const canSubmit = totalStrokes >= minStrokes;
-
-    // Stroke colors - ocean-themed gradient effect
     const getStrokeColor = (index) => {
         if (isDark) {
             const hues = ['#64d2ff', '#5ac8fa', '#48bfe3', '#56cfe1', '#72efdd'];
@@ -378,12 +293,10 @@ export default function DrawingPad({
         const hues = ['#0d4a6f', '#0a5c75', '#0d6e8a', '#1a8f9f', '#00334e'];
         return hues[index % hues.length];
     };
-
     const currentStrokeColor = isDark ? '#a8c5d4' : '#0d5c75';
-
     return (
         <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.container}>
-            {/* Canvas Card */}
+            {}
             <View style={[
                 styles.canvasCard,
                 {
@@ -396,7 +309,7 @@ export default function DrawingPad({
                         : 'rgba(0, 51, 78, 0.12)',
                 },
             ]}>
-                {/* Canvas header */}
+                {}
                 <View style={styles.canvasHeader}>
                     <View style={styles.canvasHeaderLeft}>
                         <View style={[styles.statusDot, {
@@ -408,7 +321,6 @@ export default function DrawingPad({
                             {isDrawing ? '● ' : ''}CANVAS
                         </Text>
                     </View>
-
                     <Animated.View style={[styles.strokeCounter, counterStyle]}>
                         <Text style={[styles.strokeCountText, {
                             color: canSubmit
@@ -419,7 +331,6 @@ export default function DrawingPad({
                         </Text>
                     </Animated.View>
                 </View>
-
                 {/* SVG Drawing Surface */}
                 <View
                     ref={containerRef}
@@ -448,15 +359,14 @@ export default function DrawingPad({
                     ]}
                 >
                     <Svg width="100%" height="100%">
-                        {/* Grid dots for visual guidance */}
+                        {}
                         <Defs>
                             <SvgGradient id="strokeGrad" x1="0" y1="0" x2="1" y2="1">
                                 <Stop offset="0" stopColor={isDark ? '#64d2ff' : '#0d5c75'} stopOpacity="1" />
                                 <Stop offset="1" stopColor={isDark ? '#48bfe3' : '#1a8f9f'} stopOpacity="1" />
                             </SvgGradient>
                         </Defs>
-
-                        {/* Subtle grid dots */}
+                        {}
                         {Array.from({ length: 5 }).map((_, row) =>
                             Array.from({ length: 5 }).map((_, col) => (
                                 <Circle
@@ -468,8 +378,7 @@ export default function DrawingPad({
                                 />
                             ))
                         )}
-
-                        {/* Completed strokes */}
+                        {}
                         {strokes.map((stroke, i) => (
                             <Path
                                 key={`stroke-${i}`}
@@ -482,8 +391,7 @@ export default function DrawingPad({
                                 opacity={0.9}
                             />
                         ))}
-
-                        {/* Current stroke (being drawn) */}
+                        {}
                         {currentStroke.length >= 2 && (
                             <Path
                                 d={strokesToPath(currentStroke)}
@@ -496,8 +404,7 @@ export default function DrawingPad({
                                 strokeDasharray="none"
                             />
                         )}
-
-                        {/* Starting dot indicator */}
+                        {}
                         {currentStroke.length >= 1 && (
                             <Circle
                                 cx={currentStroke[0].x}
@@ -508,8 +415,7 @@ export default function DrawingPad({
                             />
                         )}
                     </Svg>
-
-                    {/* Centered hint when empty */}
+                    {}
                     {strokes.length === 0 && !isDrawing && (
                         <View style={styles.emptyHintContainer}>
                             <Ionicons
@@ -526,8 +432,7 @@ export default function DrawingPad({
                     )}
                 </View>
             </View>
-
-            {/* Action Buttons */}
+            {}
             <View style={[styles.buttonRow, { maxWidth: maxCardWidth }]}>
                 <ClearButton
                     onPress={handleClear}
@@ -545,18 +450,12 @@ export default function DrawingPad({
         </Animated.View>
     );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// STYLES
-// ═══════════════════════════════════════════════════════════════════════════
 const styles = StyleSheet.create({
     container: {
         width: '100%',
         alignItems: 'center',
         paddingHorizontal: SPACING.md,
     },
-
-    // Canvas Card
     canvasCard: {
         width: '100%',
         borderRadius: rs(20),
@@ -594,8 +493,6 @@ const styles = StyleSheet.create({
         fontSize: rf(12),
         fontWeight: '600',
     },
-
-    // SVG Container
     svgContainer: {
         width: '100%',
         borderRadius: rs(14),
@@ -603,8 +500,6 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         position: 'relative',
     },
-
-    // Empty state hint
     emptyHintContainer: {
         ...StyleSheet.absoluteFillObject,
         justifyContent: 'center',
@@ -619,8 +514,6 @@ const styles = StyleSheet.create({
         letterSpacing: rs(0.5),
         maxWidth: '70%',
     },
-
-    // Buttons
     buttonRow: {
         flexDirection: 'row',
         gap: rs(12),

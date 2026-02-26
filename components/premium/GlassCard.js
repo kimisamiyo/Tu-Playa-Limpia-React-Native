@@ -3,19 +3,6 @@ import { View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
 import { rs } from '../../constants/responsive';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// GLASS CARD - Premium glassmorphism card component
-// ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * GlassCard - A premium glassmorphism-style card
- * @param {object} props
- * @param {ReactNode} props.children - Content
- * @param {'default'|'elevated'|'flat'} props.variant - Style variant
- * @param {boolean} props.withGradientBorder - Show gradient border
- * @param {object} props.style - Additional styles
- */
 export default function GlassCard({
     children,
     variant = 'default',
@@ -24,15 +11,14 @@ export default function GlassCard({
     ...props
 }) {
     const { colors, shadows, isDark } = useTheme();
-
     const getVariantStyles = () => {
         switch (variant) {
             case 'elevated':
                 return {
                     backgroundColor: isDark
-                        ? 'rgba(10, 31, 46, 0.75)' // Darker, deeper blue
+                        ? 'rgba(10, 31, 46, 0.75)' 
                         : 'rgba(255, 255, 255, 0.95)',
-                    borderColor: isDark ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.4)', // Subtle gold hint
+                    borderColor: isDark ? 'rgba(255,215,0,0.15)' : 'rgba(255,255,255,0.4)', 
                     borderWidth: 1,
                     ...shadows.xl,
                 };
@@ -56,9 +42,7 @@ export default function GlassCard({
                 };
         }
     };
-
     const variantStyles = getVariantStyles();
-
     if (withGradientBorder) {
         return (
             <View style={[styles.gradientBorderContainer, style]} {...props}>
@@ -72,7 +56,7 @@ export default function GlassCard({
                     style={styles.gradientBorder}
                 >
                     <View style={[styles.innerCard, variantStyles]}>
-                        {/* Shine overlay */}
+                        {}
                         <View pointerEvents="none" style={[styles.shineOverlay, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.4)' }]} />
                         {children}
                     </View>
@@ -80,7 +64,6 @@ export default function GlassCard({
             </View>
         );
     }
-
     return (
         <View
             style={[
@@ -91,13 +74,12 @@ export default function GlassCard({
             ]}
             {...props}
         >
-            {/* Shine overlay */}
+            {}
             <View pointerEvents="none" style={[styles.shineOverlay, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.3)' }]} />
             {children}
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     card: {
         borderRadius: rs(16),

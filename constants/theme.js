@@ -1,163 +1,95 @@
-// ═══════════════════════════════════════════════════════════════════════════
-// THEME CONSTANTS - Premium Color Palette for Tu Playa Limpia
-// ═══════════════════════════════════════════════════════════════════════════
 
-// Brand Colors - Ocean/Beach inspired
 export const BRAND = {
-    // Deep ocean tones
     oceanDeep: '#001220',
     oceanDark: '#00334e',
     oceanMid: '#0d5c75',
     oceanLight: '#1a8f9f',
-
-    // Bioluminescence accents (Updated to match Navbar Icon #a8c5d4)
-    biolum: '#a8c5d4',       // Previously '#00ffff'
-    biolumSoft: '#c1dbe5',   // Lighter variant
-    biolumDim: '#547582',    // Darker variant
-
-    // Sand/Gold tones
+    biolum: '#a8c5d4',       
+    biolumSoft: '#c1dbe5',   
+    biolumDim: '#547582',    
     sandGold: '#d4a574',
     sandLight: '#e8c4a0',
     sandDark: '#8b6342',
-    goldShimmer: '#fcd34d', // Vibrant gold for highlights
-
-
-    // Accent colors
+    goldShimmer: '#fcd34d', 
     coral: '#ff6b6b',
     seaweed: '#2ed573',
-
-    // Status colors
     success: '#22c55e',
     error: '#ef4444',
     warning: '#f59e0b',
     info: '#3b82f6',
 };
-
-// Light Theme - High contrast beach palette
 export const LIGHT_THEME = {
     mode: 'light',
-
-    // Backgrounds - Subtle warm tones
-    background: '#f5f3ef',           // Warm off-white
-    backgroundSecondary: '#faf8f5',  // Lighter cream
-    backgroundTertiary: '#e8e4dc',   // Sand beige
-
-    // Surfaces
-    surface: '#ffffff',              // Pure white for cards
+    background: '#f5f3ef',           
+    backgroundSecondary: '#faf8f5',  
+    backgroundTertiary: '#e8e4dc',   
+    surface: '#ffffff',              
     surfaceElevated: '#ffffff',
     surfacePressed: '#f0ece3',
-
-    // Text - HIGH CONTRAST (black for readability)
-    text: '#1a1a1a',                 // Near black
-    textSecondary: '#4a4a4a',        // Dark gray
-    textMuted: '#6b7280',            // Medium gray
+    text: '#1a1a1a',                 
+    textSecondary: '#4a4a4a',        
+    textMuted: '#6b7280',            
     textInverse: '#ffffff',
-
-    // Primary brand - Deep ocean
     primary: '#0d4a6f',
     primaryLight: '#1a6b8f',
     primaryDark: '#072d45',
-
-    // Secondary
     secondary: '#1a6b8f',
     secondaryLight: '#4a9bb8',
-
-    // Accent
     accent: '#d4a574',
     accentDark: '#b8844c',
-
-    // Borders - Visible but subtle
     border: 'rgba(0, 0, 0, 0.1)',
     borderStrong: 'rgba(0, 0, 0, 0.2)',
-
-    // Glass effects
     glass: 'rgba(255, 255, 255, 0.95)',
     glassBorder: 'rgba(0, 0, 0, 0.08)',
     glassOverlay: 'rgba(255, 255, 255, 0.9)',
-
-    // Shadows
     shadowColor: '#000000',
-
-    // Tab bar
     tabBar: 'rgba(255, 255, 255, 0.98)',
     tabBarBorder: 'rgba(0, 0, 0, 0.08)',
     tabInactive: 'rgba(255, 255, 255, 0.5)',
     tabActive: '#ffffff',
-
-    // Cards
     card: '#ffffff',
     cardBorder: 'rgba(0, 0, 0, 0.08)',
-
-    // Status
     success: BRAND.success,
     error: BRAND.error,
     warning: BRAND.warning,
     info: BRAND.info,
 };
-
-// Dark Theme
 export const DARK_THEME = {
     mode: 'dark',
-
-    // Backgrounds
     background: BRAND.oceanDeep,
     backgroundSecondary: '#001830',
     backgroundTertiary: '#002040',
-
-    // Surfaces
     surface: '#0a1f2e',
     surfaceElevated: '#0d2a3d',
     surfacePressed: '#051520',
-
-    // Text
     text: '#ffffff',
     textSecondary: '#a8c5d4',
     textMuted: '#6b8a99',
     textInverse: '#1a1a1a',
-
-    // Primary
     primary: BRAND.biolum,
     primaryLight: '#66ffff',
     primaryDark: BRAND.biolumDim,
-
-    // Secondary
     secondary: BRAND.oceanLight,
     secondaryLight: '#4ab5c5',
-
-    // Accent
     accent: BRAND.sandGold,
     accentDark: BRAND.sandDark,
-
-    // Borders
     border: 'rgba(255, 255, 255, 0.08)',
     borderStrong: 'rgba(255, 255, 255, 0.15)',
-
-    // Glass effects
     glass: 'rgba(10, 31, 46, 0.85)',
     glassBorder: 'rgba(0, 255, 255, 0.15)',
     glassOverlay: 'rgba(0, 18, 32, 0.9)',
-
-    // Shadows
     shadowColor: '#000000',
-
-    // Tab bar
     tabBar: 'rgba(10, 31, 46, 0.95)',
     tabBarBorder: 'rgba(0, 255, 255, 0.1)',
     tabInactive: '#4a6575',
     tabActive: BRAND.biolum,
-
-    // Cards
     card: '#0a1f2e',
     cardBorder: 'rgba(0, 255, 255, 0.1)',
-
-    // Status
     success: BRAND.success,
     error: BRAND.error,
     warning: BRAND.warning,
     info: BRAND.info,
 };
-
-// Gradients
 export const GRADIENTS = {
     primary: [BRAND.oceanMid, BRAND.oceanDark],
     oceanSurface: [BRAND.oceanMid, BRAND.oceanDark],
@@ -166,8 +98,6 @@ export const GRADIENTS = {
     gold: [BRAND.sandGold, BRAND.sandDark],
     biolum: [BRAND.biolum, BRAND.biolumDim],
 };
-
-// Typography scale
 export const TYPOGRAPHY = {
     hero: { fontSize: 40, fontWeight: '800', letterSpacing: -1 },
     h1: { fontSize: 32, fontWeight: '700', letterSpacing: -0.5 },
@@ -179,8 +109,6 @@ export const TYPOGRAPHY = {
     caption: { fontSize: 12, fontWeight: '500' },
     overline: { fontSize: 10, fontWeight: '600', letterSpacing: 1.5, textTransform: 'uppercase' },
 };
-
-// Legacy COLORS export for backward compatibility
 export const COLORS = {
     primary: BRAND.oceanDark,
     secondary: BRAND.oceanMid,
@@ -190,10 +118,6 @@ export const COLORS = {
     textSecondary: '#a8c5d4',
     surface: '#0a1f2e',
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CREATE SHADOWS - Theme-aware shadow generator (REQUIRED BY ThemeContext)
-// ═══════════════════════════════════════════════════════════════════════════
 export const createShadows = (isDark) => ({
     sm: {
         shadowColor: isDark ? '#000000' : '#000000',

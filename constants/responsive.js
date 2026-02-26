@@ -1,42 +1,13 @@
 import { Dimensions, PixelRatio, Platform } from 'react-native';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// RESPONSIVE UTILITIES - Scales UI perfectly across all device sizes
-// ═══════════════════════════════════════════════════════════════════════════
-
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-// Base design dimensions (iPhone 14 Pro as reference)
 const BASE_WIDTH = 393;
 const BASE_HEIGHT = 852;
-
-// Scale factors
 const widthScale = SCREEN_WIDTH / BASE_WIDTH;
 const heightScale = SCREEN_HEIGHT / BASE_HEIGHT;
 const scale = Math.min(widthScale, heightScale);
-
-/**
- * Responsive width - scales based on screen width
- * @param {number} size - Size in base design pixels
- */
 export const rw = (size) => Math.round(size * widthScale);
-
-/**
- * Responsive height - scales based on screen height
- * @param {number} size - Size in base design pixels
- */
 export const rh = (size) => Math.round(size * heightScale);
-
-/**
- * Responsive size - scales based on smaller dimension (best for fonts/icons)
- * @param {number} size - Size in base design pixels
- */
 export const rs = (size) => Math.round(size * scale);
-
-/**
- * Responsive font size with pixel ratio normalization
- * @param {number} size - Font size in base design
- */
 export const rf = (size) => {
     const newSize = size * scale;
     if (Platform.OS === 'ios') {
@@ -44,15 +15,11 @@ export const rf = (size) => {
     }
     return Math.round(PixelRatio.roundToNearestPixel(newSize)) - 2;
 };
-
-// Device type detection
 export const isSmallDevice = SCREEN_WIDTH < 375;
 export const isMediumDevice = SCREEN_WIDTH >= 375 && SCREEN_WIDTH < 414;
 export const isLargeDevice = SCREEN_WIDTH >= 414 && SCREEN_WIDTH < 768;
 export const isTablet = SCREEN_WIDTH >= 768 && SCREEN_WIDTH < 1024;
 export const isDesktop = SCREEN_WIDTH >= 1024;
-
-// Screen dimensions
 export const SCREEN = {
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT,
@@ -62,11 +29,8 @@ export const SCREEN = {
     isTablet: isTablet,
     isDesktop: isDesktop,
 };
-
 export const SIDEBAR_WIDTH = 250;
 export const CONTENT_MAX_WIDTH = 1200;
-
-// Responsive spacing scale (8px base grid)
 export const SPACING = {
     xs: rs(4),
     sm: rs(8),
@@ -76,8 +40,6 @@ export const SPACING = {
     xxl: rs(48),
     xxxl: rs(64),
 };
-
-// Responsive border radius
 export const RADIUS = {
     xs: rs(4),
     sm: rs(8),
@@ -87,8 +49,6 @@ export const RADIUS = {
     xxl: rs(32),
     full: rs(999),
 };
-
-// Responsive icon sizes
 export const ICON_SIZE = {
     xs: rs(16),
     sm: rs(20),
@@ -96,8 +56,6 @@ export const ICON_SIZE = {
     lg: rs(32),
     xl: rs(48),
 };
-
-// Responsive component heights
 export const HEIGHT = {
     button: rh(52),
     buttonSmall: rh(40),

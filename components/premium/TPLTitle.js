@@ -1,10 +1,8 @@
 import React from 'react';
 import { Text, StyleSheet, View } from 'react-native';
 import { rs, rf } from '../../constants/responsive';
-
 const TPLTitle = ({ title, size = 'md' }) => {
     if (!title) return null;
-
     const getTitleStyles = () => {
         switch (title) {
             case "Golden Eco Legend":
@@ -23,27 +21,25 @@ const TPLTitle = ({ title, size = 'md' }) => {
                 };
             case "Beach Guardian":
                 return {
-                    color: '#F4A460', // Sandy Brown
+                    color: '#F4A460', 
                     textShadowColor: 'rgba(244, 164, 96, 0.8)',
                     textShadowOffset: { width: 0, height: 0 },
                     textShadowRadius: 10,
                 };
             case "Collector Starter":
                 return {
-                    color: '#32CD32', // Lime Green
+                    color: '#32CD32', 
                     textShadowColor: 'rgba(50, 205, 50, 0.9)',
                     textShadowOffset: { width: 0, height: 0 },
                     textShadowRadius: 15,
                 };
             default:
                 return {
-                    color: '#A9A9A9', // Dark Gray
+                    color: '#A9A9A9', 
                 };
         }
     };
-
     const fontSize = size === 'lg' ? rf(18) : rf(13);
-
     return (
         <View style={styles.container}>
             <Text style={[styles.title, getTitleStyles(), { fontSize }]}>
@@ -52,7 +48,6 @@ const TPLTitle = ({ title, size = 'md' }) => {
         </View>
     );
 };
-
 const styles = StyleSheet.create({
     container: {
         marginLeft: rs(8),
@@ -70,5 +65,4 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     }
 });
-
 export default TPLTitle;

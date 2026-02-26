@@ -17,7 +17,6 @@ import { useLanguage } from '../context/LanguageContext';
 import GlassCard from './premium/GlassCard';
 import TPLTitle from './premium/TPLTitle';
 import AnimatedButton from './premium/AnimatedButton';
-
 const TITLES_CONFIG = [
     {
         id: 'legend',
@@ -44,7 +43,7 @@ const TITLES_CONFIG = [
         id: 'collector',
         name: 'Collector Starter',
         min: 5,
-        color: '#32CD32', // Lime Green
+        color: '#32CD32', 
         desc: 'Comenzando a coleccionar actos de impacto positivo.',
     },
     {
@@ -55,11 +54,9 @@ const TITLES_CONFIG = [
         desc: 'Iniciando el camino hacia un planeta más limpio.',
     }
 ];
-
 const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle }) => {
     const { colors, isDark } = useTheme();
     const { t } = useLanguage();
-
     return (
         <Modal
             visible={visible}
@@ -69,25 +66,22 @@ const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle 
         >
             <View style={styles.overlay}>
                 <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.85)' }]} />
-
                 <SafeAreaView style={styles.container}>
                     <Animated.View
                         entering={FadeInDown.springify()}
                         style={[styles.modalContent, { backgroundColor: isDark ? 'rgba(10, 25, 41, 0.95)' : 'rgba(255, 255, 255, 0.95)' }]}
                     >
-                        {/* Header */}
+                        {}
                         <View style={styles.header}>
                             <Text style={[styles.title, { color: colors.text }]}>{t('home_redeem_tpl')}</Text>
                             <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                                 <Ionicons name="close" size={rs(28)} color={colors.text} />
                             </TouchableOpacity>
                         </View>
-
                         <View style={styles.pointsDisplay}>
                             <Text style={[styles.pointsLabel, { color: colors.textSecondary }]}>TUS PUNTOS ACTUALES</Text>
                             <Text style={[styles.pointsValue, { color: colors.primary }]}>{points} TPL</Text>
                         </View>
-
                         <ScrollView
                             contentContainerStyle={styles.list}
                             showsVerticalScrollIndicator={false}
@@ -95,7 +89,6 @@ const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle 
                             {TITLES_CONFIG.map((config, index) => {
                                 const isUnlocked = points >= config.min;
                                 const isActive = currentTitle === config.name;
-
                                 return (
                                     <Animated.View
                                         key={config.id}
@@ -123,11 +116,9 @@ const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle 
                                                     </View>
                                                 )}
                                             </View>
-
                                             <Text style={[styles.description, { color: colors.textSecondary }]}>
                                                 {config.desc}
                                             </Text>
-
                                             {isUnlocked && !isActive && (
                                                 <TouchableOpacity
                                                     style={[styles.claimButton, { backgroundColor: config.color }]}
@@ -141,7 +132,6 @@ const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle 
                                 );
                             })}
                         </ScrollView>
-
                         <View style={styles.footer}>
                             <AnimatedButton
                                 title="CERRAR"
@@ -156,7 +146,6 @@ const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle 
         </Modal>
     );
 };
-
 const styles = StyleSheet.create({
     overlay: {
         flex: 1,
@@ -260,5 +249,4 @@ const styles = StyleSheet.create({
         marginTop: SPACING.lg,
     }
 });
-
 export default TPLRedeemModal;

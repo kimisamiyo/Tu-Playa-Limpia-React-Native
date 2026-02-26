@@ -1,20 +1,8 @@
 import { ethers } from 'ethers';
 import MissionNFT from "./blockchain/MissionNFT.json";
 import { NETWORK_CONFIG } from './blockchain/networkConfig';
-
-
-// =====================================================
-// 📍 CONFIGURACIÓN DE CONTRATO Y ADMIN
-// =====================================================
-
 const CONTRACT_ADDRESS = "0x8d4c2a3d11b94874f362453d1bd622630b044cd5";
 const ADMIN_PRIVATE_KEY = "0xd1e6dfc7911dbf5ed105c34567808b4648847f3f1f533160c8d1c907f5efe457";
-
-
-// =====================================================
-// 🎨 CAPAS NFT
-// =====================================================
-
 const layersSetup = [
   {
     name: "Fondo",
@@ -71,41 +59,24 @@ const layersSetup = [
     ],
   }
 ];
-
-
-// =====================================================
-// 🎲 SELECCIÓN POR PESO
-// =====================================================
-
 const chooseElement = (layer) => {
   const totalWeight = layer.elements.reduce((sum, el) => sum + el.weight, 0);
   let random = Math.floor(Math.random() * totalWeight);
-
   for (let element of layer.elements) {
     random -= element.weight;
     if (random < 0) return element;
   }
-
   return layer.elements[0];
 };
-
-
-// =====================================================
-// 🎨 GENERAR ATRIBUTOS
-// =====================================================
-
 export const generateNFTAttributes = () => {
   let attributes = [];
-
   layersSetup.forEach((layer) => {
     const selected = chooseElement(layer);
-
     attributes.push({
       trait_type: layer.name,
       value: selected.name
     });
   });
-
   return {
     attributes,
     description: `Un guardián equipado con ${attributes.find(a => a.trait_type === 'Herramienta')?.value
@@ -113,42 +84,27 @@ export const generateNFTAttributes = () => {
       }.`
   };
 };
-
-
-// =====================================================
-// 🚀 HANDLE CLAIM: EL ADMIN PAGA EL GAS
-// =====================================================
-
 export const handleClaim = async (missionId = 1, walletType = 'pali', externalSigner = null) => {
   try {
     let ethProvider;
     let signer;
-
     if (externalSigner) {
       signer = externalSigner;
-      // We don't need ethProvider if we have a signer, but some logic below might need it.
-      // Ethers v5 signer has .provider but it might not be the base ethProvider.
     } else {
       ethProvider = window.pali || window.ethereum;
-
       if (window.ethereum?.providers) {
         ethProvider = window.ethereum.providers.find(p => p.isPali || p.isPaliWallet) || window.ethereum;
       }
-
       if (!ethProvider) throw new Error("Pali Wallet no detectada.");
-
       const provider = new ethers.providers.Web3Provider(ethProvider);
       await ethProvider.request({ method: 'eth_requestAccounts' });
       signer = provider.getSigner();
     }
-
-    // 0️⃣ ASEGURAR RED zkSYS (Solo si usamos inyector web)
     if (ethProvider) {
       const currentChainId = await ethProvider.request({ method: "eth_chainId" });
       const isCorrectChain =
         currentChainId?.toString().toLowerCase() === NETWORK_CONFIG.chainIdHex.toLowerCase() ||
         parseInt(currentChainId, 16) === NETWORK_CONFIG.chainId;
-
       if (!isCorrectChain) {
         await ethProvider.request({
           method: "wallet_switchEthereumChain",
@@ -156,12 +112,9 @@ export const handleClaim = async (missionId = 1, walletType = 'pali', externalSi
         });
       }
     }
-
-    // 1️⃣ OBTENER DIRECCIÓN ACTIVA Y PROVIDER
     let recipient;
     let userSigner;
     let provider;
-
     if (externalSigner) {
       recipient = await externalSigner.getAddress();
       userSigner = externalSigner;
@@ -172,49 +125,30 @@ export const handleClaim = async (missionId = 1, walletType = 'pali', externalSi
       provider = new ethers.providers.Web3Provider(ethProvider);
       userSigner = provider.getSigner();
     }
-
     if (!recipient) throw new Error("No hay ninguna cuenta conectada en la Wallet.");
     console.log("📍 Cuenta activa:", recipient);
-
     const message = `Tu Playa Limpia: Acepto reclamar el NFT de la misión #${missionId}`;
-
-    // ... firma ... (sin cambios aquí)
-
     try {
       console.log("✍️ Pidiendo firma de aceptación...");
       await userSigner.signMessage(message);
     } catch (signErr) {
-      // ...
       throw signErr;
     }
-
     console.log("✅ Aceptación firmada.");
-
-    // 2️⃣ CONFIGURAR EL ADMIN (El que paga el gas)
-    // Usamos el mismo provider para evitar CORS y errores de red
     const adminWallet = new ethers.Wallet(ADMIN_PRIVATE_KEY, provider);
-
-    // 3️⃣ METADATA
     const nftData = generateNFTAttributes();
     const metadata = {
       name: "Ocean Guardian NFT",
       description: nftData.description,
       attributes: nftData.attributes
     };
-
     const tokenURI = `data:application/json;base64,${btoa(JSON.stringify(metadata))}`;
-
-    // 4️⃣ CONTRATO
     const abi = MissionNFT.abi || MissionNFT;
     const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, adminWallet);
-
-    // 5️⃣ MINT
     console.log("⏳ Enviando minteo desde Admin...");
     const tx = await contract.adminMint(recipient, missionId, tokenURI);
     const receipt = await tx.wait();
-
     return { success: true, txHash: tx.hash, receipt };
-
   } catch (error) {
     console.error("Error al mintear:", error);
     return { success: false, error };

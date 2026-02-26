@@ -3,19 +3,9 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Localization from 'expo-localization';
 import translations, { LANGUAGES, LANGUAGE_LABELS } from '../constants/translations';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LANGUAGE CONTEXT - Auto-detects device language, manual override in Profile
-// Supports: ES, EN, ZH, HI, AR, FR, PT
-// ═══════════════════════════════════════════════════════════════════════════
-
 const LanguageContext = createContext(null);
 const STORAGE_KEY = '@tpl_language_preference';
 const SUPPORTED = Object.values(LANGUAGES);
-
-/**
- * Detect device language and map to closest supported language
- */
 function detectDeviceLanguage() {
     try {
         const locales = Localization.getLocales?.();
@@ -24,7 +14,6 @@ function detectDeviceLanguage() {
             if (deviceLang && SUPPORTED.includes(deviceLang)) {
                 return deviceLang;
             }
-            // Try matching prefix (e.g., 'zh-Hans' -> 'zh')
             const prefix = deviceLang?.split('-')[0];
             if (prefix && SUPPORTED.includes(prefix)) {
                 return prefix;
@@ -33,15 +22,12 @@ function detectDeviceLanguage() {
     } catch (e) {
         console.warn('Language detection fallback:', e);
     }
-    return LANGUAGES.ES; // Default to Spanish
+    return LANGUAGES.ES; 
 }
-
 export function LanguageProvider({ children }) {
     const [language, setLanguageState] = useState(null);
     const [isAutoMode, setIsAutoMode] = useState(true);
     const [isReady, setIsReady] = useState(false);
-
-    // Load saved preference on mount
     useEffect(() => {
         (async () => {
             try {
@@ -58,7 +44,6 @@ export function LanguageProvider({ children }) {
                         setLanguageState(detectDeviceLanguage());
                     }
                 } else {
-                    // First time: auto-detect
                     setLanguageState(detectDeviceLanguage());
                 }
             } catch (e) {
@@ -67,8 +52,6 @@ export function LanguageProvider({ children }) {
             setIsReady(true);
         })();
     }, []);
-
-    // Set language manually
     const setLanguage = useCallback(async (lang) => {
         if (lang === 'auto') {
             setIsAutoMode(true);
@@ -81,11 +64,9 @@ export function LanguageProvider({ children }) {
             await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ mode: 'manual', language: lang }));
         }
     }, []);
-
     const t = useCallback((key, params) => {
         const lang = language || LANGUAGES.ES;
         let text = translations[lang]?.[key] || translations[LANGUAGES.ES]?.[key] || key;
-
         if (params && typeof text === 'string') {
             Object.keys(params).forEach(param => {
                 text = text.replace(new RegExp(`\\{${param}\\}`, 'g'), params[param]);
@@ -93,7 +74,6 @@ export function LanguageProvider({ children }) {
         }
         return text;
     }, [language]);
-
     const value = useMemo(() => ({
         t,
         language: language || LANGUAGES.ES,
@@ -103,14 +83,12 @@ export function LanguageProvider({ children }) {
         LANGUAGE_LABELS,
         isReady,
     }), [t, language, setLanguage, isAutoMode, isReady]);
-
     return (
         <LanguageContext.Provider value={value}>
             {isReady ? children : null}
         </LanguageContext.Provider>
     );
 }
-
 export function useLanguage() {
     const context = useContext(LanguageContext);
     if (!context) {
@@ -118,5 +96,4 @@ export function useLanguage() {
     }
     return context;
 }
-
 export default LanguageContext;

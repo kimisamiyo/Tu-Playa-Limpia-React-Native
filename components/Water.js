@@ -8,32 +8,25 @@ import Animated, {
     withTiming,
     Easing
 } from 'react-native-reanimated';
-
 const { width } = Dimensions.get('window');
-
-// SVG Path for a wave shape
 const wavePath = `M0,30 Q${width / 4},50 ${width / 2},30 T${width},30 L${width},200 L0,200 Z`;
-
 export default function Water() {
     const translateY = useSharedValue(0);
-
     useEffect(() => {
         translateY.value = withRepeat(
             withTiming(20, {
                 duration: 3000,
                 easing: Easing.inOut(Easing.ease),
             }),
-            -1, // infinite
-            true // reverse
+            -1, 
+            true 
         );
     }, []);
-
     const animatedStyle = useAnimatedStyle(() => {
         return {
             transform: [{ translateY: translateY.value }],
         };
     });
-
     return (
         <View style={styles.container}>
             <Animated.View style={[styles.waveContainer, animatedStyle]}>
@@ -45,7 +38,7 @@ export default function Water() {
                         </LinearGradientSVG>
                     </Defs>
                     <Path d={wavePath} fill="url(#grad)" />
-                    {/* Second wave layer for depth */}
+                    {}
                 </Svg>
             </Animated.View>
             <Animated.View style={[styles.waveContainer, styles.waveBack, animatedStyle]}>
@@ -62,7 +55,6 @@ export default function Water() {
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         position: 'absolute',
@@ -80,6 +72,6 @@ const styles = StyleSheet.create({
     waveBack: {
         bottom: -10,
         opacity: 0.6,
-        transform: [{ translateX: -20 }], // Slightly offset
+        transform: [{ translateX: -20 }], 
     }
 });

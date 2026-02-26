@@ -34,33 +34,23 @@ import FloatingBubbles from '../components/premium/FloatingBubbles';
 import GlassCard from '../components/premium/GlassCard';
 import TPLTitle from '../components/premium/TPLTitle';
 import TPLRedeemModal from '../components/TPLRedeemModal';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ANIMATED ACTION ITEM
-// ═══════════════════════════════════════════════════════════════════════════
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 const ActionItem = ({ icon, label, delay = 0, onPress, customWidth }) => {
     const { colors, shadows, isDark } = useTheme();
     const scale = useSharedValue(1);
-
     const handlePressIn = () => {
         scale.value = withSpring(SCALE.pressed, SPRING.snappy);
     };
-
     const handlePressOut = () => {
         scale.value = withSpring(1, SPRING.snappy);
     };
-
     const handlePress = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress?.();
     };
-
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
     }));
-
     return (
         <AnimatedPressable
             onPressIn={handlePressIn}
@@ -83,26 +73,19 @@ const ActionItem = ({ icon, label, delay = 0, onPress, customWidth }) => {
         </AnimatedPressable>
     );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PREMIUM BALANCE CARD
-// ═══════════════════════════════════════════════════════════════════════════
 const BalanceCard = ({ onRedeem, points, nfts }) => {
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
     const balanceScale = useSharedValue(1);
-
     useEffect(() => {
         balanceScale.value = withDelay(500, withSpring(1.02, SPRING.bouncy));
         setTimeout(() => {
             balanceScale.value = withSpring(1, SPRING.gentle);
         }, 1000);
     }, []);
-
     const balanceStyle = useAnimatedStyle(() => ({
         transform: [{ scale: balanceScale.value }],
     }));
-
     return (
         <Animated.View
             entering={FadeInUp.delay(200).springify()}
@@ -151,15 +134,9 @@ const BalanceCard = ({ onRedeem, points, nfts }) => {
         </Animated.View>
     );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN HOME SCREEN
-// ═══════════════════════════════════════════════════════════════════════════
-
 import { useWallet } from '../context/WalletContext';
 import { useAuth } from '../context/AuthContext';
 import { fetchTPLBalance } from '../utils/blockchain/tplToken';
-
 export default function HomeScreen() {
     const navigation = useNavigation();
     const { user, points, nfts, level, updateUserProfile } = useGame();
@@ -171,8 +148,6 @@ export default function HomeScreen() {
     const isDesktop = width >= 1024;
     const [showRedeemModal, setShowRedeemModal] = React.useState(false);
     const [tplBalance, setTplBalance] = React.useState(null);
-
-    // Sync Blockchain Balance for Titles
     useEffect(() => {
         const getBalance = async () => {
             if (address) {
@@ -182,23 +157,17 @@ export default function HomeScreen() {
         };
         getBalance();
     }, [address]);
-
     const handleTitleUpdate = (newTitle) => {
         updateUserProfile({ tplTitle: newTitle });
         setShowRedeemModal(false);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     };
-
-    // Localized date
     const today = new Date();
     const localeMap = { es: 'es-ES', en: 'en-US', zh: 'zh-CN', hi: 'hi-IN', ar: 'ar-SA', fr: 'fr-FR', pt: 'pt-BR' };
     const dateString = today.toLocaleDateString(localeMap[language] || 'es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-
-    // Responsive styles
     const actionItemWidth = isDesktop
-        ? (width - 250 - (SPACING.lg * 2) - (SPACING.md * 3)) / 4  // (Screen - Sidebar - Padding - Gaps) / 4 columns
-        : (width - (SPACING.lg * 2) - SPACING.md) / 2;             // Mobile: 2 columns
-
+        ? (width - 250 - (SPACING.lg * 2) - (SPACING.md * 3)) / 4  
+        : (width - (SPACING.lg * 2) - SPACING.md) / 2;             
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {isDark && (
@@ -208,13 +177,12 @@ export default function HomeScreen() {
                 />
             )}
             <FloatingBubbles count={isDesktop ? 20 : 8} minSize={4} maxSize={isDesktop ? 20 : 14} zIndex={0} />
-
             <SafeAreaView style={styles.safeArea}>
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Header */}
+                    {}
                     <Animated.View
                         entering={FadeInDown.delay(100).springify()}
                         style={styles.header}
@@ -250,11 +218,9 @@ export default function HomeScreen() {
                             )}
                         </TouchableOpacity>
                     </Animated.View>
-
-                    {/* Dashboard Layout Content */}
+                    {}
                     <View style={isDesktop ? styles.desktopRow : styles.mobileCol}>
-
-                        {/* Left/Top: Balance Card */}
+                        {}
                         <View style={isDesktop ? { flex: 0.4, marginRight: SPACING.xl } : { width: '100%' }}>
                             <BalanceCard
                                 onRedeem={() => setShowRedeemModal(true)}
@@ -262,15 +228,13 @@ export default function HomeScreen() {
                                 nfts={nfts}
                             />
                         </View>
-
-                        {/* Right/Bottom: Quick Actions */}
+                        {}
                         <View style={isDesktop ? { flex: 0.6 } : { width: '100%' }}>
                             <Animated.View entering={FadeInUp.delay(400).springify()}>
                                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
                                     {t('home_quick_actions')}
                                 </Text>
                             </Animated.View>
-
                             <View style={styles.grid}>
                                 <ActionItem
                                     icon="scan-outline"
@@ -305,7 +269,6 @@ export default function HomeScreen() {
                     </View>
                 </ScrollView>
             </SafeAreaView>
-
             <View style={styles.waterWrapper}>
                 <Water />
             </View>
@@ -319,7 +282,6 @@ export default function HomeScreen() {
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: { flex: 1 },
     safeArea: { flex: 1 },
@@ -336,10 +298,8 @@ const styles = StyleSheet.create({
     },
     avatarImage: { width: rs(50), height: rs(50), borderRadius: rs(25) },
     avatarInitials: { fontSize: rf(18), fontWeight: '700' },
-
     desktopRow: { flexDirection: 'row', alignItems: 'flex-start' },
     mobileCol: { flexDirection: 'column' },
-
     balanceContainer: { marginBottom: SPACING.xl },
     balanceCard: { borderRadius: RADIUS.xl, padding: SPACING.lg, overflow: 'hidden', minHeight: 200 },
     cardShine: {
@@ -396,19 +356,16 @@ const styles = StyleSheet.create({
     decorCircle: { position: 'absolute', borderRadius: rs(100), backgroundColor: 'rgba(255, 255, 255, 0.03)' },
     decorCircle1: { width: rs(200), height: rs(200), top: -rs(50), right: -rs(80) },
     decorCircle2: { width: rs(120), height: rs(120), bottom: -rs(30), right: -rs(20) },
-
     sectionTitle: { fontSize: rf(18), fontWeight: '700', marginBottom: SPACING.md },
-
     grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: SPACING.md },
-    actionItem: { /* width handled dynamically */ },
-    actionCard: { padding: 0, height: '100%' }, // Ensure full height
+    actionItem: {  },
+    actionCard: { padding: 0, height: '100%' }, 
     actionContent: { alignItems: 'center', padding: SPACING.lg, justifyContent: 'center', height: '100%' },
     iconBox: {
         width: rs(52), height: rs(52), borderRadius: rs(16),
         justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.sm,
     },
     actionLabel: { fontWeight: '600', fontSize: rf(14) },
-
     waterWrapper: {
         position: 'absolute', bottom: 0, left: 0, right: 0,
         height: rh(100), zIndex: -1, opacity: 0.4,

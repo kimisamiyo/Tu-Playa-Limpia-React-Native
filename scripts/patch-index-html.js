@@ -4,8 +4,12 @@
  * 
  * Run automatically via `npm run build:web`
  */
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const DIST_DIR = path.join(__dirname, '..', 'dist');
 const FONTS_TARGET_DIR = path.join(DIST_DIR, 'fonts');
@@ -105,6 +109,14 @@ try {
 
   // Remove old injection if present
   html = html.replace(/<style id="icon-fonts">[\s\S]*?<\/style>\s*/, '');
+
+  // Inject cache-control meta tags
+  const cacheMeta = `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">`;
+  if (!html.includes('http-equiv="Cache-Control"')) {
+    html = html.replace('</head>', `    ${cacheMeta}\n</head>`);
+  }
 
   // Inject before <style id="expo-reset"> or </head>
   if (html.includes('<style id="expo-reset">')) {

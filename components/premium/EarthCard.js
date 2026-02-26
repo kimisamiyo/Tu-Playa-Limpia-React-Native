@@ -15,29 +15,17 @@ import { rs, rf, SPACING, RADIUS } from '../../constants/responsive';
 import { BRAND } from '../../constants/theme';
 import GenerativeArt, { generatePatternFromId } from '../GenerativeArt';
 import { useLanguage } from '../../context/LanguageContext';
-
 const { width } = Dimensions.get('window');
-// Default card dimensions
 const DEFAULT_CARD_WIDTH = width * 0.85;
 const DEFAULT_CARD_HEIGHT = DEFAULT_CARD_WIDTH * 1.4;
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ANIMATED BUBBLE COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════
 const AnimatedBubble = ({ index, total, sizeScale = 1 }) => {
     const size = (4 + (index % 5) * 2) * sizeScale;
     const duration = 4000 + (index % 4) * 1000;
     const delay = (index * 800) % 3000;
     const leftPos = `${10 + (index * 15) % 80}%`;
-
     const translateY = useSharedValue(0);
     const opacity = useSharedValue(0);
-
-    // We can't access card height deeply here easily without context,
-    // but a relative value works if container clips.
-    // Assuming standard travel distance.
     const travelDist = 200 * sizeScale;
-
     useEffect(() => {
         translateY.value = withDelay(
             delay,
@@ -47,7 +35,6 @@ const AnimatedBubble = ({ index, total, sizeScale = 1 }) => {
                 false
             )
         );
-
         opacity.value = withDelay(
             delay,
             withRepeat(
@@ -61,12 +48,10 @@ const AnimatedBubble = ({ index, total, sizeScale = 1 }) => {
             )
         );
     }, []);
-
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: translateY.value }],
         opacity: opacity.value,
     }));
-
     return (
         <Animated.View
             style={[
@@ -83,10 +68,6 @@ const AnimatedBubble = ({ index, total, sizeScale = 1 }) => {
         />
     );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MOON / PEARL COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════
 const MoonPearl = ({ scale = 1 }) => {
     return (
         <View style={[styles.moonContainer, { transform: [{ scale }] }]}>
@@ -102,20 +83,16 @@ const MoonPearl = ({ scale = 1 }) => {
         </View>
     );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN CARD
-// ═══════════════════════════════════════════════════════════════════════════
 const EarthCard = ({
     children,
     title,
     rarity,
     description,
-    image, // Added image prop
+    image, 
     date,
-    isNew, // Added isNew prop
-    attributes, // New prop for generative NFTs
-    id, // Added id prop for generative SVG art
+    isNew, 
+    attributes, 
+    id, 
     width = DEFAULT_CARD_WIDTH,
     height = DEFAULT_CARD_HEIGHT,
     compact = false
@@ -123,30 +100,21 @@ const EarthCard = ({
     const { t } = useLanguage();
     const bubbles = Array.from({ length: compact ? 4 : 8 }, (_, i) => i);
     const scale = compact ? 0.4 : 1;
-
-    // Determine if we should show the generative view (Prioritize ID if present)
     const hasArt = !!id || (attributes && attributes.length > 0) || !!image;
-    // ═══════════════════════════════════════════════════════════════════════════
-    // RANDOM BACKGROUNDS - Grey/Blue tones (App Theme)
-    // ═══════════════════════════════════════════════════════════════════════════
     const BG_VARIANTS = [
-        [BRAND.oceanDeep, '#000000', '#000000'],       // Deepest Blue
-        ['#0f172a', '#1e293b', '#0f172a'],              // Slate/Grey Blue
-        [BRAND.oceanDark, BRAND.oceanDeep, '#000000'],  // Dark Ocean
-        ['#1e3a8a', '#172554', '#0f172a'],              // Navy Blue
-        ['#334155', '#1e293b', '#0f172a'],              // Lighter Steel
-        ['#111827', '#1f2937', '#111827'],              // Cool Grey
+        [BRAND.oceanDeep, '#000000', '#000000'],       
+        ['#0f172a', '#1e293b', '#0f172a'],              
+        [BRAND.oceanDark, BRAND.oceanDeep, '#000000'],  
+        ['#1e3a8a', '#172554', '#0f172a'],              
+        ['#334155', '#1e293b', '#0f172a'],              
+        ['#111827', '#1f2937', '#111827'],              
     ];
-
-    // Select background based on ID (Deterministic)
     const bgIndex = React.useMemo(() => {
         if (!id) return 0;
         const seed = id.toString().split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
         return seed % BG_VARIANTS.length;
     }, [id]);
-
     const currentBg = BG_VARIANTS[bgIndex];
-
     return (
         <View style={[
             styles.cardContainer,
@@ -162,19 +130,19 @@ const EarthCard = ({
                 {id ? (
                     /* RENDER GENERATIVE ART (SVG) */
                     <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
-                        {/* Centered art, maybe scale carefully */}
+                        {}
                         <GenerativeArt
                             id={id}
                             size={Math.min(width, height)}
-                            isDark={true} // Always dark in EarthCard/Rewards context? Or pass prop? EarthCard is dark themed usually.
+                            isDark={true} 
                         />
-                        {/* Overlay bubbles for effect */}
+                        {}
                         <View style={[StyleSheet.absoluteFill, { zIndex: 5 }]}>
                             {bubbles.map((i) => (
                                 <AnimatedBubble key={i} index={i} total={8} sizeScale={scale} />
                             ))}
                         </View>
-                        {/* New Badge/Glow Overlay */}
+                        {}
                         {isNew && (
                             <View style={styles.newOverlay}>
                                 <View style={styles.newBadge}>
@@ -184,18 +152,17 @@ const EarthCard = ({
                         )}
                     </View>
                 ) : image ? (
-                    /* STATIC IMAGE VIEW */
                     <View style={StyleSheet.absoluteFill}>
                         <Image
                             source={{ uri: image }}
                             style={{ width: '100%', height: '100%', resizeMode: 'cover' }}
                         />
-                        {/* Gradient overlay for text readability */}
+                        {}
                         <LinearGradient
                             colors={['transparent', 'rgba(0,0,0,0.8)']}
                             style={[StyleSheet.absoluteFill, { zIndex: 1 }]}
                         />
-                        {/* New Badge/Glow Overlay for Image Mode */}
+                        {}
                         {isNew && (
                             <View style={styles.newOverlay}>
                                 <View style={styles.newBadge}>
@@ -205,7 +172,6 @@ const EarthCard = ({
                         )}
                     </View>
                 ) : (
-                    /* DEFAULT MOON/PEARL VIEW */
                     <>
                         <View style={StyleSheet.absoluteFill}>
                             {bubbles.map((i) => (
@@ -217,12 +183,10 @@ const EarthCard = ({
                         </View>
                     </>
                 )}
-
-                {/* 3. Content Overlay (Text) */}
+                {}
                 <View style={[styles.contentContainer, { padding: compact ? 8 : SPACING.lg }]}>
                     {children}
-
-                    {/* Default content layout if props provided */}
+                    {}
                     {(title || rarity) && (
                         <View style={[
                             styles.infoBlock,
@@ -237,7 +201,6 @@ const EarthCard = ({
                                     <Text style={[styles.rarityText, compact && { fontSize: 8 }]}>{rarity}</Text>
                                 </View>
                             )}
-
                             {title && (
                                 <Text
                                     style={[
@@ -249,9 +212,7 @@ const EarthCard = ({
                                     {title}
                                 </Text>
                             )}
-
                             {!compact && description && <Text style={styles.description}>{description}</Text>}
-
                             {!compact && date && (
                                 <View style={styles.footer}>
                                     <Text style={styles.dateLabel}>{t('nft_discovered_on')}</Text>
@@ -265,23 +226,18 @@ const EarthCard = ({
         </View>
     );
 };
-
-// Helper for rarity colors
 const getRarityColor = (rarity) => {
     switch (rarity?.toLowerCase()) {
-        case 'legendary': return '#FFD700'; // Gold
-        case 'epic': return '#9333EA';      // Purple
-        case 'rare': return '#3B82F6';      // Blue
-        case 'uncommon': return '#14b8a6';  // Teal
-        case 'common': return '#10B981';    // Green
-        default: return '#6B7280';          // Grey
+        case 'legendary': return '#FFD700'; 
+        case 'epic': return '#9333EA';      
+        case 'rare': return '#3B82F6';      
+        case 'uncommon': return '#14b8a6';  
+        case 'common': return '#10B981';    
+        default: return '#6B7280';          
     }
 };
-
 const styles = StyleSheet.create({
     cardContainer: {
-        // Dimensions set via props
-        // shadowColor: BRAND.biolum,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -294,7 +250,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.1)',
     },
-    // Bubbles
     bubble: {
         position: 'absolute',
         backgroundColor: 'rgba(173, 216, 230, 0.6)',
@@ -304,7 +259,6 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
         elevation: 5,
     },
-    // Moon (internal styles mostly replaced by prop scaling but kept for structure)
     moonContainer: {
         width: 80,
         height: 80,
@@ -335,8 +289,6 @@ const styles = StyleSheet.create({
     cr1: { width: 12, height: 12, top: 15, left: 10 },
     cr2: { width: 18, height: 18, top: 30, left: 28 },
     cr3: { width: 8, height: 8, top: 40, left: 15 },
-
-    // Content
     contentContainer: {
         flex: 1,
         justifyContent: 'flex-end',
@@ -395,7 +347,6 @@ const styles = StyleSheet.create({
         fontSize: rf(12),
         fontWeight: '600',
     },
-    // NEW Badge & Glow
     newOverlay: {
         ...StyleSheet.absoluteFillObject,
         zIndex: 20,
@@ -403,7 +354,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         padding: 8,
         borderWidth: 2,
-        borderColor: '#FFD700', // Gold border for glow effect
+        borderColor: '#FFD700', 
         borderRadius: 12,
     },
     newBadge: {
@@ -423,5 +374,4 @@ const styles = StyleSheet.create({
         color: '#000',
     },
 });
-
 export default EarthCard;

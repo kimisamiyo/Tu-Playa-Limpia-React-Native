@@ -8,8 +8,6 @@ import Animated, {
     withSequence,
     Easing
 } from 'react-native-reanimated';
-
-// Color Palette from CSS
 const COLORS = {
     dogSkin: '#deac80',
     dogBody: '#914f1e',
@@ -20,11 +18,8 @@ const COLORS = {
     shadow: '#b5c18e',
     mouth: '#ff6b6b',
 };
-
-const SCALE = 0.8; // Scale factor for the dog
-
+const SCALE = 0.8; 
 export default function AnimatedDog({ isAwake = false }) {
-    // Shared Values for Animation
     const headRotate = useSharedValue(0);
     const headY = useSharedValue(0);
     const eyeScaleY = useSharedValue(0.3);
@@ -32,9 +27,7 @@ export default function AnimatedDog({ isAwake = false }) {
     const earRightRotate = useSharedValue(25);
     const tailRotate = useSharedValue(0);
     const mouthScale = useSharedValue(0);
-
     useEffect(() => {
-        // Tail wagging animation
         tailRotate.value = withRepeat(
             withSequence(
                 withTiming(-20, { duration: 200, easing: Easing.ease }),
@@ -43,8 +36,6 @@ export default function AnimatedDog({ isAwake = false }) {
             -1,
             true
         );
-
-        // Head bobbing
         headY.value = withRepeat(
             withSequence(
                 withTiming(-3, { duration: 500, easing: Easing.ease }),
@@ -53,8 +44,6 @@ export default function AnimatedDog({ isAwake = false }) {
             -1,
             true
         );
-
-        // Ear wiggles
         earLeftRotate.value = withRepeat(
             withSequence(
                 withTiming(-55, { duration: 300 }),
@@ -64,7 +53,6 @@ export default function AnimatedDog({ isAwake = false }) {
             -1,
             false
         );
-
         earRightRotate.value = withRepeat(
             withSequence(
                 withTiming(20, { duration: 300 }),
@@ -75,10 +63,8 @@ export default function AnimatedDog({ isAwake = false }) {
             false
         );
     }, []);
-
     useEffect(() => {
         if (isAwake) {
-            // Wake up animation - eyes open and mouth opens
             eyeScaleY.value = withTiming(1, { duration: 400, easing: Easing.out(Easing.back(1.5)) });
             mouthScale.value = withTiming(1, { duration: 300 });
             headRotate.value = withSequence(
@@ -90,72 +76,59 @@ export default function AnimatedDog({ isAwake = false }) {
             mouthScale.value = withTiming(0, { duration: 200 });
         }
     }, [isAwake]);
-
     const headStyle = useAnimatedStyle(() => ({
         transform: [
             { translateY: headY.value },
             { rotateZ: `${headRotate.value}deg` }
         ]
     }));
-
     const leftEarStyle = useAnimatedStyle(() => ({
         transform: [{ rotateZ: `${earLeftRotate.value}deg` }]
     }));
-
     const rightEarStyle = useAnimatedStyle(() => ({
         transform: [{ rotateZ: `${earRightRotate.value}deg` }]
     }));
-
     const eyeStyle = useAnimatedStyle(() => ({
         transform: [{ scaleY: eyeScaleY.value }]
     }));
-
     const tailStyle = useAnimatedStyle(() => ({
         transform: [{ rotateZ: `${tailRotate.value}deg` }]
     }));
-
     const mouthStyle = useAnimatedStyle(() => ({
         transform: [{ scaleY: mouthScale.value }],
         opacity: mouthScale.value,
     }));
-
     return (
         <View style={styles.container}>
             <View style={styles.dog}>
-                {/* TAIL */}
+                {}
                 <Animated.View style={[styles.tailWrapper, tailStyle]}>
                     <View style={styles.tail} />
                 </Animated.View>
-
-                {/* BODY */}
+                {}
                 <View style={styles.body} />
-
-                {/* PAWS */}
+                {}
                 <View style={styles.pawsRow}>
                     <View style={styles.paw} />
                     <View style={styles.paw} />
                     <View style={styles.paw} />
                     <View style={styles.paw} />
                 </View>
-
-                {/* HEAD GROUP */}
+                {}
                 <Animated.View style={[styles.headContainer, headStyle]}>
-                    {/* EARS */}
+                    {}
                     <Animated.View style={[styles.ear, styles.earLeft, leftEarStyle]} />
                     <Animated.View style={[styles.ear, styles.earRight, rightEarStyle]} />
-
-                    {/* HEAD SHAPE */}
+                    {}
                     <View style={styles.headMain}>
-                        {/* SNOUT */}
+                        {}
                         <View style={styles.snout}>
-                            {/* NOSE */}
+                            {}
                             <View style={styles.noseTip} />
-
-                            {/* MOUTH (opens when awake) */}
+                            {}
                             <Animated.View style={[styles.mouth, mouthStyle]} />
                         </View>
-
-                        {/* EYES */}
+                        {}
                         <View style={styles.eyesContainer}>
                             <Animated.View style={[styles.eyeWrapper, eyeStyle]}>
                                 <View style={styles.eye}>
@@ -170,14 +143,12 @@ export default function AnimatedDog({ isAwake = false }) {
                         </View>
                     </View>
                 </Animated.View>
-
-                {/* SHADOW */}
+                {}
                 <View style={styles.shadow} />
             </View>
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         width: 180 * SCALE,
@@ -191,7 +162,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         position: 'relative',
     },
-    // BODY
     body: {
         position: 'absolute',
         bottom: 20 * SCALE,
@@ -204,7 +174,6 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 15 * SCALE,
         zIndex: 1,
     },
-    // TAIL
     tailWrapper: {
         position: 'absolute',
         bottom: 40 * SCALE,
@@ -218,7 +187,6 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.dogBody,
         borderRadius: 10 * SCALE,
     },
-    // PAWS
     pawsRow: {
         position: 'absolute',
         bottom: 5 * SCALE,
@@ -232,7 +200,6 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.paw,
         borderRadius: 9 * SCALE,
     },
-    // HEAD
     headContainer: {
         position: 'absolute',
         bottom: 35 * SCALE,
@@ -251,7 +218,6 @@ const styles = StyleSheet.create({
         zIndex: 2,
         alignItems: 'center',
     },
-    // SNOUT
     snout: {
         position: 'absolute',
         bottom: -5 * SCALE,
@@ -283,7 +249,6 @@ const styles = StyleSheet.create({
         borderBottomLeftRadius: 10 * SCALE,
         borderBottomRightRadius: 10 * SCALE,
     },
-    // EYES
     eyesContainer: {
         position: 'absolute',
         top: 20 * SCALE,
@@ -292,7 +257,6 @@ const styles = StyleSheet.create({
         gap: 18 * SCALE,
     },
     eyeWrapper: {
-        // For animation
     },
     eye: {
         width: 10 * SCALE,
@@ -309,7 +273,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 1.5 * SCALE,
     },
-    // EARS
     ear: {
         position: 'absolute',
         width: 35 * SCALE,
@@ -331,7 +294,6 @@ const styles = StyleSheet.create({
         right: -5 * SCALE,
         transformOrigin: 'bottom right',
     },
-    // SHADOW
     shadow: {
         position: 'absolute',
         bottom: 0,
@@ -342,4 +304,3 @@ const styles = StyleSheet.create({
         opacity: 0.5,
     },
 });
-

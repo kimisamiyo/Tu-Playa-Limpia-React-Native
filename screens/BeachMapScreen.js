@@ -25,18 +25,10 @@ import { mintNFT } from "../utils/blockchain/missionNFT";
 import { generateNFTAttributes } from "../utils/nftGenerator";
 import FlagIcon from "../components/FlagIcon";
 import { LANGUAGE_LABELS } from "../constants/translations";
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CONSTANTS
-// ═══════════════════════════════════════════════════════════════════════════
 const BLUE_GREY = "#607d8b";
 const BLUE_GREY_DARK = "#455a64";
 const BLUE_GREY_LIGHT = "#cfd8dc";
 const BLUE_GREY_BG = "rgba(96, 125, 139, 0.15)";
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LIMA BEACHES DATABASE
-// ═══════════════════════════════════════════════════════════════════════════
 const LIMA_BEACHES = [
   {
     id: 1,
@@ -374,7 +366,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "pe",
   },
-  // Estados Unidos
   {
     id: 29,
     name: "Venice Beach",
@@ -471,7 +462,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "us",
   },
-  // México
   {
     id: 37,
     name: "Playa del Carmen",
@@ -544,7 +534,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "mx",
   },
-  // Brasil
   {
     id: 43,
     name: "Copacabana",
@@ -605,7 +594,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "br",
   },
-  // Colombia
   {
     id: 48,
     name: "Playa Blanca",
@@ -642,7 +630,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "co",
   },
-  // República Dominicana
   {
     id: 51,
     name: "Punta Cana Beach",
@@ -667,7 +654,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "do",
   },
-  // Puerto Rico
   {
     id: 53,
     name: "Flamenco Beach",
@@ -680,7 +666,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "pr",
   },
-  // Argentina
   {
     id: 54,
     name: "Mar del Plata",
@@ -705,7 +690,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "ar",
   },
-  // Uruguay
   {
     id: 56,
     name: "Punta del Este",
@@ -730,7 +714,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "uy",
   },
-  // Chile
   {
     id: 58,
     name: "Playa Anakena",
@@ -755,7 +738,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "cl",
   },
-  // España
   {
     id: 60,
     name: "Playa de la Concha",
@@ -804,7 +786,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "es",
   },
-  // Portugal
   {
     id: 64,
     name: "Praia da Marinha",
@@ -829,7 +810,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "pt",
   },
-  // Francia
   {
     id: 66,
     name: "Plage de Palombaggia",
@@ -854,7 +834,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "fr",
   },
-  // Italia
   {
     id: 68,
     name: "Spiaggia dei Conigli",
@@ -867,7 +846,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "it",
   },
-  // Grecia
   {
     id: 69,
     name: "Navagio Beach",
@@ -892,7 +870,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "gr",
   },
-  // Middle East - Arabic Speaking Countries
   {
     id: 71,
     name: "Jumeirah Beach",
@@ -941,7 +918,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "om",
   },
-  // Asia - Hindi Speaking (India)
   {
     id: 75,
     name: "Palolem Beach",
@@ -990,7 +966,6 @@ const LIMA_BEACHES = [
     people: 0,
     country: "in",
   },
-  // Asia - Chinese Speaking (China, Hong Kong, Taiwan)
   {
     id: 79,
     name: "Yalong Bay",
@@ -1040,9 +1015,7 @@ const LIMA_BEACHES = [
     country: "tw",
   },
 ];
-
 const LIMA_CENTER = { lat: -12.12, lng: -77.03 };
-
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -1054,69 +1027,38 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
     Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════════════════════
-// FLAG MAPPING HELPER
-// ═══════════════════════════════════════════════════════════════════════════
 const getFlag = (district, zone) => {
-  // Map specific districts/zones to flags
   const mapping = {
-    // Peru (Lima & others)
     "Ancón": "pe", "Santa Rosa": "pe", "Miraflores": "pe", "Barranco": "pe",
     "Chorrillos": "pe", "Villa El Salvador": "pe", "Lurín": "pe", "Punta Hermosa": "pe",
     "Lima Norte": "pe", "Lima Centro": "pe", "Lima Sur": "pe", "Sur Chico": "pe", "Sur Grande": "pe",
-    // USA
     "Los Angeles": "us", "Malibu": "us", "Miami Beach": "us", "Honolulu": "us",
     "Orange County": "us", "San Diego": "us", "Clearwater": "us",
-    // Mexico
     "Quintana Roo": "mx", "Cancún": "mx", "Tulum": "mx", "Isla Mujeres": "mx",
     "Los Cabos": "mx", "Puerto Vallarta": "mx",
-    // Brazil
     "Rio de Janeiro": "br", "Ceará": "br", "Fernando de Noronha": "br",
-    // Colombia
     "Cartagena": "co", "La Guajira": "co", "San Andrés": "co",
-    // Dominican Republic
     "Punta Cana": "do",
-    // Puerto Rico
     "Culebra": "pr",
-    // Argentina
     "Buenos Aires": "ar", "Mar del Plata": "ar",
-    // Uruguay
     "Maldonado": "uy", "Punta del Este": "uy",
-    // Chile
     "Isla de Pascua": "cl", "Valparaíso": "cl",
-    // Spain
     "San Sebastián": "es", "Galicia": "es", "Barcelona": "es", "Formentera": "es",
-    // Portugal
     "Algarve": "pt",
-    // France
     "Corsica": "fr", "Saint-Tropez": "fr",
-    // Italy
     "Lampedusa": "it",
-    // Greece
     "Zakynthos": "gr", "Crete": "gr",
-    // UAE
     "Dubai": "ae",
-    // Egypt
     "Sharm El Sheikh": "eg",
-    // Morocco
     "Agadir": "ma",
-    // Oman
     "Muscat": "om",
-    // India
     "Goa": "in", "Kerala": "in", "Andaman Islands": "in",
-    // China
     "Hainan": "cn", "Sanya": "cn",
-    // Hong Kong
     "Hong Kong": "hk",
-    // Taiwan
     "Taiwan": "tw",
   };
-
   return mapping[district] || mapping[zone] || null;
 };
-
 const getZoneEmoji = (zone) => {
   const mapping = {
     "all": "all",
@@ -1126,7 +1068,7 @@ const getZoneEmoji = (zone) => {
     "Sur Chico": "pe",
     "Sur Grande": "pe",
     "North America": "us",
-    "South America": "br", // Using BR as proxy for SA if needed, or just globe emoji
+    "South America": "br", 
     "Caribbean": "do",
     "Europe": "eu",
     "Middle East": "ae",
@@ -1134,10 +1076,6 @@ const getZoneEmoji = (zone) => {
   };
   return mapping[zone] || null;
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ZONE MAPPING
-// ═══════════════════════════════════════════════════════════════════════════
 const zoneMapping = {
   "Lima Norte": "map_zone_north",
   "Lima Centro": "map_zone_center",
@@ -1151,7 +1089,6 @@ const zoneMapping = {
   "Middle East": "map_zone_middle_east",
   Asia: "map_zone_asia",
 };
-
 const LANGUAGE_TO_ZONE = {
   es: "map_all_zones",
   en: "map_zone_north_america",
@@ -1161,20 +1098,14 @@ const LANGUAGE_TO_ZONE = {
   fr: "map_zone_europe",
   pt: "map_zone_south_america",
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// BEACH CARD COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════
 const BeachCard = ({ beach, isDark, onPress, t }) => {
   const cardBg = isDark ? "rgba(13, 58, 77, 0.6)" : "#ffffff";
   const textColor = "#ffffff";
   const subTextColor = "rgba(170, 222, 243, 0.8)";
   const statusBg = beach.clean ? BLUE_GREY_BG : "rgba(245, 158, 11, 0.15)";
   const statusColor = beach.clean ? BLUE_GREY : "#f59e0b";
-
   const flag = getFlag(beach.district, beach.zone);
   const locationText = `${beach.district}`;
-
   return (
     <TouchableOpacity
       style={[styles.beachCard, { backgroundColor: cardBg }]}
@@ -1186,13 +1117,11 @@ const BeachCard = ({ beach, isDark, onPress, t }) => {
         style={styles.beachCardImage}
         resizeMode="cover"
       />
-
-      {/* Location Badge Overlay */}
+      {}
       <View style={styles.locationBadge}>
         <FlagIcon code={flag} size={0.8} />
         <Text style={styles.locationBadgeText}>{locationText}</Text>
       </View>
-
       <LinearGradient
         colors={
           isDark
@@ -1226,7 +1155,6 @@ const BeachCard = ({ beach, isDark, onPress, t }) => {
               <Ionicons name="location" size={rs(18)} color="#fff" />
             </TouchableOpacity>
           </View>
-
           <View style={styles.beachCardStats}>
             <View style={[styles.beachCardStat, { backgroundColor: statusBg }]}>
               <Ionicons
@@ -1252,10 +1180,6 @@ const BeachCard = ({ beach, isDark, onPress, t }) => {
     </TouchableOpacity>
   );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN SCREEN
-// ═══════════════════════════════════════════════════════════════════════════
 export default function BeachMapScreen() {
   const { colors, shadows, isDark } = useTheme();
   const { unlockRegionNFT } = useGame();
@@ -1263,29 +1187,22 @@ export default function BeachMapScreen() {
   const [search, setSearch] = useState("");
   const [selectedZone, setSelectedZone] = useState("map_all_zones");
   const [showCelebration, setShowCelebration] = useState(false);
-
-  // Auto-switch zone based on language on mount and change
   useEffect(() => {
     if (language && LANGUAGE_TO_ZONE[language]) {
-      // If we are in "All Zones" or the previous language's zone, switch to new one
-      // But only if we aren't already in a specific manual filter
       setSelectedZone(LANGUAGE_TO_ZONE[language]);
     }
   }, [language]);
   const [lastUnlockedNFT, setLastUnlockedNFT] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
-
   const { width } = useWindowDimensions();
   const isDesktop = width >= 1024;
   const numColumns = isDesktop ? 4 : 1;
-  // Calculate width: Desktop uses Grid, Mobile uses List (full width)
   const sidebarOffset = isDesktop ? 250 : 0;
   const padding = SPACING.lg * 2;
   const gap = SPACING.md;
   const availableWidth =
     width - sidebarOffset - padding - gap * (numColumns - 1);
   const cardWidth = isDesktop ? availableWidth / numColumns : "100%";
-
   const zones = [
     "map_all_zones",
     "map_zone_north",
@@ -1300,81 +1217,58 @@ export default function BeachMapScreen() {
     "map_zone_middle_east",
     "map_zone_asia",
   ];
-
-
-
   const filteredBeaches = LIMA_BEACHES.filter((beach) => {
-    // Basic search filtering
     const matchesSearch =
       beach.name.toLowerCase().includes(search.toLowerCase()) ||
       beach.district.toLowerCase().includes(search.toLowerCase()) ||
       t(zoneMapping[beach.zone] || "")
         .toLowerCase()
         .includes(search.toLowerCase());
-
     // Zone filtering
     let matchesZone =
       selectedZone === "map_all_zones" ||
       zoneMapping[beach.zone] === selectedZone;
-
-    // Language-based country filtering (if in All Zones and no active search)
-    // This satisfies "me muestre las playas de un pais" per language
     if (!search && selectedZone === "map_all_zones") {
       const preferredCountry = LANGUAGE_LABELS[language]?.code;
       if (preferredCountry) {
         matchesZone = beach.country === preferredCountry;
       }
     }
-
     return matchesSearch && matchesZone;
   });
-
-  // Generar sugerencias basadas en el texto de búsqueda
   const generateSuggestions = (text) => {
     if (!text || text.length < 2) {
       setSuggestions([]);
       return;
     }
-
     const searchLower = text.toLowerCase();
     const suggestionSet = new Set();
     const maxSuggestions = 5;
-
-    // Agregar nombres de playas que coincidan
     LIMA_BEACHES.forEach((beach) => {
       if (beach.name.toLowerCase().includes(searchLower)) {
         suggestionSet.add(JSON.stringify({ type: 'beach', text: beach.name, beach }));
       }
     });
-
-    // Agregar distritos únicos que coincidan
     LIMA_BEACHES.forEach((beach) => {
       if (beach.district.toLowerCase().includes(searchLower)) {
         suggestionSet.add(JSON.stringify({ type: 'district', text: beach.district }));
       }
     });
-
-    // Agregar zonas traducidas que coincidan
     Object.keys(zoneMapping).forEach((zone) => {
       const translatedZone = t(zoneMapping[zone]);
       if (translatedZone.toLowerCase().includes(searchLower)) {
         suggestionSet.add(JSON.stringify({ type: 'zone', text: translatedZone, originalZone: zone }));
       }
     });
-
-    // Convertir Set a Array y limitar resultados
     const suggestionsArray = Array.from(suggestionSet)
       .map((s) => JSON.parse(s))
       .slice(0, maxSuggestions);
-
     setSuggestions(suggestionsArray);
   };
-
   const handleSearchChange = (text) => {
     setSearch(text);
     generateSuggestions(text);
   };
-
   const handleSuggestionPress = (suggestion) => {
     if (suggestion.type === 'beach') {
       setSearch(suggestion.text);
@@ -1389,13 +1283,11 @@ export default function BeachMapScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
-
   const textColor = isDark ? colors.text : "#000000";
   const subTextColor = isDark ? colors.textMuted : "#666666";
   const inputBg = isDark ? "rgba(255, 255, 255, 0.1)" : "#ffffff";
   const headerBg = isDark ? BRAND.oceanDark : "#ffffff";
-  const navBarHeight = 90; // Adjust based on your header height
-
+  const navBarHeight = 90; 
   const handleBeachPress = (beach) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -1405,13 +1297,11 @@ export default function BeachMapScreen() {
       setLastUnlockedNFT(newNFT);
       setShowCelebration(true);
     }
-    // Open map as requested
     const url = `https://www.google.com/maps/search/?api=1&query=${beach.lat},${beach.lng}`;
     if (Platform.OS !== "web")
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Linking.openURL(url);
   };
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <CelebrationModal
@@ -1423,8 +1313,7 @@ export default function BeachMapScreen() {
             : t("celebration_thanks")
         }
       />
-
-      {/* FIXED HEADER & SEARCH */}
+      {}
       <View style={{ backgroundColor: headerBg, zIndex: 100 }}>
         <SafeAreaView edges={["top"]}>
           <View
@@ -1437,8 +1326,7 @@ export default function BeachMapScreen() {
               {filteredBeaches.length} {t("map_available")}
             </Text>
           </View>
-
-          {/* FLOATING SEARCH BAR */}
+          {}
           <View style={[styles.searchContainer, { paddingHorizontal: SPACING.md }]}>
             <View style={[
               styles.searchBar,
@@ -1476,7 +1364,7 @@ export default function BeachMapScreen() {
               )}
             </View>
           </View>
-          {/* SEARCH SUGGESTIONS */}
+          {}
           {suggestions.length > 0 && (
             <View style={[styles.suggestionsContainer, { paddingHorizontal: SPACING.md }]}>
               <View
@@ -1492,7 +1380,6 @@ export default function BeachMapScreen() {
                   const isBeach = suggestion.type === 'beach';
                   const isDistrict = suggestion.type === 'district';
                   const isZone = suggestion.type === 'zone';
-
                   return (
                     <TouchableOpacity
                       key={index}
@@ -1525,8 +1412,7 @@ export default function BeachMapScreen() {
               </View>
             </View>
           )}
-
-          {/* ZONE FILTERS */}
+          {}
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -1603,8 +1489,7 @@ export default function BeachMapScreen() {
           />
         </SafeAreaView>
       </View>
-
-      {/* CONTENT LIST */}
+      {}
       <FlatList
         key={numColumns}
         data={filteredBeaches}
@@ -1637,7 +1522,6 @@ export default function BeachMapScreen() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1664,7 +1548,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: SPACING.md,
     height: rs(50),
-    borderRadius: RADIUS.full, // Rounded search bar
+    borderRadius: RADIUS.full, 
     gap: SPACING.sm,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -1682,7 +1566,7 @@ const styles = StyleSheet.create({
   },
   suggestionsContainer: {
     position: 'absolute',
-    top: rs(125), // Adjust below search bar
+    top: rs(125), 
     left: 0,
     right: 0,
     zIndex: 1000,
@@ -1747,7 +1631,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     overflow: "hidden",
     marginBottom: SPACING.md,
-    height: rs(220), // Slightly shorter for better list view
+    height: rs(220), 
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
@@ -1767,7 +1651,7 @@ const styles = StyleSheet.create({
     paddingVertical: rs(4),
     paddingHorizontal: rs(10),
     borderRadius: RADIUS.full,
-    backdropFilter: 'blur(4px)', // Web support
+    backdropFilter: 'blur(4px)', 
     flexDirection: 'row',
     alignItems: 'center',
     gap: rs(4),

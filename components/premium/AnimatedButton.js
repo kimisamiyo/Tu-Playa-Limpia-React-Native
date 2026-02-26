@@ -12,25 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { useTheme } from '../../context/ThemeContext';
 import { rs, rf } from '../../constants/responsive';
 import { SPRING, SCALE } from '../../constants/animations';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ANIMATED BUTTON - Premium button with liquid/ripple effects
-// ═══════════════════════════════════════════════════════════════════════════
-
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-/**
- * AnimatedButton - Premium animated button
- * @param {object} props
- * @param {string} props.title - Button text
- * @param {function} props.onPress - Press handler
- * @param {'primary'|'secondary'|'ghost'|'danger'} props.variant - Style variant
- * @param {'sm'|'md'|'lg'} props.size - Button size
- * @param {boolean} props.disabled - Disabled state
- * @param {boolean} props.withHaptics - Enable haptic feedback
- * @param {ReactNode} props.icon - Optional icon component
- * @param {boolean} props.fullWidth - Full width button
- */
 export default function AnimatedButton({
     title,
     onPress,
@@ -40,46 +22,37 @@ export default function AnimatedButton({
     withHaptics = true,
     icon,
     fullWidth = false,
-    gradientColors, // Custom gradient colors
+    gradientColors, 
     style,
     textStyle,
     ...props
 }) {
     const { colors, shadows, isDark } = useTheme();
-
     const scale = useSharedValue(1);
     const pressed = useSharedValue(0);
-
     const handlePressIn = useCallback(() => {
         scale.value = withSpring(SCALE.pressed, SPRING.snappy);
         pressed.value = withTiming(1, { duration: 100 });
     }, []);
-
     const handlePressOut = useCallback(() => {
         scale.value = withSpring(1, SPRING.snappy);
         pressed.value = withTiming(0, { duration: 150 });
     }, []);
-
     const handlePress = useCallback(() => {
         if (withHaptics) {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }
         onPress?.();
     }, [onPress, withHaptics]);
-
     const animatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
         opacity: disabled ? 0.5 : 1,
     }));
-
-    // Size configs
     const sizeConfig = {
         sm: { height: rs(40), paddingHorizontal: rs(16), fontSize: rf(12) },
         md: { height: rs(52), paddingHorizontal: rs(24), fontSize: rf(14) },
         lg: { height: rs(60), paddingHorizontal: rs(32), fontSize: rf(16) },
     }[size];
-
-    // Variant configs
     const getVariantConfig = () => {
         switch (variant) {
             case 'secondary':
@@ -102,7 +75,7 @@ export default function AnimatedButton({
                     textColor: '#ffffff',
                     borderColor: 'transparent',
                 };
-            default: // primary
+            default: 
                 return {
                     gradientColors: isDark
                         ? ['#145374', '#00334e']
@@ -112,9 +85,7 @@ export default function AnimatedButton({
                 };
         }
     };
-
     const variantConfig = getVariantConfig();
-
     return (
         <AnimatedPressable
             onPressIn={handlePressIn}
@@ -160,7 +131,6 @@ export default function AnimatedButton({
         </AnimatedPressable>
     );
 }
-
 const styles = StyleSheet.create({
     gradient: {
         flexDirection: 'row',

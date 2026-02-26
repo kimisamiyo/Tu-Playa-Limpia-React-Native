@@ -1,9 +1,9 @@
 import React from 'react';
-// Trigger rebuild for WalletContext
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppNavigator from './navigation/AppNavigator';
 import { GameProvider } from './context/GameContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -12,40 +12,47 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { WalletProvider } from "./context/WalletContext";
 import { injectPaliWallet } from './utils/paliInjector';
-
+import ENV from './constants/env';
 import { useFonts } from 'expo-font';
 import { Ionicons, MaterialCommunityIcons, FontAwesome, Feather } from '@expo/vector-icons';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Inner App component — reads auth state from context
-// ═══════════════════════════════════════════════════════════════════════════
 function AppContent() {
   const { isDark } = useTheme();
   const { isAuthenticated, isLoading, isFirstTime, register, login, importAccount, username } = useAuth();
-
   const [fontsLoaded] = useFonts({
     ...Ionicons.font,
     ...MaterialCommunityIcons.font,
     ...FontAwesome.font,
     ...Feather.font,
   });
-
-  // Inyectar Pali Wallet en web
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const storedVersion = await AsyncStorage.getItem('@tpl_app_version');
+        if (storedVersion !== ENV.APP_VERSION) {
+          const staleKeys = [
+            '@tpl_scan_permission_revoked',
+          ];
+          await AsyncStorage.multiRemove(staleKeys);
+          await AsyncStorage.setItem('@tpl_app_version', ENV.APP_VERSION);
+          console.log(`App updated: ${storedVersion || 'none'} → ${ENV.APP_VERSION}`);
+        }
+      } catch (e) {
+        console.warn('Version check error:', e);
+      }
+    })();
+  }, []);
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       injectPaliWallet().then((success) => {
         if (success) {
-          console.log("✅ Pali Wallet disponible para usar");
+          console.log("Pali Wallet disponible para usar");
         } else {
-          console.warn("⚠️ Pali Wallet no está disponible. Asegúrate de tener la extensión instalada.");
+          console.warn("Pali Wallet no disponible.");
         }
       });
     }
   }, []);
-
-  // Only wait for Auth to initialize. If fonts fail, icons will pop in later.
   if (isLoading) return null;
-
   return (
     <>
       <NavigationContainer>
@@ -62,10 +69,6 @@ function AppContent() {
     </>
   );
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Root App — wraps everything with providers
-// ═══════════════════════════════════════════════════════════════════════════
 export default function App() {
   return (
     <ErrorBoundary>

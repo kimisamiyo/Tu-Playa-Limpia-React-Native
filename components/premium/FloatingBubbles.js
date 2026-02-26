@@ -11,23 +11,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../../context/ThemeContext';
 import { BRAND } from '../../constants/theme';
-
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-// ═══════════════════════════════════════════════════════════════════════════
-// FLOATING BUBBLES - Ambient background with proper z-index layering
-// Bubbles render BEHIND content and fade when crossing components
-// ═══════════════════════════════════════════════════════════════════════════
-
 const Bubble = ({ size, startX, delay, duration, zDepth }) => {
     const { isDark } = useTheme();
     const translateY = useSharedValue(0);
     const translateX = useSharedValue(0);
     const scale = useSharedValue(1);
     const opacity = useSharedValue(0);
-
     useEffect(() => {
-        // Vertical rise
         translateY.value = withDelay(
             delay,
             withRepeat(
@@ -39,8 +30,6 @@ const Bubble = ({ size, startX, delay, duration, zDepth }) => {
                 false
             )
         );
-
-        // Horizontal wobble
         translateX.value = withDelay(
             delay,
             withRepeat(
@@ -52,8 +41,6 @@ const Bubble = ({ size, startX, delay, duration, zDepth }) => {
                 true
             )
         );
-
-        // Subtle scale pulsing
         scale.value = withDelay(
             delay,
             withRepeat(
@@ -65,22 +52,17 @@ const Bubble = ({ size, startX, delay, duration, zDepth }) => {
                 true
             )
         );
-
-        // Fade in after delay
         opacity.value = withDelay(
             delay,
             withTiming(1, { duration: 1000 })
         );
     }, []);
-
     const animatedStyle = useAnimatedStyle(() => {
-        // Calculate opacity based on position (fade near edges)
         const positionOpacity = interpolate(
             translateY.value,
             [-SCREEN_HEIGHT, -SCREEN_HEIGHT * 0.8, -SCREEN_HEIGHT * 0.2, 0],
             [0, 1, 1, 0.3]
         );
-
         return {
             transform: [
                 { translateY: translateY.value },
@@ -90,16 +72,12 @@ const Bubble = ({ size, startX, delay, duration, zDepth }) => {
             opacity: opacity.value * positionOpacity * zDepth,
         };
     });
-
-    // Bubble color based on depth (deeper = more faded)
     const bubbleColor = isDark
         ? `rgba(0, 255, 255, ${0.15 * zDepth})`
         : `rgba(13, 74, 111, ${0.08 * zDepth})`;
-
     const borderColor = isDark
         ? `rgba(0, 255, 255, ${0.3 * zDepth})`
         : `rgba(13, 74, 111, ${0.15 * zDepth})`;
-
     return (
         <Animated.View
             style={[
@@ -116,7 +94,7 @@ const Bubble = ({ size, startX, delay, duration, zDepth }) => {
                 animatedStyle,
             ]}
         >
-            {/* Inner highlight */}
+            {}
             <View
                 style={[
                     styles.highlight,
@@ -131,15 +109,13 @@ const Bubble = ({ size, startX, delay, duration, zDepth }) => {
         </Animated.View>
     );
 };
-
 export default function FloatingBubbles({
     count = 12,
     minSize = 4,
     maxSize = 18,
-    zIndex = -1,  // Render behind content by default
+    zIndex = -1,  
 }) {
     const { width } = Dimensions.get('window');
-
     const bubbles = useMemo(() => {
         return Array.from({ length: count }, (_, i) => ({
             id: i,
@@ -147,10 +123,9 @@ export default function FloatingBubbles({
             startX: Math.random() * width,
             delay: Math.random() * 8000,
             duration: 12000 + Math.random() * 10000,
-            zDepth: 0.4 + Math.random() * 0.6, // Depth factor for parallax effect
+            zDepth: 0.4 + Math.random() * 0.6, 
         }));
     }, [count, minSize, maxSize, width]);
-
     return (
         <View style={[styles.container, { zIndex }]} pointerEvents="none">
             {bubbles.map((bubble) => (
@@ -166,7 +141,6 @@ export default function FloatingBubbles({
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         ...StyleSheet.absoluteFillObject,

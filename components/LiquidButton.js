@@ -12,8 +12,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '../constants/theme';
-
-// Local SHADOWS definition since it's not exported directly from theme
 const SHADOWS = {
     medium: {
         shadowColor: "#000",
@@ -26,17 +24,13 @@ const SHADOWS = {
         elevation: 5,
     }
 };
-
 const { width } = Dimensions.get('window');
-
 export default function LiquidButton({ onPress, label = "CONTINUAR" }) {
     const drop1Progress = useSharedValue(0);
     const drop2Progress = useSharedValue(0);
     const drop3Progress = useSharedValue(0);
     const buttonPulse = useSharedValue(1);
-
     useEffect(() => {
-        // Drop 1 - Left
         drop1Progress.value = withRepeat(
             withSequence(
                 withTiming(1, { duration: 1200, easing: Easing.in(Easing.quad) }),
@@ -45,8 +39,6 @@ export default function LiquidButton({ onPress, label = "CONTINUAR" }) {
             -1,
             false
         );
-
-        // Drop 2 - Center (delayed)
         drop2Progress.value = withDelay(
             400,
             withRepeat(
@@ -58,8 +50,6 @@ export default function LiquidButton({ onPress, label = "CONTINUAR" }) {
                 false
             )
         );
-
-        // Drop 3 - Right (more delayed)
         drop3Progress.value = withDelay(
             800,
             withRepeat(
@@ -71,8 +61,6 @@ export default function LiquidButton({ onPress, label = "CONTINUAR" }) {
                 false
             )
         );
-
-        // Button subtle pulse
         buttonPulse.value = withRepeat(
             withSequence(
                 withTiming(1.02, { duration: 1000, easing: Easing.ease }),
@@ -82,7 +70,6 @@ export default function LiquidButton({ onPress, label = "CONTINUAR" }) {
             true
         );
     }, []);
-
     const drop1Style = useAnimatedStyle(() => {
         const translateY = interpolate(drop1Progress.value, [0, 1], [0, 60]);
         const opacity = interpolate(drop1Progress.value, [0, 0.7, 1], [1, 0.8, 0]);
@@ -92,7 +79,6 @@ export default function LiquidButton({ onPress, label = "CONTINUAR" }) {
             opacity,
         };
     });
-
     const drop2Style = useAnimatedStyle(() => {
         const translateY = interpolate(drop2Progress.value, [0, 1], [0, 70]);
         const opacity = interpolate(drop2Progress.value, [0, 0.7, 1], [1, 0.8, 0]);
@@ -102,7 +88,6 @@ export default function LiquidButton({ onPress, label = "CONTINUAR" }) {
             opacity,
         };
     });
-
     const drop3Style = useAnimatedStyle(() => {
         const translateY = interpolate(drop3Progress.value, [0, 1], [0, 50]);
         const opacity = interpolate(drop3Progress.value, [0, 0.7, 1], [1, 0.8, 0]);
@@ -112,24 +97,20 @@ export default function LiquidButton({ onPress, label = "CONTINUAR" }) {
             opacity,
         };
     });
-
     const buttonAnimStyle = useAnimatedStyle(() => ({
         transform: [{ scale: buttonPulse.value }],
     }));
-
     return (
         <View style={styles.wrapper}>
-            {/* Drip Container */}
+            {}
             <View style={styles.dripsContainer}>
                 <Animated.View style={[styles.drop, styles.dropLeft, drop1Style]} />
                 <Animated.View style={[styles.drop, styles.dropCenter, drop2Style]} />
                 <Animated.View style={[styles.drop, styles.dropRight, drop3Style]} />
             </View>
-
-            {/* Liquid Base */}
+            {}
             <View style={styles.liquidBase} />
-
-            {/* Button */}
+            {}
             <Animated.View style={[styles.buttonWrapper, buttonAnimStyle]}>
                 <TouchableOpacity onPress={onPress} activeOpacity={0.8}>
                     <LinearGradient
@@ -145,7 +126,6 @@ export default function LiquidButton({ onPress, label = "CONTINUAR" }) {
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     wrapper: {
         alignItems: 'center',
@@ -212,4 +192,3 @@ const styles = StyleSheet.create({
         height: 16,
     },
 });
-

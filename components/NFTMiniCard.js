@@ -17,41 +17,21 @@ import { rs, rf, SPACING, RADIUS } from '../constants/responsive';
 import { SPRING } from '../constants/animations';
 import { useLanguage } from '../context/LanguageContext';
 import GenerativeArt, { generatePatternFromId, NFT_PALETTES } from './GenerativeArt';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// UNIQUE GENERATIVE NFT ART - Beach/Ocean themed
-// Square corners, gallery style, shimmer only when NEW
-// ═══════════════════════════════════════════════════════════════════════════
-
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-// Rarity config
 const RARITY_CONFIG = {
     'Común': { shimmerSpeed: 4000, borderWidth: 1 },
     'Raro': { shimmerSpeed: 3000, borderWidth: 1.5 },
     'Épico': { shimmerSpeed: 2000, borderWidth: 2 },
     'Legendario': { shimmerSpeed: 1500, borderWidth: 2.5 },
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// NFT MINI CARD - Square corners, shimmer only when NEW
-// ═══════════════════════════════════════════════════════════════════════════
 export default function NFTMiniCard({ nft, onPress, size = 'default', isNew = false }) {
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
-
-    // Shimmer only runs if isNew
     const shimmer = useSharedValue(0);
     const scale = useSharedValue(1);
-
     const rarityConfig = RARITY_CONFIG[nft?.rarity] || RARITY_CONFIG['Común'];
-
-    // We can still compute pattern here if needed, or just pass ID to GenerativeArt
-    // Wait, NFTMiniCard used pattern for border colors etc. So we need the pattern.
     const pattern = useMemo(() => generatePatternFromId(nft?.id), [nft?.id]);
     const palette = NFT_PALETTES[pattern.colorVariant];
-
-
     useEffect(() => {
         if (isNew) {
             shimmer.value = withRepeat(
@@ -61,25 +41,19 @@ export default function NFTMiniCard({ nft, onPress, size = 'default', isNew = fa
             );
         }
     }, [isNew, rarityConfig.shimmerSpeed]);
-
     const handlePressIn = () => {
         scale.value = withSpring(0.96, SPRING.snappy);
     };
-
     const handlePressOut = () => {
         scale.value = withSpring(1, SPRING.smooth);
     };
-
     const handlePress = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         onPress?.(nft);
     };
-
     const cardStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
     }));
-
-    // Shimmer only visible when NEW
     const shimmerStyle = useAnimatedStyle(() => {
         if (!isNew) return { opacity: 0 };
         const translateX = interpolate(shimmer.value, [0, 1], [-100, 100]);
@@ -88,10 +62,7 @@ export default function NFTMiniCard({ nft, onPress, size = 'default', isNew = fa
             opacity: 0.8,
         };
     });
-
-    // Smaller cards for 3-column grid
     const cardWidth = size === 'large' ? rs(150) : rs(105);
-
     return (
         <AnimatedPressable
             onPressIn={handlePressIn}
@@ -99,7 +70,7 @@ export default function NFTMiniCard({ nft, onPress, size = 'default', isNew = fa
             onPress={handlePress}
             style={[styles.container, { width: cardWidth }, cardStyle]}
         >
-            {/* Card with SQUARE corners */}
+            {}
             <View style={[
                 styles.cardInner,
                 {
@@ -109,7 +80,7 @@ export default function NFTMiniCard({ nft, onPress, size = 'default', isNew = fa
                 },
                 shadows.sm
             ]}>
-                {/* Shimmer (only for NEW items) */}
+                {}
                 {isNew && (
                     <Animated.View style={[styles.shimmer, shimmerStyle]}>
                         <ExpoGradient
@@ -120,20 +91,17 @@ export default function NFTMiniCard({ nft, onPress, size = 'default', isNew = fa
                         />
                     </Animated.View>
                 )}
-
-                {/* NEW badge */}
+                {}
                 {isNew && (
                     <View style={[styles.newBadge, { backgroundColor: BRAND.success }]}>
                         <Text style={styles.newBadgeText}>{t('nft_badge_new')}</Text>
                     </View>
                 )}
-
-                {/* Art */}
+                {}
                 <View style={styles.artSection}>
                     <GenerativeArt id={nft?.id} size={cardWidth - rs(8)} isDark={isDark} />
                 </View>
-
-                {/* Info */}
+                {}
                 <View style={[
                     styles.infoSection,
                     { backgroundColor: isDark ? 'rgba(0,18,32,0.9)' : 'rgba(13, 92, 117, 0.1)' }
@@ -141,7 +109,6 @@ export default function NFTMiniCard({ nft, onPress, size = 'default', isNew = fa
                     <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
                         {nft?.title || 'Eco Guardian'}
                     </Text>
-
                     <View style={[styles.rarityBadge, { backgroundColor: palette.primary }]}>
                         <Text style={styles.rarityText}>{nft?.rarity || 'Común'}</Text>
                     </View>
@@ -150,13 +117,12 @@ export default function NFTMiniCard({ nft, onPress, size = 'default', isNew = fa
         </AnimatedPressable>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         marginBottom: SPACING.sm,
     },
     cardInner: {
-        borderRadius: RADIUS.sm,  // Square corners (small radius)
+        borderRadius: RADIUS.sm,  
         overflow: 'hidden',
     },
     shimmer: {

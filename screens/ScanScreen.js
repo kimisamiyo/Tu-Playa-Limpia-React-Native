@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions, ActivityIndicator, useWindowDimensions } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -29,23 +29,15 @@ import { SPRING } from '../constants/animations';
 import FloatingBubbles from '../components/premium/FloatingBubbles';
 import CelebrationModal from '../components/CelebrationModal';
 import ENV from '../constants/env';
-
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const { width, height } = Dimensions.get('window');
-
-// Responsive scanner size - adapts to screen
 const getScannerSize = () => {
     const baseSize = Math.min(SCREEN.width, SCREEN.height) * 0.7;
-    return Math.min(baseSize, 350); // Cap for tablets
+    return Math.min(baseSize, 350); 
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CORNER BRACKET COMPONENT - Properly positioned at corners
-// ═══════════════════════════════════════════════════════════════════════════
 const CornerBracket = ({ position, color, size = 28 }) => {
     const thickness = 4;
     const length = size;
-
     const getPositionStyle = () => {
         switch (position) {
             case 'topLeft':
@@ -60,11 +52,9 @@ const CornerBracket = ({ position, color, size = 28 }) => {
                 return {};
         }
     };
-
     const getLineStyles = () => {
         const isTop = position.includes('top');
         const isLeft = position.includes('Left');
-
         return {
             horizontal: {
                 position: 'absolute',
@@ -86,9 +76,7 @@ const CornerBracket = ({ position, color, size = 28 }) => {
             },
         };
     };
-
     const lines = getLineStyles();
-
     return (
         <View style={[styles.cornerBracket, getPositionStyle()]}>
             <View style={lines.horizontal} />
@@ -96,35 +84,25 @@ const CornerBracket = ({ position, color, size = 28 }) => {
         </View>
     );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SCAN BUTTON
-// ═══════════════════════════════════════════════════════════════════════════
 const ScanButton = ({ icon, color, label, onPress, delay }) => {
     const { colors, isDark } = useTheme();
     const scale = useSharedValue(1);
-
     const handlePressIn = () => {
         scale.value = withSpring(0.92, SPRING.snappy);
     };
-
     const handlePressOut = () => {
         scale.value = withSpring(1, SPRING.smooth);
     };
-
     const handlePress = () => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         onPress?.();
     };
-
     const buttonStyle = useAnimatedStyle(() => ({
         transform: [{ scale: scale.value }],
     }));
-
-    // Button Background: Gradient for Dark Mode, Solid for Light Mode
     const ButtonBackground = isDark ? LinearGradient : View;
     const buttonProps = isDark ? {
-        colors: [BRAND.oceanDeep, '#002844'], // Matching background gradient
+        colors: [BRAND.oceanDeep, '#002844'], 
         style: [styles.scanButtonInner, { borderColor: color }]
     } : {
         style: [
@@ -135,7 +113,6 @@ const ScanButton = ({ icon, color, label, onPress, delay }) => {
             }
         ]
     };
-
     return (
         <AnimatedPressable
             onPressIn={handlePressIn}
@@ -154,18 +131,11 @@ const ScanButton = ({ icon, color, label, onPress, delay }) => {
         </AnimatedPressable>
     );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SUCCESS POPUP
-// ═══════════════════════════════════════════════════════════════════════════
 const SuccessPopup = ({ visible, points, type }) => {
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
-
     if (!visible) return null;
-
     const translatedType = type ? t(`scan_type_${type.toLowerCase()}`, type) : type;
-
     return (
         <Animated.View
             entering={FadeIn.springify()}
@@ -186,21 +156,15 @@ const SuccessPopup = ({ visible, points, type }) => {
         </Animated.View>
     );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PERMISSION REQUEST SCREEN
-// ═══════════════════════════════════════════════════════════════════════════
 const PermissionScreen = ({ onRequestPermission, isDark }) => {
     const { t } = useLanguage();
     const waterGradient = isDark
         ? [BRAND.oceanDeep, '#002844', BRAND.oceanMid]
         : ['#1a6b8f', '#2d8ab0', '#4aa3c7'];
-
     return (
         <View style={styles.container}>
             <LinearGradient colors={waterGradient} style={StyleSheet.absoluteFill} />
             <FloatingBubbles count={12} minSize={4} maxSize={16} zIndex={1} />
-
             <View style={styles.permissionContainer}>
                 <Animated.View
                     entering={FadeIn.springify()}
@@ -219,21 +183,18 @@ const PermissionScreen = ({ onRequestPermission, isDark }) => {
                             color={isDark ? BRAND.biolum : '#0d4a6f'}
                         />
                     </View>
-
                     <Text style={[
                         styles.permissionTitle,
                         { color: isDark ? '#fff' : '#1a3a4a' }
                     ]}>
                         {t('scan_camera_permission')}
                     </Text>
-
                     <Text style={[
                         styles.permissionDescription,
                         { color: isDark ? 'rgba(255,255,255,0.7)' : '#666' }
                     ]}>
                         {t('scan_camera_permission_desc')}
                     </Text>
-
                     <Pressable
                         onPress={onRequestPermission}
                         style={({ pressed }) => [
@@ -247,24 +208,16 @@ const PermissionScreen = ({ onRequestPermission, isDark }) => {
                         <Ionicons name="checkmark-circle" size={rs(20)} color="#fff" />
                         <Text style={styles.permissionButtonText}>{t('scan_permission_allow')}</Text>
                     </Pressable>
-
                 </Animated.View>
             </View>
         </View>
     );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ROBOFLOW API CONFIGURATION - Usando variables de entorno seguras
-// ═══════════════════════════════════════════════════════════════════════════
 const ROBOFLOW_API_KEY = ENV.ROBOFLOW_API_KEY;
 const ROBOFLOW_MODEL = ENV.ROBOFLOW_MODEL;
 const ROBOFLOW_URL = `https://serverless.roboflow.com/${ROBOFLOW_MODEL}`;
-const SCAN_INTERVAL_MS = 1500; // Scan every 1.5 seconds for real-time detection
-const CONFIDENCE_THRESHOLD = 40; // Minimum confidence % to show detection
-
-// Mapeo de clases detectadas a tipos y puntos
-// Mapeo de clases detectadas a tipos y puntos
+const SCAN_INTERVAL_MS = 1500; 
+const CONFIDENCE_THRESHOLD = 40; 
 const CLASS_MAPPING = {
     'plastic-bottle': { type: 'bottle', labelKey: 'scan_label_plastic_bottle', points: 5, color: '#22c55e' },
     'bottle': { type: 'bottle', labelKey: 'scan_label_bottle', points: 5, color: '#22c55e' },
@@ -276,25 +229,17 @@ const CLASS_MAPPING = {
     'glass': { type: 'bottle', labelKey: 'scan_label_glass', points: 5, color: '#06b6d4' },
     'metal': { type: 'can', labelKey: 'scan_label_metal', points: 3, color: '#64748b' },
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// DETECTION BOX COMPONENT - Shows bounding box around detected objects
-// ═══════════════════════════════════════════════════════════════════════════
 const DetectionBox = ({ prediction, frameSize, imageSize }) => {
     const { t } = useLanguage();
-    // Convert Roboflow coordinates (center x,y + width,height) to screen position
     const scaleX = frameSize / imageSize.width;
     const scaleY = frameSize / imageSize.height;
-
     const boxWidth = prediction.width * scaleX;
     const boxHeight = prediction.height * scaleY;
     const left = (prediction.x * scaleX) - (boxWidth / 2);
     const top = (prediction.y * scaleY) - (boxHeight / 2);
-
     const mapping = CLASS_MAPPING[prediction.class.toLowerCase()] || { label: prediction.class, color: '#22c55e' };
     const label = mapping.labelKey ? t(mapping.labelKey) : (mapping.label || prediction.class);
     const confidence = Math.round(prediction.confidence * 100);
-
     return (
         <Animated.View
             entering={FadeIn.duration(200)}
@@ -317,14 +262,9 @@ const DetectionBox = ({ prediction, frameSize, imageSize }) => {
         </Animated.View>
     );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// DETECTION INFO PANEL - Shows friendly summary of detections
-// ═══════════════════════════════════════════════════════════════════════════
 const DetectionPanel = ({ counts, totalPoints, isDark }) => {
     const { t } = useLanguage();
     if (!counts || Object.keys(counts).length === 0) return null;
-
     return (
         <Animated.View
             entering={FadeInUp.springify()}
@@ -361,27 +301,19 @@ const DetectionPanel = ({ counts, totalPoints, isDark }) => {
         </Animated.View>
     );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// LAST SCAN INFO PANEL - Shows detailed info about the last scanned items
-// ═══════════════════════════════════════════════════════════════════════════
 const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
     const { t } = useLanguage();
     const { width } = useWindowDimensions();
-    const isDesktop = width > 768; // Simple breakpoint for desktop/web
-
-    // Auto-dismiss on mobile only
+    const isDesktop = width > 768; 
     useEffect(() => {
         if (!isDesktop && scanInfo) {
             const timer = setTimeout(() => {
                 onDismiss();
-            }, 5000); // 5 seconds as requested
+            }, 5000); 
             return () => clearTimeout(timer);
         }
     }, [scanInfo, isDesktop, onDismiss]);
-
     if (!scanInfo) return null;
-
     return (
         <Animated.View
             entering={isDesktop ? FadeInLeft.springify() : FadeInUp.springify()}
@@ -389,19 +321,17 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
                 styles.lastScanPanel,
                 {
                     backgroundColor: isDark ? 'rgba(0,18,32,0.95)' : 'rgba(255,255,255,0.98)',
-                    // Responsive positioning
                     ...(isDesktop ? {
                         top: 100,
                         left: 20,
                         right: undefined,
                         width: 300,
-                        bottom: 100, // Stretch vertically or fixed height? User said "mini list"
-                        maxHeight: 500, // Limit height on large screens
+                        bottom: 100, 
+                        maxHeight: 500, 
                     } : {
-                        top: rs(87), // Reverted to original position
+                        top: rs(87), 
                         left: rs(16),
                         right: rs(16),
-                        // Mobile: Reverted to original styles (no sticker look, just clean panel)
                         backgroundColor: isDark ? 'rgba(0,18,32,0.95)' : 'rgba(255,255,255,0.98)',
                     })
                 }
@@ -414,9 +344,8 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
                         {t('scan_last_scan')}
                     </Text>
                 </View>
-                {/* Timestamp removed for privacy */}
+                {}
             </View>
-
             <View style={styles.lastScanItems}>
                 {scanInfo.items.map((item, index) => (
                     <View key={index} style={styles.lastScanItem}>
@@ -424,7 +353,7 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
                             <Text style={[styles.lastScanItemLabel, { color: isDark ? '#e0e0e0' : '#374151' }]}>
                                 {item.count}x {item.labelKey ? t(item.labelKey) : item.label}
                             </Text>
-                            {/* Display Dimensions instead of just %, or both */}
+                            {}
                             <Text style={[styles.lastScanItemSize, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
                                 {item.width > 0 && item.height > 0
                                     ? `${t('scan_width')}: ${item.width}px | ${t('scan_height')}: ${item.height}px`
@@ -437,7 +366,6 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
                     </View>
                 ))}
             </View>
-
             <View style={[styles.lastScanTotal, { borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
                 <Text style={[styles.lastScanTotalLabel, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
                     {t('scan_total_objects', { count: scanInfo.totalItems })}
@@ -446,71 +374,34 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
                     +{scanInfo.totalPoints} TPL
                 </Text>
             </View>
-
             <Pressable onPress={onDismiss} style={styles.lastScanDismiss}>
                 <Ionicons name="close-circle" size={rs(20)} color={isDark ? '#6b7280' : '#9ca3af'} />
             </Pressable>
         </Animated.View>
     );
 };
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MAIN SCAN SCREEN
-// ═══════════════════════════════════════════════════════════════════════════
 export default function ScanScreen() {
     const { scanItem } = useGame();
     const { colors, isDark } = useTheme();
     const { t } = useLanguage();
+    const navigation = useNavigation();
     const [lastScanned, setLastScanned] = useState(null);
     const [permission, requestPermission] = useCameraPermissions();
-    const [permissionRevoked, setPermissionRevoked] = useState(false);
-
-    // Persistence: Load permissionRevoked state
-    useEffect(() => {
-        const loadRevokeState = async () => {
-            try {
-                const saved = await AsyncStorage.getItem('@tpl_scan_permission_revoked');
-                if (saved === 'true') setPermissionRevoked(true);
-            } catch (e) {
-                console.warn('Failed to load revoke state:', e);
-            }
-        };
-        loadRevokeState();
-    }, []);
-
-    // Persistence: Save permissionRevoked state
-    useEffect(() => {
-        const saveRevokeState = async () => {
-            try {
-                await AsyncStorage.setItem('@tpl_scan_permission_revoked', permissionRevoked.toString());
-            } catch (e) {
-                console.warn('Failed to save revoke state:', e);
-            }
-        };
-        saveRevokeState();
-    }, [permissionRevoked]);
-
-    // AI Scanning states
     const cameraRef = useRef(null);
     const scanIntervalRef = useRef(null);
     const isScanningRef = useRef(false);
     const isReadyToCollectRef = useRef(false);
-
     const [isScanning, setIsScanningState] = useState(false);
     const [isAutoScanning, setIsAutoScanning] = useState(true);
     const [isReadyToCollect, setIsReadyToCollectState] = useState(false);
-
-    // Helper to update both ref and state
     const setIsScanning = (val) => {
         isScanningRef.current = val;
         setIsScanningState(val);
     };
-
     const setIsReadyToCollect = (val) => {
         isReadyToCollectRef.current = val;
         setIsReadyToCollectState(val);
     };
-
     const [detectionResults, setDetectionResults] = useState(null);
     const [scanError, setScanError] = useState(null);
     const [predictions, setPredictions] = useState([]);
@@ -518,13 +409,10 @@ export default function ScanScreen() {
     const [lastScanInfo, setLastScanInfo] = useState(null);
     const [showCelebration, setShowCelebration] = useState(false);
     const [celebrationMessage, setCelebrationMessage] = useState('');
-
     const scannerSize = getScannerSize();
-
     // Scanner line animation
     const scanLineY = useSharedValue(0);
     const pulseOpacity = useSharedValue(0.6);
-
     useEffect(() => {
         scanLineY.value = withRepeat(
             withTiming(scannerSize - 10, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
@@ -540,15 +428,12 @@ export default function ScanScreen() {
             false
         );
     }, [scannerSize]);
-
     // Continuous scanning effect with locking logic
     useEffect(() => {
         if (permission?.granted && isAutoScanning && cameraRef.current) {
             console.log('Starting continuous scan loop...');
-
             // Clear existing interval
             if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
-
             // Start locked scanning interval
             scanIntervalRef.current = setInterval(() => {
                 // VERIFICATION LOGIC: Continues scanning to verify object presence
@@ -557,7 +442,6 @@ export default function ScanScreen() {
                     performScan();
                 }
             }, SCAN_INTERVAL_MS);
-
             return () => {
                 if (scanIntervalRef.current) {
                     clearInterval(scanIntervalRef.current);
@@ -565,46 +449,34 @@ export default function ScanScreen() {
             };
         }
     }, [permission?.granted, isAutoScanning]);
-
     const scanLineStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: scanLineY.value }],
     }));
-
     const pulseStyle = useAnimatedStyle(() => ({
         opacity: pulseOpacity.value,
     }));
-
     // Real-time scan function - calls Roboflow API directly
     const performScan = async () => {
         if (!cameraRef.current || isScanning) return;
-
         // If locked, we are verifying. If not locked, we are searching.
         setIsScanning(true);
-
         try {
             // Capture photo from camera
             const photo = await cameraRef.current.takePictureAsync({
                 quality: 0.5,  // Lower quality for faster upload
                 base64: true,  // Need base64 for Roboflow API
             });
-
             if (!photo || !photo.base64) {
                 console.log('No photo captured');
                 return;
             }
-
-            // Store image size
             if (photo.width && photo.height) {
                 setImageSize({ width: photo.width, height: photo.height });
             }
-
-            // Get just the base64 data (remove prefix if present)
             let base64Data = photo.base64;
             if (base64Data.startsWith('data:')) {
                 base64Data = base64Data.split(',')[1];
             }
-
-            // Call Roboflow API directly
             const response = await fetch(
                 `${ROBOFLOW_URL}?api_key=${ROBOFLOW_API_KEY}&confidence=${CONFIDENCE_THRESHOLD}&overlap=50`,
                 {
@@ -615,43 +487,30 @@ export default function ScanScreen() {
                     body: base64Data,
                 }
             );
-
             if (!response.ok) {
                 console.log('Roboflow error:', response.status);
                 return;
             }
-
             const data = await response.json();
             let apiPredictions = data.predictions || [];
-
-            // FILTER: Only keep objects fully inside the frame (with margin)
-            const margin = 10; // pixels margin from edge
+            const margin = 10; 
             const imgW = photo.width;
             const imgH = photo.height;
-
             apiPredictions = apiPredictions.filter(p => {
                 const x = p.x;
                 const y = p.y;
                 const w = p.width;
                 const h = p.height;
-
                 const minX = x - w / 2;
                 const maxX = x + w / 2;
                 const minY = y - h / 2;
                 const maxY = y + h / 2;
-
-                // Check if touches borders
                 const safelyInside = minX > margin && maxX < (imgW - margin) &&
                     minY > margin && maxY < (imgH - margin);
                 return safelyInside;
             });
-
-            // Update predictions for drawing boxes
             setPredictions(apiPredictions);
-
             if (apiPredictions.length > 0) {
-                // ... same calculation logic ...
-                // Calculate counts
                 const counts = {};
                 for (const pred of apiPredictions) {
                     const cls = pred.class;
@@ -659,30 +518,21 @@ export default function ScanScreen() {
                         counts[cls] = (counts[cls] || 0) + 1;
                     }
                 }
-
-                // Calculate total points with size multiplier
                 let totalPoints = 0;
                 const detectedItems = [];
-
                 for (const pred of apiPredictions) {
                     const className = pred.class;
                     const mapping = CLASS_MAPPING[className.toLowerCase()] ||
                         { type: 'trash', label: className, points: 5, color: '#3b82f6' };
-
-                    // Size multiplier: larger objects = more points
                     const area = pred.width * pred.height;
                     const imageArea = imageSize.width * imageSize.height;
                     const sizePercent = (area / imageArea) * 100;
-
                     let sizeMultiplier = 1;
                     if (sizePercent > 20) sizeMultiplier = 3;
                     else if (sizePercent > 10) sizeMultiplier = 2;
                     else if (sizePercent > 5) sizeMultiplier = 1.5;
-
                     const itemPoints = Math.round(mapping.points * sizeMultiplier);
                     totalPoints += itemPoints;
-
-                    // Check if this item type already exists
                     const existingItem = detectedItems.find(i => i.className === className);
                     if (existingItem) {
                         existingItem.count++;
@@ -700,54 +550,38 @@ export default function ScanScreen() {
                         });
                     }
                 }
-
-                // Calculate counts for panel
                 const finalCounts = {};
                 for (const item of detectedItems) {
                     finalCounts[item.className] = item.count;
                 }
-
                 setDetectionResults({
                     items: detectedItems,
                     totalPoints,
                     count: apiPredictions.length,
                     counts: finalCounts,
                 });
-
-                // Mark as ready to collect (LOCK)
                 setIsReadyToCollect(true);
             } else {
-                // No valid detections found (or object left the screen) -> UNLOCK
                 if (isReadyToCollectRef.current) {
-                    // Only clear if we were locked, to avoid flickering
                     setPredictions([]);
                     setDetectionResults(null);
                     setIsReadyToCollect(false);
                 }
             }
-
         } catch (error) {
             console.log('Scan error:', error.message);
-            // Silent failure for continuous scanning
         } finally {
             setIsScanning(false);
         }
     };
-
-    // Manual collect - awards points for detected items
     const handleCollect = () => {
         if (!isReadyToCollect || !detectionResults || detectionResults.totalPoints <= 0) return;
-
         const mainType = detectionResults.items[0]?.label || 'Residuo';
-        // Pass the actual calculated points to scanItem
         const { unlockedNFT } = scanItem('trash', detectionResults.totalPoints);
-
         if (unlockedNFT) {
             setCelebrationMessage(`${t('celebration_thanks')}\n\n${t('celebration_nft_unlocked')}\n${unlockedNFT.title}\n\n${t('celebration_see_rewards')}`);
             setShowCelebration(true);
         }
-
-        // Save detailed scan info for the HUD
         setLastScanInfo({
             timestamp: new Date().toLocaleTimeString(),
             items: detectionResults.items.map(item => ({
@@ -761,27 +595,19 @@ export default function ScanScreen() {
             totalPoints: detectionResults.totalPoints,
             totalItems: detectionResults.count,
         });
-
         setLastScanned({
             type: mainType,
             points: detectionResults.totalPoints,
             details: detectionResults.items,
         });
-
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-        // Reset ready state
         setIsReadyToCollect(false);
-
-        // Clear detection boxes but keep lastScanInfo visible
         setTimeout(() => {
             setLastScanned(null);
             setDetectionResults(null);
             setPredictions([]);
         }, 2500);
     };
-
-    // Toggle auto-scanning
     const toggleAutoScan = () => {
         setIsAutoScanning(!isAutoScanning);
         if (!isAutoScanning) {
@@ -789,14 +615,8 @@ export default function ScanScreen() {
             setDetectionResults(null);
         }
     };
-
-
-
     const scannerColor = isDark ? BRAND.biolum : '#0d4a6f';
-
-    // Show permission request screen if permission not granted
     if (!permission) {
-        // Still loading permission status
         return (
             <View style={[styles.container, styles.loadingContainer]}>
                 <LinearGradient
@@ -808,41 +628,37 @@ export default function ScanScreen() {
             </View>
         );
     }
-
-    if (!permission.granted || permissionRevoked) {
-        // Permission not granted or manually revoked, show request UI
+    if (!permission.granted) {
         return (
             <PermissionScreen
                 onRequestPermission={() => {
-                    setPermissionRevoked(false);
                     requestPermission();
                 }}
                 isDark={isDark}
             />
         );
     }
-
-    // Permission granted - show camera scanner with original design
     const waterGradient = isDark
         ? [BRAND.oceanDeep, '#002844', BRAND.oceanMid]
         : ['#1a6b8f', '#2d8ab0', '#4aa3c7'];
-
     return (
         <View style={styles.container}>
-            {/* Background - same as original */}
+            {}
             <LinearGradient colors={waterGradient} style={StyleSheet.absoluteFill} />
-
-            {/* Bubbles - same as original */}
+            {}
             <FloatingBubbles count={12} minSize={4} maxSize={16} zIndex={1} />
-
-            {/* ═══ Revoke permission button ═══ */}
+            {}
             <Pressable
                 onPress={() => {
                     setIsAutoScanning(false);
-                    setPermissionRevoked(true);
                     setPredictions([]);
                     setDetectionResults(null);
                     if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
+                    if (navigation.canGoBack()) {
+                        navigation.goBack();
+                    } else {
+                        navigation.navigate('Home');
+                    }
                 }}
                 style={({ pressed }) => [
                     styles.revokeButton,
@@ -852,14 +668,12 @@ export default function ScanScreen() {
             >
                 <Ionicons name="close" size={rs(16)} color={isDark ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.95)'} />
             </Pressable>
-
             <CelebrationModal
                 visible={showCelebration}
                 onClose={() => setShowCelebration(false)}
                 message={celebrationMessage}
             />
-
-            {/* Status indicator - MOVED OUTSIDE OVERLAY */}
+            {}
             <Animated.View
                 entering={FadeIn.delay(400)}
                 style={styles.scanningBox}
@@ -890,37 +704,34 @@ export default function ScanScreen() {
                         : t('scan_searching')}
                 </Text>
             </Animated.View>
-
-            {/* Scanner overlay */}
+            {}
             <View style={styles.scannerOverlay}>
-                {/* Scanner Frame with Camera inside */}
+                {}
                 <Animated.View style={[
                     styles.scannerFrame,
                     {
                         width: scannerSize,
                         height: scannerSize,
                         borderColor: isDark ? 'rgba(168,197,212,0.3)' : 'rgba(13,74,111,0.2)',
-                        overflow: 'hidden', // Clip camera to frame
-                        marginTop: rs(20), // Spacing from text
+                        overflow: 'hidden', 
+                        marginTop: rs(20), 
                     },
                     pulseStyle
                 ]}>
-                    {/* Camera View - Only visible inside scanner frame */}
+                    {}
                     <CameraView
                         ref={cameraRef}
                         style={styles.cameraInFrame}
                         facing="back"
                     />
-
-                    {/* 4 Corner Brackets - on top of camera */}
+                    {}
                     <View style={styles.cornerOverlay}>
                         <CornerBracket position="topLeft" color={scannerColor} size={rs(32)} />
                         <CornerBracket position="topRight" color={scannerColor} size={rs(32)} />
                         <CornerBracket position="bottomLeft" color={scannerColor} size={rs(32)} />
                         <CornerBracket position="bottomRight" color={scannerColor} size={rs(32)} />
                     </View>
-
-                    {/* Detection Boxes - drawn over detected objects */}
+                    {}
                     {predictions.map((pred, index) => (
                         <DetectionBox
                             key={pred.detection_id || index}
@@ -929,8 +740,7 @@ export default function ScanScreen() {
                             imageSize={imageSize}
                         />
                     ))}
-
-                    {/* Scan line - on top of camera */}
+                    {}
                     <Animated.View style={[styles.scanLine, scanLineStyle]}>
                         <LinearGradient
                             colors={[
@@ -945,8 +755,7 @@ export default function ScanScreen() {
                     </Animated.View>
                 </Animated.View>
             </View>
-
-            {/* Error Message */}
+            {}
             {scanError && (
                 <Animated.View
                     entering={FadeIn.springify()}
@@ -956,17 +765,13 @@ export default function ScanScreen() {
                     <Text style={styles.errorText}>{scanError}</Text>
                 </Animated.View>
             )}
-
-
-
-            {/* Success popup */}
+            {}
             <SuccessPopup
                 visible={lastScanned !== null}
                 points={lastScanned?.points}
                 type={lastScanned?.type}
             />
-
-            {/* Detection Panel - Friendly info display */}
+            {}
             {detectionResults && !lastScanInfo && (
                 <DetectionPanel
                     counts={detectionResults.counts}
@@ -974,15 +779,13 @@ export default function ScanScreen() {
                     isDark={isDark}
                 />
             )}
-
-            {/* Last Scan Info Panel - Shows after scanning */}
+            {}
             <LastScanInfoPanel
                 scanInfo={lastScanInfo}
                 isDark={isDark}
                 onDismiss={() => setLastScanInfo(null)}
             />
-
-            {/* Controls area - with extra margin to avoid navbar */}
+            {}
             <SafeAreaView edges={['bottom']} style={styles.controlsArea}>
                 <LinearGradient
                     colors={isDark
@@ -991,7 +794,7 @@ export default function ScanScreen() {
                     }
                     style={[styles.controlsGradient, { paddingBottom: rs(110) }]}
                 >
-                    {/* Status indicator */}
+                    {}
                     <Animated.View entering={FadeIn.delay(100)} style={styles.statusRow}>
                         <View style={[
                             styles.statusDot,
@@ -1003,8 +806,7 @@ export default function ScanScreen() {
                                 : (isScanning ? t('scan_analyzing') : (isAutoScanning ? t('scan_searching') : t('scan_paused')))}
                         </Text>
                     </Animated.View>
-
-                    {/* Main Collect Button - Only enabled when ready to collect */}
+                    {}
                     <Animated.View entering={FadeInUp.delay(100).springify()}>
                         <Pressable
                             onPress={handleCollect}
@@ -1032,8 +834,7 @@ export default function ScanScreen() {
                             </Text>
                         </Pressable>
                     </Animated.View>
-
-                    {/* Toggle auto-scan */}
+                    {}
                     <View style={styles.controlButtonRow}>
                         <Pressable
                             onPress={toggleAutoScan}
@@ -1057,7 +858,6 @@ export default function ScanScreen() {
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -1065,8 +865,7 @@ const styles = StyleSheet.create({
     scannerOverlay: {
         ...StyleSheet.absoluteFillObject,
         justifyContent: 'flex-start',
-        // Mobile: Push scanner down ensuring it's below the info panel
-        paddingTop: rh(230), // Raised 5px as requested
+        paddingTop: rh(230), 
         alignItems: 'center',
         zIndex: 2,
     },
@@ -1090,16 +889,6 @@ const styles = StyleSheet.create({
         flex: 1,
         borderRadius: rs(2),
     },
-    instructionBox: {
-        position: 'absolute',
-        top: rh(30),
-        zIndex: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: rs(8),
-        alignSelf: 'center',
-        justifyContent: 'center',
-    },
     scanText: {
         fontSize: rf(16),
         fontWeight: '700',
@@ -1116,19 +905,6 @@ const styles = StyleSheet.create({
         paddingTop: SPACING.xxl,
         paddingBottom: rh(90),
         paddingHorizontal: SPACING.lg,
-    },
-    debugTitle: {
-        fontSize: rf(10),
-        letterSpacing: 2,
-        textAlign: 'center',
-        marginBottom: SPACING.md,
-        fontWeight: '600',
-        color: 'rgba(255,255,255,0.5)',
-    },
-    buttonRow: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: SPACING.lg,
     },
     scanButton: {
         alignItems: 'center',
@@ -1176,7 +952,6 @@ const styles = StyleSheet.create({
         marginTop: rs(2),
         letterSpacing: 1,
     },
-    // Loading screen styles
     loadingContainer: {
         justifyContent: 'center',
         alignItems: 'center',
@@ -1186,7 +961,6 @@ const styles = StyleSheet.create({
         fontSize: rf(14),
         fontWeight: '500',
     },
-    // Permission screen styles
     permissionContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -1234,30 +1008,6 @@ const styles = StyleSheet.create({
         fontSize: rf(15),
         fontWeight: '600',
     },
-    // Camera overlay styles
-    cameraOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        zIndex: 2,
-    },
-    overlaySection: {
-        width: '100%',
-    },
-    middleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    sideOverlay: {
-        flex: 1,
-    },
-    instructionContainer: {
-        position: 'absolute',
-        top: '65%',
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-        zIndex: 10,
-    },
-    // Camera inside scanner frame
     cameraInFrame: {
         ...StyleSheet.absoluteFillObject,
         borderRadius: RADIUS.md,
@@ -1266,7 +1016,6 @@ const styles = StyleSheet.create({
         ...StyleSheet.absoluteFillObject,
         zIndex: 2,
     },
-    // AI Scan button styles
     aiScanButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1285,10 +1034,9 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         letterSpacing: 2,
     },
-    // Error and scanning indicators
     errorBox: {
         position: 'absolute',
-        top: rh(15), // Moved to very top
+        top: rh(15), 
         alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'center',
@@ -1305,7 +1053,7 @@ const styles = StyleSheet.create({
     },
     scanningBox: {
         position: 'absolute',
-        top: rh(15), // Moved to very top
+        top: rh(15), 
         alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'center',
@@ -1315,11 +1063,6 @@ const styles = StyleSheet.create({
         borderRadius: RADIUS.lg,
         zIndex: 100,
     },
-    scanningText: {
-        fontSize: rf(13),
-        fontWeight: '600',
-    },
-    // Detection Box styles
     detectionBox: {
         position: 'absolute',
         borderWidth: 2,
@@ -1339,7 +1082,6 @@ const styles = StyleSheet.create({
         fontSize: rf(10),
         fontWeight: '700',
     },
-    // Detection Panel styles
     detectionPanel: {
         position: 'absolute',
         top: rh(120),
@@ -1387,19 +1129,6 @@ const styles = StyleSheet.create({
         fontSize: rf(14),
         fontWeight: '700',
     },
-    // Discrete test button
-    discreteTestButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: rs(4),
-        alignSelf: 'center',
-        marginTop: rs(8),
-    },
-    discreteTestText: {
-        color: 'rgba(255,255,255,0.6)',
-        fontSize: rf(11),
-    },
-    // Status indicator
     statusRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1416,7 +1145,6 @@ const styles = StyleSheet.create({
         color: 'rgba(255,255,255,0.7)',
         fontSize: rf(12),
     },
-    // Control button row
     controlButtonRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1438,7 +1166,6 @@ const styles = StyleSheet.create({
         fontSize: rf(12),
         fontWeight: '600',
     },
-    // Last Scan Info Panel styles
     lastScanPanel: {
         position: 'absolute',
         top: rs(100),
@@ -1466,9 +1193,6 @@ const styles = StyleSheet.create({
     lastScanTitle: {
         fontSize: rf(14),
         fontWeight: '700',
-    },
-    lastScanTime: {
-        fontSize: rf(11),
     },
     lastScanItems: {
         gap: rs(6),

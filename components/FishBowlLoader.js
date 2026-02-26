@@ -11,14 +11,10 @@ import Animated, {
     interpolate,
 } from 'react-native-reanimated';
 import { COLORS } from '../constants/theme';
-
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const DEFAULT_BOWL_SIZE = Math.min(SCREEN_WIDTH * 0.55, 220);
 const FISH_SIZE = 45;
-
 const AnimatedView = Animated.createAnimatedComponent(View);
-
-// SVG Fish Component (from CSS design)
 const FishSVG = () => (
     <Svg width={FISH_SIZE} height={FISH_SIZE} viewBox="0 0 512 512">
         <G>
@@ -47,10 +43,8 @@ const FishSVG = () => (
         </G>
     </Svg>
 );
-
 export default function FishBowlLoader({ size }) {
     const bowlSize = size || DEFAULT_BOWL_SIZE;
-    // Animation values for circular/organic movement
     const fishProgress = useSharedValue(0);
     const fishY = useSharedValue(0);
     const bubbleY1 = useSharedValue(0);
@@ -59,16 +53,12 @@ export default function FishBowlLoader({ size }) {
     const bubbleOpacity1 = useSharedValue(0);
     const bubbleOpacity2 = useSharedValue(0);
     const bubbleOpacity3 = useSharedValue(0);
-
     useEffect(() => {
-        // Fish swimming in an organic path (8 seconds per full cycle)
         fishProgress.value = withRepeat(
             withTiming(1, { duration: 8000, easing: Easing.linear }),
             -1,
             false
         );
-
-        // Fish vertical bobbing
         fishY.value = withRepeat(
             withSequence(
                 withTiming(-8, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
@@ -79,8 +69,6 @@ export default function FishBowlLoader({ size }) {
             -1,
             true
         );
-
-        // Bubble 1 animation
         bubbleY1.value = withRepeat(
             withSequence(
                 withTiming(0, { duration: 0 }),
@@ -97,8 +85,6 @@ export default function FishBowlLoader({ size }) {
             -1,
             false
         );
-
-        // Bubble 2 animation (delayed)
         setTimeout(() => {
             bubbleY2.value = withRepeat(
                 withSequence(
@@ -117,8 +103,6 @@ export default function FishBowlLoader({ size }) {
                 false
             );
         }, 800);
-
-        // Bubble 3 animation (more delayed)
         setTimeout(() => {
             bubbleY3.value = withRepeat(
                 withSequence(
@@ -138,25 +122,14 @@ export default function FishBowlLoader({ size }) {
             );
         }, 1500);
     }, []);
-
-    // Fish circular/organic movement around the bowl
     const fishStyle = useAnimatedStyle(() => {
         const progress = fishProgress.value;
-
-        // Create a figure-8 / organic path
         const radiusX = bowlSize * 0.28;
         const radiusY = bowlSize * 0.12;
-
-        // Figure-8 path using sine waves
         const translateX = Math.sin(progress * 2 * Math.PI) * radiusX;
         const translateY = Math.sin(progress * 4 * Math.PI) * radiusY + fishY.value;
-
-        // Fish faces direction of movement
         const scaleX = Math.cos(progress * 2 * Math.PI) > 0 ? 1 : -1;
-
-        // Slight rotation based on movement
         const rotation = Math.sin(progress * 2 * Math.PI) * 10;
-
         return {
             transform: [
                 { translateX },
@@ -166,53 +139,43 @@ export default function FishBowlLoader({ size }) {
             ],
         };
     });
-
-    // Bubble styles
     const bubble1Style = useAnimatedStyle(() => ({
         transform: [{ translateY: bubbleY1.value }],
         opacity: bubbleOpacity1.value,
     }));
-
     const bubble2Style = useAnimatedStyle(() => ({
         transform: [{ translateY: bubbleY2.value }],
         opacity: bubbleOpacity2.value,
     }));
-
     const bubble3Style = useAnimatedStyle(() => ({
         transform: [{ translateY: bubbleY3.value }],
         opacity: bubbleOpacity3.value,
     }));
-
     return (
         <View style={styles.container}>
-            {/* Bowl */}
+            {}
             <View style={[styles.bowl, { width: bowlSize, height: bowlSize, borderRadius: bowlSize / 2 }]}>
-                {/* Glass highlight (subtle) */}
+                {}
                 <View style={styles.glassHighlight} />
                 <View style={styles.glassHighlight2} />
-
-                {/* Water */}
+                {}
                 <View style={styles.waterContainer}>
                     <View style={styles.water} />
                 </View>
-
-                {/* Fish */}
+                {}
                 <AnimatedView style={[styles.fishContainer, fishStyle]}>
                     <FishSVG />
                 </AnimatedView>
-
-                {/* Bubbles */}
+                {}
                 <AnimatedView style={[styles.bubble, styles.bubble1, bubble1Style]} />
                 <AnimatedView style={[styles.bubble, styles.bubble2, bubble2Style]} />
                 <AnimatedView style={[styles.bubble, styles.bubble3, bubble3Style]} />
             </View>
-
-            {/* Shadow */}
+            {}
             <View style={[styles.shadow, { width: bowlSize * 0.9 }]} />
         </View>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',

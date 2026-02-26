@@ -9,24 +9,16 @@ import { useLanguage } from '../context/LanguageContext';
 import { BRAND } from '../constants/theme';
 import { rs, rf, SPACING, RADIUS } from '../constants/responsive';
 import GlassCard from './premium/GlassCard';
-
-// ═══════════════════════════════════════════════════════════════════════════
-// PREMIUM SCOREBOARD - Stats display with icons (no emojis)
-// ═══════════════════════════════════════════════════════════════════════════
-
 export default function Scoreboard() {
     const { points, nfts, level, scannedItems } = useGame();
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
-
     const stats = [
         { label: t('home_points'), value: points, icon: 'star', color: '#fbbf24' },
         { label: t('home_nfts'), value: nfts.length, icon: 'diamond', color: '#60a5fa' },
         { label: t('profile_level'), value: level, icon: 'trophy', color: '#f472b6' },
     ];
-
     const progressPercent = Math.min((nfts.length / 4) * 100, 100);
-
     return (
         <Animated.View entering={FadeIn.delay(150)} style={styles.container}>
             <GlassCard variant="elevated" style={styles.card}>
@@ -50,8 +42,7 @@ export default function Scoreboard() {
                         </React.Fragment>
                     ))}
                 </View>
-
-                {/* Progress to next level */}
+                {}
                 <View style={styles.progressSection}>
                     <View style={styles.progressHeader}>
                         <Ionicons name="arrow-up-circle" size={rs(14)} color={colors.textMuted} />
@@ -75,7 +66,6 @@ export default function Scoreboard() {
         </Animated.View>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         marginBottom: SPACING.lg,
