@@ -35,7 +35,7 @@ import FloatingBubbles from './premium/FloatingBubbles';
 import GlassCard from './premium/GlassCard';
 export default function AuthScreen({ onAuthenticated }) {
     const { colors, isDark } = useTheme();
-    const { register: onRegister, login: onLogin, isFirstTime, importAccount: onImport } = useAuth();
+    const { register: onRegister, login: onLogin, isFirstTime, importAccount: onImport, username: savedUsername } = useAuth();
     const { user, updateUserProfile, reloadGameState } = useGame();
     const { t } = useLanguage();
     const { height: winH } = useWindowDimensions();
