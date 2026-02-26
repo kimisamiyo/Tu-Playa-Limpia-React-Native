@@ -104,7 +104,9 @@ export const handleClaim = async (missionId = 1, walletType = 'pali', externalSi
           showQrModal: true,
         });
 
-        await wcProvider.enable();
+        if (!wcProvider.session) {
+          await wcProvider.connect();
+        }
         ethProvider = wcProvider;
 
         provider = new ethers.providers.Web3Provider(wcProvider);
@@ -144,6 +146,9 @@ export const handleClaim = async (missionId = 1, walletType = 'pali', externalSi
     const message = `Tu Playa Limpia: Acepto reclamar el NFT de la misión #${missionId}`;
     try {
       console.log("✍️ Pidiendo firma de aceptación...");
+      if (walletType === 'metamask' && typeof window !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator?.userAgent)) {
+        setTimeout(() => { window.location.href = "metamask://"; }, 500);
+      }
       await userSigner.signMessage(message);
     } catch (signErr) {
       throw signErr;
