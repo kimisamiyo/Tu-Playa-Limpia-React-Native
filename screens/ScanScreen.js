@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions, ActivityIndicator, useWindowDimensions } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -33,7 +33,7 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const { width, height } = Dimensions.get('window');
 const getScannerSize = () => {
     const baseSize = Math.min(SCREEN.width, SCREEN.height) * 0.7;
-    return Math.min(baseSize, 350); 
+    return Math.min(baseSize, 350);
 };
 const CornerBracket = ({ position, color, size = 28 }) => {
     const thickness = 4;
@@ -102,7 +102,7 @@ const ScanButton = ({ icon, color, label, onPress, delay }) => {
     }));
     const ButtonBackground = isDark ? LinearGradient : View;
     const buttonProps = isDark ? {
-        colors: [BRAND.oceanDeep, '#002844'], 
+        colors: [BRAND.oceanDeep, '#002844'],
         style: [styles.scanButtonInner, { borderColor: color }]
     } : {
         style: [
@@ -216,8 +216,8 @@ const PermissionScreen = ({ onRequestPermission, isDark }) => {
 const ROBOFLOW_API_KEY = ENV.ROBOFLOW_API_KEY;
 const ROBOFLOW_MODEL = ENV.ROBOFLOW_MODEL;
 const ROBOFLOW_URL = `https://serverless.roboflow.com/${ROBOFLOW_MODEL}`;
-const SCAN_INTERVAL_MS = 1500; 
-const CONFIDENCE_THRESHOLD = 40; 
+const SCAN_INTERVAL_MS = 1500;
+const CONFIDENCE_THRESHOLD = 40;
 const CLASS_MAPPING = {
     'plastic-bottle': { type: 'bottle', labelKey: 'scan_label_plastic_bottle', points: 5, color: '#22c55e' },
     'bottle': { type: 'bottle', labelKey: 'scan_label_bottle', points: 5, color: '#22c55e' },
@@ -304,12 +304,12 @@ const DetectionPanel = ({ counts, totalPoints, isDark }) => {
 const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
     const { t } = useLanguage();
     const { width } = useWindowDimensions();
-    const isDesktop = width > 768; 
+    const isDesktop = width > 768;
     useEffect(() => {
         if (!isDesktop && scanInfo) {
             const timer = setTimeout(() => {
                 onDismiss();
-            }, 5000); 
+            }, 5000);
             return () => clearTimeout(timer);
         }
     }, [scanInfo, isDesktop, onDismiss]);
@@ -326,10 +326,10 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
                         left: 20,
                         right: undefined,
                         width: 300,
-                        bottom: 100, 
-                        maxHeight: 500, 
+                        bottom: 100,
+                        maxHeight: 500,
                     } : {
-                        top: rs(87), 
+                        top: rs(87),
                         left: rs(16),
                         right: rs(16),
                         backgroundColor: isDark ? 'rgba(0,18,32,0.95)' : 'rgba(255,255,255,0.98)',
@@ -344,7 +344,7 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
                         {t('scan_last_scan')}
                     </Text>
                 </View>
-                {}
+                { }
             </View>
             <View style={styles.lastScanItems}>
                 {scanInfo.items.map((item, index) => (
@@ -353,7 +353,7 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
                             <Text style={[styles.lastScanItemLabel, { color: isDark ? '#e0e0e0' : '#374151' }]}>
                                 {item.count}x {item.labelKey ? t(item.labelKey) : item.label}
                             </Text>
-                            {}
+                            { }
                             <Text style={[styles.lastScanItemSize, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
                                 {item.width > 0 && item.height > 0
                                     ? `${t('scan_width')}: ${item.width}px | ${t('scan_height')}: ${item.height}px`
@@ -385,6 +385,7 @@ export default function ScanScreen() {
     const { colors, isDark } = useTheme();
     const { t } = useLanguage();
     const navigation = useNavigation();
+    const isFocused = useIsFocused();
     const [lastScanned, setLastScanned] = useState(null);
     const [permission, requestPermission] = useCameraPermissions();
     const cameraRef = useRef(null);
@@ -430,7 +431,7 @@ export default function ScanScreen() {
     }, [scannerSize]);
     // Continuous scanning effect with locking logic
     useEffect(() => {
-        if (permission?.granted && isAutoScanning && cameraRef.current) {
+        if (permission?.granted && isAutoScanning && cameraRef.current && isFocused) {
             console.log('Starting continuous scan loop...');
             // Clear existing interval
             if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
@@ -493,7 +494,7 @@ export default function ScanScreen() {
             }
             const data = await response.json();
             let apiPredictions = data.predictions || [];
-            const margin = 10; 
+            const margin = 10;
             const imgW = photo.width;
             const imgH = photo.height;
             apiPredictions = apiPredictions.filter(p => {
@@ -616,6 +617,9 @@ export default function ScanScreen() {
         }
     };
     const scannerColor = isDark ? BRAND.biolum : '#0d4a6f';
+    if (!isFocused) {
+        return <View style={styles.container} />;
+    }
     if (!permission) {
         return (
             <View style={[styles.container, styles.loadingContainer]}>
@@ -643,11 +647,11 @@ export default function ScanScreen() {
         : ['#1a6b8f', '#2d8ab0', '#4aa3c7'];
     return (
         <View style={styles.container}>
-            {}
+            { }
             <LinearGradient colors={waterGradient} style={StyleSheet.absoluteFill} />
-            {}
+            { }
             <FloatingBubbles count={12} minSize={4} maxSize={16} zIndex={1} />
-            {}
+            { }
             <Pressable
                 onPress={() => {
                     setIsAutoScanning(false);
@@ -673,7 +677,7 @@ export default function ScanScreen() {
                 onClose={() => setShowCelebration(false)}
                 message={celebrationMessage}
             />
-            {}
+            { }
             <Animated.View
                 entering={FadeIn.delay(400)}
                 style={styles.scanningBox}
@@ -704,34 +708,34 @@ export default function ScanScreen() {
                         : t('scan_searching')}
                 </Text>
             </Animated.View>
-            {}
+            { }
             <View style={styles.scannerOverlay}>
-                {}
+                { }
                 <Animated.View style={[
                     styles.scannerFrame,
                     {
                         width: scannerSize,
                         height: scannerSize,
                         borderColor: isDark ? 'rgba(168,197,212,0.3)' : 'rgba(13,74,111,0.2)',
-                        overflow: 'hidden', 
-                        marginTop: rs(20), 
+                        overflow: 'hidden',
+                        marginTop: rs(20),
                     },
                     pulseStyle
                 ]}>
-                    {}
+                    { }
                     <CameraView
                         ref={cameraRef}
                         style={styles.cameraInFrame}
                         facing="back"
                     />
-                    {}
+                    { }
                     <View style={styles.cornerOverlay}>
                         <CornerBracket position="topLeft" color={scannerColor} size={rs(32)} />
                         <CornerBracket position="topRight" color={scannerColor} size={rs(32)} />
                         <CornerBracket position="bottomLeft" color={scannerColor} size={rs(32)} />
                         <CornerBracket position="bottomRight" color={scannerColor} size={rs(32)} />
                     </View>
-                    {}
+                    { }
                     {predictions.map((pred, index) => (
                         <DetectionBox
                             key={pred.detection_id || index}
@@ -740,7 +744,7 @@ export default function ScanScreen() {
                             imageSize={imageSize}
                         />
                     ))}
-                    {}
+                    { }
                     <Animated.View style={[styles.scanLine, scanLineStyle]}>
                         <LinearGradient
                             colors={[
@@ -755,7 +759,7 @@ export default function ScanScreen() {
                     </Animated.View>
                 </Animated.View>
             </View>
-            {}
+            { }
             {scanError && (
                 <Animated.View
                     entering={FadeIn.springify()}
@@ -765,13 +769,13 @@ export default function ScanScreen() {
                     <Text style={styles.errorText}>{scanError}</Text>
                 </Animated.View>
             )}
-            {}
+            { }
             <SuccessPopup
                 visible={lastScanned !== null}
                 points={lastScanned?.points}
                 type={lastScanned?.type}
             />
-            {}
+            { }
             {detectionResults && !lastScanInfo && (
                 <DetectionPanel
                     counts={detectionResults.counts}
@@ -779,13 +783,13 @@ export default function ScanScreen() {
                     isDark={isDark}
                 />
             )}
-            {}
+            { }
             <LastScanInfoPanel
                 scanInfo={lastScanInfo}
                 isDark={isDark}
                 onDismiss={() => setLastScanInfo(null)}
             />
-            {}
+            { }
             <SafeAreaView edges={['bottom']} style={styles.controlsArea}>
                 <LinearGradient
                     colors={isDark
@@ -794,7 +798,7 @@ export default function ScanScreen() {
                     }
                     style={[styles.controlsGradient, { paddingBottom: rs(110) }]}
                 >
-                    {}
+                    { }
                     <Animated.View entering={FadeIn.delay(100)} style={styles.statusRow}>
                         <View style={[
                             styles.statusDot,
@@ -806,7 +810,7 @@ export default function ScanScreen() {
                                 : (isScanning ? t('scan_analyzing') : (isAutoScanning ? t('scan_searching') : t('scan_paused')))}
                         </Text>
                     </Animated.View>
-                    {}
+                    { }
                     <Animated.View entering={FadeInUp.delay(100).springify()}>
                         <Pressable
                             onPress={handleCollect}
@@ -834,7 +838,7 @@ export default function ScanScreen() {
                             </Text>
                         </Pressable>
                     </Animated.View>
-                    {}
+                    { }
                     <View style={styles.controlButtonRow}>
                         <Pressable
                             onPress={toggleAutoScan}
@@ -865,7 +869,7 @@ const styles = StyleSheet.create({
     scannerOverlay: {
         ...StyleSheet.absoluteFillObject,
         justifyContent: 'flex-start',
-        paddingTop: rh(230), 
+        paddingTop: rh(230),
         alignItems: 'center',
         zIndex: 2,
     },
@@ -1036,7 +1040,7 @@ const styles = StyleSheet.create({
     },
     errorBox: {
         position: 'absolute',
-        top: rh(15), 
+        top: rh(15),
         alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'center',
@@ -1053,7 +1057,7 @@ const styles = StyleSheet.create({
     },
     scanningBox: {
         position: 'absolute',
-        top: rh(15), 
+        top: rh(15),
         alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'center',
