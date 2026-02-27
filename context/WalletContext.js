@@ -23,7 +23,84 @@ export function WalletProvider({ children }) {
   const [signer, setSigner] = useState(null)
   const [address, setAddress] = useState(null)
 
-  const connectWallet = async () => {
+  // --------------------------------------------------
+  // SWITCH / ADD NETWORK
+  // --------------------------------------------------
+  const switchNetwork = async (externalProvider) => {
+    try {
+      await externalProvider.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: NETWORK.chainIdHex }]
+      })
+    } catch (switchError) {
+
+      if (switchError.code === 4902) {
+        await externalProvider.request({
+          method: "wallet_addEthereumChain",
+          params: [
+            {
+              chainId: NETWORK.chainIdHex,
+              chainName: NETWORK.chainName,
+              nativeCurrency: NETWORK.nativeCurrency,
+              rpcUrls: [NETWORK.rpcUrl],
+              blockExplorerUrls: [NETWORK.blockExplorerUrl]
+            }
+          ]
+        })
+      } else {
+        throw switchError
+      }
+    }
+  }
+
+  // --------------------------------------------------
+  // 🦊 METAMASK (EXTENSIÓN DESKTOP)
+  // --------------------------------------------------
+  const connectMetaMask = async () => {
+    try {
+
+      if (!window.ethereum) {
+        alert("MetaMask no está instalado")
+        return
+      }
+
+      // 🔥 detecta MetaMask cuando hay múltiples wallets
+      let mmProvider = window.ethereum
+
+      if (Array.isArray(window.ethereum.providers)) {
+        mmProvider = window.ethereum.providers.find(p => p.isMetaMask)
+      }
+
+      if (!mmProvider) {
+        alert("MetaMask no disponible")
+        return
+      }
+
+      const ethersProvider = new ethers.BrowserProvider(mmProvider)
+
+      // ✅ ESTO ABRE LA EXTENSIÓN
+      await ethersProvider.send("eth_requestAccounts", [])
+
+      await switchNetwork(mmProvider)
+
+      const signer = await ethersProvider.getSigner()
+      const address = await signer.getAddress()
+
+      setProvider(ethersProvider)
+      setSigner(signer)
+      setAddress(address)
+
+      console.log("🦊 MetaMask conectado:", address)
+
+    } catch (err) {
+      console.log("MetaMask connection error:", err)
+    }
+  }
+
+  // --------------------------------------------------
+  // 📱 WALLETCONNECT (MÓVIL / QR)
+  // --------------------------------------------------
+  const connectWalletConnect = async () => {
     try {
 
       const wcProvider = await EthereumProvider.init({
@@ -38,10 +115,10 @@ export function WalletProvider({ children }) {
 
       await wcProvider.enable()
 
-      // 🔹 cambiar / agregar red automáticamente
       await switchNetwork(wcProvider)
 
       const ethersProvider = new ethers.BrowserProvider(wcProvider)
+
       const signer = await ethersProvider.getSigner()
       const address = await signer.getAddress()
 
@@ -49,44 +126,28 @@ export function WalletProvider({ children }) {
       setSigner(signer)
       setAddress(address)
 
+      console.log("📱 WalletConnect conectado:", address)
+
     } catch (err) {
-      console.log("Wallet connection error:", err)
+      console.log("WalletConnect error:", err)
     }
   }
 
-  const switchNetwork = async (wcProvider) => {
-    try {
-
-      await wcProvider.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: NETWORK.chainIdHex }]
-      })
-
-    } catch (switchError) {
-
-      if (switchError.code === 4902) {
-
-        await wcProvider.request({
-          method: "wallet_addEthereumChain",
-          params: [
-            {
-              chainId: NETWORK.chainIdHex,
-              chainName: NETWORK.chainName,
-              nativeCurrency: NETWORK.nativeCurrency,
-              rpcUrls: [NETWORK.rpcUrl],
-              blockExplorerUrls: [NETWORK.blockExplorerUrl]
-            }
-          ]
-        })
-
-      }
-    }
+  // --------------------------------------------------
+  // DISCONNECT
+  // --------------------------------------------------
+  const disconnectWallet = () => {
+    setProvider(null)
+    setSigner(null)
+    setAddress(null)
   }
 
   return (
     <WalletContext.Provider
       value={{
-        connectWallet,
+        connectMetaMask,
+        connectWalletConnect,
+        disconnectWallet,
         provider,
         signer,
         address

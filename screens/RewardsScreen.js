@@ -17,7 +17,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import translations, { REWARDS_CLAIM_LABELS } from '../constants/translations';
 import { useWallet } from '../context/WalletContext';
-import { handleClaim } from '../utils/nftGenerator';
+import { handleClaim, disconnectWalletConnect } from '../utils/nftGenerator';
 import { BRAND, GRADIENTS } from '../constants/theme';
 import { rs, rf, rh, SPACING, RADIUS, SCREEN } from '../constants/responsive';
 import NFTMiniCard from '../components/NFTMiniCard';
@@ -27,6 +27,7 @@ import FloatingBubbles from '../components/premium/FloatingBubbles';
 import GlassCard from '../components/premium/GlassCard';
 import AnimatedButton from '../components/premium/AnimatedButton';
 import EarthCard from '../components/premium/EarthCard';
+
 const CelebrationModal = ({ visible, onClose, nft }) => {
     const { colors, shadows, isDark } = useTheme();
     const { t, language } = useLanguage();
@@ -64,12 +65,14 @@ const CelebrationModal = ({ visible, onClose, nft }) => {
         </Modal>
     );
 };
-const NFTDetailModal = ({ visible, onClose, nft, onClaim, isMobileWeb }) => {
+
+const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
     const [claiming, setClaiming] = useState(false);
     if (!nft) return null;
-    const handleClaimPress = async (walletType = 'any') => {
+
+    const handleClaimPress = async (walletType) => {
         if (nft.claimed || claiming) return;
         setClaiming(true);
         try {
@@ -80,6 +83,7 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim, isMobileWeb }) => {
             setClaiming(false);
         }
     };
+
     return (
         <Modal visible={visible} transparent animationType="slide">
             <View style={[styles.detailOverlay, { backgroundColor: isDark ? 'rgba(0,18,32,0.95)' : 'rgba(0,0,0,0.85)' }]}>
@@ -125,41 +129,44 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim, isMobileWeb }) => {
                                     </Text>
                                 </View>
                             )}
+
+                            {/* ✅ Ambos botones visibles siempre, en desktop y móvil */}
                             <View style={{ marginTop: SPACING.xl, width: '100%', gap: SPACING.md }}>
-                                { }
-                                {Platform.OS === 'web' && !isMobileWeb ? (
-                                    <AnimatedButton
-                                        title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_pali')}
-                                        onPress={() => handleClaimPress('pali')}
-                                        variant="primary"
-                                        icon={
-                                            <Image
-                                                source={require('../assets/logo-pali.png')}
-                                                style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
-                                                resizeMode="contain"
-                                            />
-                                        }
-                                        disabled={nft.claimed || claiming}
-                                        fullWidth
-                                        style={{ justifyContent: 'center', alignItems: 'center' }}
-                                    />
-                                ) : (
-                                    <AnimatedButton
-                                        title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_metamask')}
-                                        onPress={() => handleClaimPress('metamask')}
-                                        variant="primary"
-                                        icon={
-                                            <Image
-                                                source={require('../assets/logo-metamask.png')}
-                                                style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
-                                                resizeMode="contain"
-                                            />
-                                        }
-                                        disabled={nft.claimed || claiming}
-                                        fullWidth
-                                        style={{ justifyContent: 'center', alignItems: 'center' }}
-                                    />
-                                )}
+
+                                {/* Botón Pali Wallet */}
+                                <AnimatedButton
+                                    title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_pali')}
+                                    onPress={() => handleClaimPress('pali')}
+                                    variant="primary"
+                                    icon={
+                                        <Image
+                                            source={require('../assets/logo-pali.png')}
+                                            style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
+                                            resizeMode="contain"
+                                        />
+                                    }
+                                    disabled={nft.claimed || claiming}
+                                    fullWidth
+                                    style={{ justifyContent: 'center', alignItems: 'center' }}
+                                />
+
+                                {/* Botón MetaMask (WalletConnect) — visible en todas las plataformas */}
+                                <AnimatedButton
+                                    title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_metamask')}
+                                    onPress={() => handleClaimPress('metamask')}
+                                    variant="secondary"
+                                    icon={
+                                        <Image
+                                            source={require('../assets/logo-metamask.png')}
+                                            style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
+                                            resizeMode="contain"
+                                        />
+                                    }
+                                    disabled={nft.claimed || claiming}
+                                    fullWidth
+                                    style={{ justifyContent: 'center', alignItems: 'center' }}
+                                />
+
                             </View>
                         </View>
                     </Animated.View>
@@ -168,6 +175,7 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim, isMobileWeb }) => {
         </Modal>
     );
 };
+
 export default function RewardsScreen() {
     const { points, nfts, unlockNFT, markNFTSeen, claimNFT } = useGame();
     const { colors, shadows, isDark } = useTheme();
@@ -182,17 +190,6 @@ export default function RewardsScreen() {
     const { width } = useWindowDimensions();
     const isDesktop = width >= 1024;
 
-    // Detect mobile web to show MetaMask instead of Pali
-    const [isMobileWeb, setIsMobileWeb] = useState(false);
-    useEffect(() => {
-        if (Platform.OS === 'web' && typeof navigator !== 'undefined') {
-            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            if (/android/i.test(userAgent) || /iPad|iPhone|iPod/.test(userAgent) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2)) {
-                setIsMobileWeb(true);
-            }
-        }
-    }, []);
-
     const handleNFTPress = (nft) => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         if (nft.isNew) {
@@ -201,12 +198,14 @@ export default function RewardsScreen() {
         setSelectedNFT(nft);
         setShowDetail(true);
     };
+
     const numColumns = isDesktop ? 6 : 3;
     const cardGap = SPACING.sm;
     const sidebarOffset = isDesktop ? 250 : 0;
     const availableWidth = width - sidebarOffset - (SPACING.lg * 2) - (cardGap * (numColumns - 1));
     const cardWidth = availableWidth / numColumns;
     const cardHeight = cardWidth * 1.4;
+
     const renderNFT = useCallback(({ item, index }) => {
         const isNew = lastUnlockedNFT?.id === item.id;
         return (
@@ -236,20 +235,18 @@ export default function RewardsScreen() {
             </Animated.View>
         );
     }, [lastUnlockedNFT, cardWidth, address, claimingMap, t, colors, signer]);
+
     const ListHeader = () => (
         <>
-            { }
             <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.header}>
                 <Text style={[styles.headerTitle, { color: colors.text }]}>{t('rewards_title')}</Text>
                 <Text style={[styles.headerSubtitle, { color: colors.textSecondary }]}>
                     {nfts.length} {t('rewards_collection_count')}
                 </Text>
             </Animated.View>
-            { }
             <Animated.View entering={FadeInDown.delay(200).springify()}>
                 <Scoreboard />
             </Animated.View>
-            { }
             {nfts.length > 0 && (
                 <Animated.View entering={FadeInUp.delay(400).springify()}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('rewards_your_collection')}</Text>
@@ -257,6 +254,7 @@ export default function RewardsScreen() {
             )}
         </>
     );
+
     const EmptyState = () => (
         <Animated.View entering={FadeInUp.delay(400).springify()} style={styles.emptyContainer}>
             <GlassCard variant="flat" style={styles.emptyCard}>
@@ -268,6 +266,15 @@ export default function RewardsScreen() {
             </GlassCard>
         </Animated.View>
     );
+
+    // ✅ Al cerrar el modal, desconectar la sesión WalletConnect activa.
+    //    Evita que MetaMask reciba solicitudes duplicadas en la próxima
+    //    conexión, lo que causaría el error -32002 "Request already pending".
+    const handleCloseDetail = () => {
+        disconnectWalletConnect();
+        setShowDetail(false);
+    };
+
     const handleClaimNFT = async (nft, walletType = 'any') => {
         try {
             if (!nft) return;
@@ -276,7 +283,7 @@ export default function RewardsScreen() {
                 setTimeout(() => reject(new Error('Timeout: la transacción tardó demasiado')), 120000)
             );
             const result = await Promise.race([
-                handleClaim(nft.id, walletType, signer),
+                handleClaim(nft.id, walletType),
                 timeout
             ]);
             console.log("Resultado del claim:", result);
@@ -299,6 +306,7 @@ export default function RewardsScreen() {
             );
         }
     };
+
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {isDark && (
@@ -330,14 +338,14 @@ export default function RewardsScreen() {
             />
             <NFTDetailModal
                 visible={showDetail}
-                onClose={() => setShowDetail(false)}
+                onClose={handleCloseDetail}
                 nft={selectedNFT}
                 onClaim={handleClaimNFT}
-                isMobileWeb={isMobileWeb}
             />
         </View>
     );
 }
+
 const styles = StyleSheet.create({
     container: { flex: 1 },
     bgWater: { ...StyleSheet.absoluteFillObject, opacity: 0.2 },

@@ -8,6 +8,34 @@ import { EthereumProvider } from '@walletconnect/ethereum-provider';
 const CONTRACT_ADDRESS = process.env.EXPO_PUBLIC_CONTRACT_ADDRESS;
 
 // ---------------------------------------------------------------------------
+// Referencia global al wcProvider activo
+// ---------------------------------------------------------------------------
+// Se guarda aquí para poder desconectarlo desde fuera (ej: al cerrar el modal)
+// sin necesidad de pasarlo como parámetro por toda la app.
+// Sin esto, cada nueva conexión crea una sesión nueva sin cerrar la anterior,
+// causando el error -32002 "Request already pending".
+let _activeWcProvider = null;
+
+/**
+ * Desconecta la sesión WalletConnect activa y limpia localStorage.
+ * Llamar esto al cerrar el modal de NFT desde RewardsScreen.
+ */
+export const disconnectWalletConnect = async () => {
+  if (_activeWcProvider) {
+    try {
+      await _activeWcProvider.disconnect();
+      console.log("🔌 Sesión WalletConnect desconectada.");
+    } catch (_) {
+      // Ya estaba desconectado, ignorar
+    }
+    _activeWcProvider = null;
+  }
+  // Limpiar también el singleton para que el próximo init() sea limpio
+  _wcProviderInstance = null;
+  clearWalletConnectCache();
+};
+
+// ---------------------------------------------------------------------------
 // Capas de generación de NFT
 // ---------------------------------------------------------------------------
 const layersSetup = [
@@ -95,34 +123,201 @@ export const generateNFTAttributes = () => {
 };
 
 // ---------------------------------------------------------------------------
+// Helpers de detección de entorno
+// ---------------------------------------------------------------------------
+const isMobileEnvironment = () => {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || navigator.vendor || window.opera || '';
+  return (
+    /android/i.test(ua) ||
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.maxTouchPoints && navigator.maxTouchPoints > 2)
+  );
+};
+
+const isInsideMetaMaskBrowser = () => {
+  if (typeof window === 'undefined') return false;
+  // Solo es true si estamos en un dispositivo móvil real Y MetaMask está inyectado.
+  // En desktop con extensión MetaMask, isMobileEnvironment() devuelve false,
+  // así que siempre irá al flujo WalletConnect QR.
+  return !!(window.ethereum?.isMetaMask) && isMobileEnvironment();
+};
+
+// ---------------------------------------------------------------------------
+// Limpieza de caché WalletConnect
+// ---------------------------------------------------------------------------
+const clearWalletConnectCache = () => {
+  if (typeof window === 'undefined' || !window.localStorage) return;
+  const keysToRemove = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && (
+      key.startsWith('wc@') ||
+      key.startsWith('walletconnect') ||
+      key.startsWith('WCM_') ||
+      key.startsWith('W3M_') ||
+      key.includes('walletConnect') ||
+      key.includes('wc2')
+    )) {
+      keysToRemove.push(key);
+    }
+  }
+  keysToRemove.forEach(k => localStorage.removeItem(k));
+  if (keysToRemove.length > 0) {
+    console.log(`🧹 WalletConnect cache limpiada (${keysToRemove.length} keys)`);
+  }
+};
+
+// ---------------------------------------------------------------------------
 // Conexión de wallet
 // ---------------------------------------------------------------------------
 
 /**
- * Inicializa WalletConnect y devuelve { provider, signer, recipient }.
- * Se usa tanto para MetaMask como para cualquier otra wallet compatible.
- * La sesión WC se conecta a la RPC personalizada de NETWORK_CONFIG.
+ * Conexión a MetaMask en MÓVIL cuando la página se abre desde el
+ * browser integrado de MetaMask. No usa WalletConnect ni QR modal.
  */
+const connectMetaMaskMobileBrowser = async () => {
+  const ethProvider = window.ethereum;
+  if (!ethProvider?.isMetaMask) throw new Error("MetaMask no detectada en este navegador.");
+
+  const provider = new ethers.providers.Web3Provider(ethProvider);
+  await ethProvider.request({ method: 'eth_requestAccounts' });
+
+  const currentChainId = await ethProvider.request({ method: 'eth_chainId' });
+  const isCorrectChain =
+    currentChainId?.toString().toLowerCase() === NETWORK_CONFIG.chainIdHex.toLowerCase() ||
+    parseInt(currentChainId, 16) === NETWORK_CONFIG.chainId;
+
+  if (!isCorrectChain) {
+    try {
+      await ethProvider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: NETWORK_CONFIG.chainIdHex }],
+      });
+    } catch (switchErr) {
+      if (switchErr.code === 4902) {
+        await ethProvider.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: NETWORK_CONFIG.chainIdHex,
+            chainName: NETWORK_CONFIG.chainName,
+            rpcUrls: [NETWORK_CONFIG.rpcUrl],
+            nativeCurrency: NETWORK_CONFIG.nativeCurrency,
+            blockExplorerUrls: NETWORK_CONFIG.blockExplorerUrls ?? [],
+          }],
+        });
+      } else {
+        throw switchErr;
+      }
+    }
+  }
+
+  const accounts = await ethProvider.request({ method: 'eth_requestAccounts' });
+  if (!accounts || accounts.length === 0)
+    throw new Error("No hay cuenta conectada en MetaMask.");
+
+  return {
+    provider,
+    signer: provider.getSigner(),
+    recipient: accounts[0],
+  };
+};
+
+const waitForChainChange = (wcProvider, expectedChainId, timeoutMs = 60000) =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      wcProvider.removeListener('chainChanged', handler);
+      reject(new Error('Timeout esperando cambio de red. Acepta el cambio en MetaMask.'));
+    }, timeoutMs);
+
+    const handler = (chainId) => {
+      const id = typeof chainId === 'string' ? parseInt(chainId, 16) : chainId;
+      console.log(`🔗 chainChanged recibido: ${id}`);
+      if (id === expectedChainId) {
+        clearTimeout(timer);
+        wcProvider.removeListener('chainChanged', handler);
+        resolve();
+      }
+    };
+
+    wcProvider.on('chainChanged', handler);
+  });
+
+const buildFreshProvider = async (wcProvider) => {
+  // Esperar hasta 10 intentos a que el chainId sea el correcto.
+  // WalletConnect móvil puede tardar varios segundos en sincronizar
+  // el chainId después de wallet_switchEthereumChain.
+  for (let i = 0; i < 10; i++) {
+    await new Promise(r => setTimeout(r, 500));
+    try {
+      const raw = await wcProvider.request({ method: 'eth_chainId' });
+      const current = parseInt(raw, 16);
+      if (current === NETWORK_CONFIG.chainId) {
+        const p = new ethers.providers.Web3Provider(wcProvider);
+        return p;
+      }
+      console.log(`⏳ Esperando red correcta... intento ${i + 1}/10 (actual: ${current})`);
+    } catch (_) { }
+  }
+  throw new Error(
+    `Red incorrecta tras cambio: esperada ${NETWORK_CONFIG.chainId}. ` +
+    `Asegúrate de aceptar el cambio de red en MetaMask.`
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Conexión WalletConnect desktop (QR modal)
+// ---------------------------------------------------------------------------
+
+// Singleton del wcProvider — se reutiliza entre conexiones para evitar
+// el warning "WalletConnect Core is already initialized. Init() called 2 times"
+// que causa el error "Connection request reset".
+let _wcProviderInstance = null;
+
 const connectViaWalletConnect = async () => {
+  // ✅ Si ya hay una instancia conectada con la red correcta, reutilizarla.
+  //    Esto evita llamar a init() dos veces (que rompe el Core singleton de WC).
+  if (_wcProviderInstance && _wcProviderInstance.connected) {
+    const rawChainId = await _wcProviderInstance.request({ method: 'eth_chainId' }).catch(() => null);
+    const connectedChain = rawChainId ? parseInt(rawChainId, 16) : 0;
+
+    if (connectedChain === NETWORK_CONFIG.chainId) {
+      console.log("♻️ Reutilizando sesión WalletConnect existente.");
+      _activeWcProvider = _wcProviderInstance;
+      const provider = await buildFreshProvider(_wcProviderInstance);
+      const accounts = await provider.listAccounts();
+      if (accounts && accounts.length > 0) {
+        return {
+          provider,
+          signer: provider.getSigner(),
+          recipient: accounts[0],
+          wcProvider: _wcProviderInstance,
+        };
+      }
+    }
+  }
+
+  // No hay sesión válida — desconectar la anterior y limpiar antes de crear nueva.
+  await disconnectWalletConnect();
+  _wcProviderInstance = null;
+
   const wcProvider = await EthereumProvider.init({
-    projectId:
-      process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID || "5c7937e314de0f188fccc2d1f9927e11",
+    projectId: process.env.EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID,
 
-    // ✅ Usamos la cadena personalizada en lugar de mainnet (1).
-    //    optionalChains permite que wallets que no la soporten no fallen.
+    // ✅ Solo declaramos zkSYS. Si MetaMask no tiene la red, la pediremos
+    //    con wallet_addEthereumChain antes de conectar via QR.
+    //    NO ponemos mainnet en optionalChains para evitar que MetaMask
+    //    establezca la sesión WC en chainId 1 y luego el switch quede
+    //    reflejado solo localmente en MetaMask sin actualizar la sesión WC.
     chains: [NETWORK_CONFIG.chainId],
-    optionalChains: [1],
+    optionalChains: [NETWORK_CONFIG.chainId],
 
-    // ✅ RPC apunta a tu nodo personalizado.
     rpcMap: {
       [NETWORK_CONFIG.chainId]: NETWORK_CONFIG.rpcUrl,
     },
 
     showQrModal: true,
 
-    // ✅ Metadatos del proyecto: ayudan a que MetaMask/WalletConnect
-    //    muestren el nombre correcto en la solicitud de conexión
-    //    y reduce la probabilidad de que se marque como phishing.
     metadata: {
       name: "Tu Playa Limpia",
       description: "Plataforma de misiones de limpieza de playas con NFTs",
@@ -131,39 +326,57 @@ const connectViaWalletConnect = async () => {
     },
   });
 
+  // Guardar como singleton y como referencia activa.
+  _wcProviderInstance = wcProvider;
+  _activeWcProvider = wcProvider;
+
+  // ✅ wcProvider.enable() abre el QR modal y espera a que el usuario
+  //    conecte. Cuando resuelve, la sesión WC ya está establecida con
+  //    la cadena correcta (zkSYS) porque es la única declarada.
   await wcProvider.enable();
 
-  const provider = new ethers.providers.Web3Provider(wcProvider);
+  // Verificar chainId de la sesión WC (no de MetaMask localmente).
+  const rawChainId = await wcProvider.request({ method: 'eth_chainId' });
+  const connectedChain = parseInt(rawChainId, 16);
+  console.log(`✅ Sesión WC establecida en chainId: ${connectedChain}`);
 
-  // Verificar y cambiar a la red correcta si hace falta
-  const { chainId: connectedChain } = await provider.getNetwork();
   if (connectedChain !== NETWORK_CONFIG.chainId) {
+    // Si aún no coincide (ej: wallet muy vieja que ignora chains del QR),
+    // pedir cambio explícito y esperar el evento chainChanged.
+    const chainChangePromise = waitForChainChange(wcProvider, NETWORK_CONFIG.chainId);
+
     try {
       await wcProvider.request({
-        method: "wallet_switchEthereumChain",
+        method: 'wallet_switchEthereumChain',
         params: [{ chainId: NETWORK_CONFIG.chainIdHex }],
       });
     } catch (switchErr) {
-      // Si la red no existe en la wallet, la añadimos
       if (switchErr.code === 4902) {
         await wcProvider.request({
-          method: "wallet_addEthereumChain",
-          params: [
-            {
-              chainId: NETWORK_CONFIG.chainIdHex,
-              chainName: NETWORK_CONFIG.chainName,
-              rpcUrls: [NETWORK_CONFIG.rpcUrl],
-              nativeCurrency: NETWORK_CONFIG.nativeCurrency,
-              blockExplorerUrls: NETWORK_CONFIG.blockExplorerUrls ?? [],
-            },
-          ],
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: NETWORK_CONFIG.chainIdHex,
+            chainName: NETWORK_CONFIG.chainName,
+            rpcUrls: [NETWORK_CONFIG.rpcUrl],
+            nativeCurrency: NETWORK_CONFIG.nativeCurrency,
+            blockExplorerUrls: NETWORK_CONFIG.blockExplorerUrls ?? [],
+          }],
+        });
+        await wcProvider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: NETWORK_CONFIG.chainIdHex }],
         });
       } else {
         throw switchErr;
       }
     }
+
+    await chainChangePromise;
   }
 
+  // ✅ Construir provider ethers directamente — no hace falta buildFreshProvider
+  //    con reintentos porque la sesión WC ya tiene el chainId correcto.
+  const provider = new ethers.providers.Web3Provider(wcProvider);
   const accounts = await provider.listAccounts();
   if (!accounts || accounts.length === 0)
     throw new Error("No hay cuenta conectada en la wallet.");
@@ -178,7 +391,6 @@ const connectViaWalletConnect = async () => {
 
 /**
  * Conexión directa con Pali Wallet (inyectada en window).
- * Mismo flujo que antes, sin cambios.
  */
 const connectViaPali = async () => {
   let ethProvider = window.pali || window.ethereum;
@@ -196,8 +408,7 @@ const connectViaPali = async () => {
 
   const currentChainId = await ethProvider.request({ method: "eth_chainId" });
   const isCorrectChain =
-    currentChainId?.toString().toLowerCase() ===
-    NETWORK_CONFIG.chainIdHex.toLowerCase() ||
+    currentChainId?.toString().toLowerCase() === NETWORK_CONFIG.chainIdHex.toLowerCase() ||
     parseInt(currentChainId, 16) === NETWORK_CONFIG.chainId;
 
   if (!isCorrectChain) {
@@ -210,15 +421,13 @@ const connectViaPali = async () => {
       if (switchErr.code === 4902) {
         await ethProvider.request({
           method: "wallet_addEthereumChain",
-          params: [
-            {
-              chainId: NETWORK_CONFIG.chainIdHex,
-              chainName: NETWORK_CONFIG.chainName,
-              rpcUrls: [NETWORK_CONFIG.rpcUrl],
-              nativeCurrency: NETWORK_CONFIG.nativeCurrency,
-              blockExplorerUrls: NETWORK_CONFIG.blockExplorerUrls ?? [],
-            },
-          ],
+          params: [{
+            chainId: NETWORK_CONFIG.chainIdHex,
+            chainName: NETWORK_CONFIG.chainName,
+            rpcUrls: [NETWORK_CONFIG.rpcUrl],
+            nativeCurrency: NETWORK_CONFIG.nativeCurrency,
+            blockExplorerUrls: NETWORK_CONFIG.blockExplorerUrls ?? [],
+          }],
         });
       } else {
         throw switchErr;
@@ -238,16 +447,6 @@ const connectViaPali = async () => {
 // ---------------------------------------------------------------------------
 // handleClaim
 // ---------------------------------------------------------------------------
-
-/**
- * @param {number}  missionId      - ID de la misión (default 1)
- * @param {'pali'|'metamask'|'external'} walletType
- * @param {ethers.Signer|null} externalSigner - Signer ya conectado (opcional)
- * @param {Function|null} adminMintViaBackend  - Función async que llama a tu
- *   backend/serverless para ejecutar adminMint. Recibe (recipient, missionId, tokenURI)
- *   y devuelve { txHash }. Si es null, se intenta mintear localmente
- *   (solo para desarrollo con EXPO_PUBLIC_ADMIN_PRIVATE_KEY en .env).
- */
 export const handleClaim = async (
   missionId = 1,
   walletType = 'pali',
@@ -266,13 +465,15 @@ export const handleClaim = async (
       provider = externalSigner.provider;
 
     } else if (walletType === 'metamask') {
-      // ✅ MetaMask ahora usa WalletConnect igual que cualquier otra wallet.
-      //    El usuario escanea el QR (móvil) o hace clic en "MetaMask" (extensión).
-      //    La conexión apunta a la RPC personalizada de NETWORK_CONFIG.
-      ({ provider, signer, recipient } = await connectViaWalletConnect());
+      if (isInsideMetaMaskBrowser()) {
+        console.log("📱 MetaMask browser detectado → conexión directa");
+        ({ provider, signer, recipient } = await connectMetaMaskMobileBrowser());
+      } else {
+        console.log("🖥️ Desktop detectado → WalletConnect QR modal");
+        ({ provider, signer, recipient } = await connectViaWalletConnect());
+      }
 
     } else {
-      // Pali Wallet inyectada en window
       ({ provider, signer, recipient } = await connectViaPali());
     }
 
@@ -298,22 +499,28 @@ export const handleClaim = async (
     let txHash;
 
     if (typeof adminMintViaBackend === 'function') {
-      // ✅ PRODUCCIÓN: el backend firma con la clave admin de forma segura.
       const result = await adminMintViaBackend(recipient, missionId, tokenURI);
       txHash = result.txHash;
 
     } else {
-      // ⚠️  SOLO DESARROLLO LOCAL: clave admin en .env, nunca en producción.
       const adminPrivateKey = process.env.EXPO_PUBLIC_ADMIN_PRIVATE_KEY;
       if (!adminPrivateKey)
         throw new Error("adminMintViaBackend no fue provisto y no hay clave admin en .env");
 
-      const adminWallet = new ethers.Wallet(adminPrivateKey, provider);
+      // ✅ Usar JsonRpcProvider directo al RPC, no el wcProvider del usuario.
+      //    Esto evita que ethers llame a eth_gasPrice a través del browser
+      //    (que falla por CORS en dev). JsonRpcProvider hace la llamada desde
+      //    Node/el bundler, no desde fetch del browser.
+      const adminProvider = new ethers.providers.JsonRpcProvider(NETWORK_CONFIG.rpcUrl);
+      const adminWallet = new ethers.Wallet(adminPrivateKey, adminProvider);
       const abi = MissionNFT.abi || MissionNFT;
       const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, adminWallet);
 
+      // gasPrice fijo para evitar la llamada eth_gasPrice al RPC desde el browser.
+      const gasPrice = ethers.utils.parseUnits('1', 'gwei');
+
       console.log("⏳ Enviando minteo desde Admin (modo dev)...");
-      const tx = await contract.adminMint(recipient, missionId, tokenURI);
+      const tx = await contract.adminMint(recipient, missionId, tokenURI, { gasPrice });
       await tx.wait();
       txHash = tx.hash;
     }
