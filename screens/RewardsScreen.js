@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
     detailOverlay: { flex: 1 },
     detailSafeArea: { flex: 1 },
     detailClose: { alignSelf: 'flex-end', padding: SPACING.md },
-    detailContent: { flex: 1, alignItems: 'center', paddingHorizontal: SPACING.xl },
+    detailContent: { width: '100%', maxWidth: 500, alignSelf: 'center', alignItems: 'center', paddingHorizontal: SPACING.xl },
     detailInfo: { marginTop: SPACING.xl, width: '100%' },
     detailTitle: { fontSize: rf(24), fontWeight: '700', textAlign: 'center' },
     detailRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: SPACING.md, gap: SPACING.xs },

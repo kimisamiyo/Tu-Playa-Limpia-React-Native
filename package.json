@@ -50,6 +50,7 @@
     "@nomicfoundation/hardhat-ethers": "^4.0.4",
     "@openzeppelin/contracts": "^5.4.0",
     "@types/node": "^22.19.11",
+    "@types/react": "~19.1.10",
     "cross-env": "^10.1.0",
     "dotenv": "^17.2.4",
     "ethers": "^5.8.0",

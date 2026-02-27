@@ -6,9 +6,7 @@ const ENV = {
   ROBOFLOW_API_KEY: process.env.EXPO_PUBLIC_ROBOFLOW_API_KEY || "",
   ROBOFLOW_MODEL: process.env.EXPO_PUBLIC_ROBOFLOW_MODEL || "ocean-waste/2",
   API_BASE_URL: process.env.API_BASE_URL || "",
-  // ─────────────────────────────────────────────────────────────────────────
-  // BLOCKCHAIN CONFIGURATION
-  // ─────────────────────────────────────────────────────────────────────────
+
   // zkSYS PoB Devnet Configuration
   BLOCKCHAIN_CHAIN_ID: 57042,
   BLOCKCHAIN_CHAIN_ID_HEX: '0xDED2',

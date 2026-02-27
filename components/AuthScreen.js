@@ -580,9 +580,11 @@ export default function AuthScreen({ onAuthenticated }) {
             return null;
         })();
         return (
-            <Animated.View entering={FadeIn.duration(500)} style={{ flex: 1, alignItems: 'center' }}>
+            <Animated.View entering={FadeIn.duration(500)} style={{ flex: 1, width: '100%', alignItems: 'center' }}>
                 {renderHeader()}
-                {content}
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', width: '100%', paddingBottom: winH > 800 ? 100 : 40 }}>
+                    {content}
+                </View>
             </Animated.View>
         );
     };
@@ -603,40 +605,42 @@ export default function AuthScreen({ onAuthenticated }) {
                 {isDrawingMode ? (
                     <Animated.View style={[styles.contentWrapper, contentStyle]}>
                         {renderHeader()}
-                        {(mode === 'create_drawing' || mode === 'confirm_drawing') && (
-                            <View style={{ alignItems: 'center', paddingVertical: winH < 700 ? rs(4) : rs(10) }}>
-                                <FishBowlLoader size={winH < 700 ? 120 : 180} />
+                        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                            {(mode === 'create_drawing' || mode === 'confirm_drawing') && (
+                                <View style={{ alignItems: 'center', paddingVertical: winH < 700 ? rs(4) : rs(10) }}>
+                                    <FishBowlLoader size={winH < 700 ? 120 : 180} />
+                                </View>
+                            )}
+                            { }
+                            <View style={styles.drawingArea}>
+                                <DrawingPad
+                                    key={mode}
+                                    onSubmit={handleDrawingSubmit}
+                                    confirmLabel={t('auth_draw_confirm_btn')}
+                                    clearLabel={t('auth_draw_clear')}
+                                    hintText={t('auth_draw_hint')}
+                                    strokeCountLabel={t('auth_draw_strokes')}
+                                />
+                                <Text style={[styles.pinHint, { color: colors.textMuted, marginTop: rs(8) }]}>{statusText}</Text>
+                                {errorText ? <Text style={[styles.pinError]}>{errorText}</Text> : null}
                             </View>
-                        )}
-                        { }
-                        <View style={styles.drawingArea}>
-                            <DrawingPad
-                                key={mode}
-                                onSubmit={handleDrawingSubmit}
-                                confirmLabel={t('auth_draw_confirm_btn')}
-                                clearLabel={t('auth_draw_clear')}
-                                hintText={t('auth_draw_hint')}
-                                strokeCountLabel={t('auth_draw_strokes')}
-                            />
-                            <Text style={[styles.pinHint, { color: colors.textMuted, marginTop: rs(8) }]}>{statusText}</Text>
-                            {errorText ? <Text style={[styles.pinError]}>{errorText}</Text> : null}
+                            { }
+                            {(mode === 'create_drawing' || mode === 'import_drawing') && (
+                                <TouchableOpacity
+                                    style={styles.backButton}
+                                    onPress={() => {
+                                        setDrawingStrokes(null);
+                                        setFirstDrawing(null);
+                                        setErrorText('');
+                                        if (mode === 'create_drawing') setMode('register_password');
+                                        else setMode('import_file');
+                                    }}
+                                >
+                                    <Ionicons name="arrow-back" size={rs(18)} color={colors.textSecondary} />
+                                    <Text style={[styles.backButtonText, { color: colors.textSecondary }]}>{t('auth_back')}</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
-                        { }
-                        {(mode === 'create_drawing' || mode === 'import_drawing') && (
-                            <TouchableOpacity
-                                style={styles.backButton}
-                                onPress={() => {
-                                    setDrawingStrokes(null);
-                                    setFirstDrawing(null);
-                                    setErrorText('');
-                                    if (mode === 'create_drawing') setMode('register_password');
-                                    else setMode('import_file');
-                                }}
-                            >
-                                <Ionicons name="arrow-back" size={rs(18)} color={colors.textSecondary} />
-                                <Text style={[styles.backButtonText, { color: colors.textSecondary }]}>{t('auth_back')}</Text>
-                            </TouchableOpacity>
-                        )}
                     </Animated.View>
                 ) : (
                     renderFormContent()
@@ -673,7 +677,7 @@ const styles = StyleSheet.create({
     drawingArea: { flex: 3, justifyContent: 'center', alignItems: 'center', paddingBottom: rh(10) },
     pinHint: { fontSize: rf(12), marginTop: rs(8), letterSpacing: rs(0.5), textAlign: 'center' },
     pinError: { fontSize: rf(11), marginTop: rs(6), color: '#ef4444', textAlign: 'center', fontWeight: '600' },
-    choiceContainer: { width: '100%', gap: SPACING.lg, paddingHorizontal: SPACING.md },
+    choiceContainer: { width: '100%', maxWidth: 500, alignSelf: 'center', gap: SPACING.lg, paddingHorizontal: SPACING.md },
     choiceCard: {
         borderRadius: rs(24),
         overflow: 'hidden',
@@ -713,7 +717,7 @@ const styles = StyleSheet.create({
         lineHeight: rf(18),
         paddingHorizontal: SPACING.sm,
     },
-    formContainer: { width: '100%', paddingHorizontal: SPACING.md },
+    formContainer: { width: '100%', maxWidth: 500, alignSelf: 'center', paddingHorizontal: SPACING.md },
     formCard: { padding: SPACING.xl, borderRadius: rs(24) },
     formIconRow: { alignItems: 'center', marginBottom: SPACING.lg },
     input: {
