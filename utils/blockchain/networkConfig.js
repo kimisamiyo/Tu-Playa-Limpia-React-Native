@@ -9,7 +9,8 @@ export const NETWORK_CONFIG = {
     decimals: 18
   },
   rpcUrl: "https://rpc-pob.dev11.top",
-  blockExplorerUrl: "https://explorer-pob.dev11.top"
+  blockExplorerUrl: "https://explorer-pob.dev11.top",
+  blockExplorerUrls: ["https://explorer-pob.dev11.top"],
 };
 export function getProvider() {
   if (!window.ethereum) {
