@@ -11,7 +11,6 @@ import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { WalletProvider } from "./context/WalletContext";
-import { injectPaliWallet } from './utils/paliInjector';
 import ENV from './constants/env';
 import { useFonts } from 'expo-font';
 import { Ionicons, MaterialCommunityIcons, FontAwesome, Feather } from '@expo/vector-icons';
@@ -40,17 +39,6 @@ function AppContent() {
         console.warn('Version check error:', e);
       }
     })();
-  }, []);
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      injectPaliWallet().then((success) => {
-        if (success) {
-          console.log("Pali Wallet disponible para usar");
-        } else {
-          console.warn("Pali Wallet no disponible.");
-        }
-      });
-    }
   }, []);
   if (isLoading) return null;
   return (
