@@ -1068,7 +1068,7 @@ const getZoneEmoji = (zone) => {
     "Sur Chico": "pe",
     "Sur Grande": "pe",
     "North America": "us",
-    "South America": "br", 
+    "South America": "br",
     "Caribbean": "do",
     "Europe": "eu",
     "Middle East": "ae",
@@ -1117,7 +1117,7 @@ const BeachCard = ({ beach, isDark, onPress, t }) => {
         style={styles.beachCardImage}
         resizeMode="cover"
       />
-      {}
+      { }
       <View style={styles.locationBadge}>
         <FlagIcon code={flag} size={0.8} />
         <Text style={styles.locationBadgeText}>{locationText}</Text>
@@ -1287,7 +1287,7 @@ export default function BeachMapScreen() {
   const subTextColor = isDark ? colors.textMuted : "#666666";
   const inputBg = isDark ? "rgba(255, 255, 255, 0.1)" : "#ffffff";
   const headerBg = isDark ? BRAND.oceanDark : "#ffffff";
-  const navBarHeight = 90; 
+  const navBarHeight = 90;
   const handleBeachPress = (beach) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -1313,7 +1313,7 @@ export default function BeachMapScreen() {
             : t("celebration_thanks")
         }
       />
-      {}
+      { }
       <View style={{ backgroundColor: headerBg, zIndex: 100 }}>
         <SafeAreaView edges={["top"]}>
           <View
@@ -1326,7 +1326,7 @@ export default function BeachMapScreen() {
               {filteredBeaches.length} {t("map_available")}
             </Text>
           </View>
-          {}
+          { }
           <View style={[styles.searchContainer, { paddingHorizontal: SPACING.md }]}>
             <View style={[
               styles.searchBar,
@@ -1364,7 +1364,7 @@ export default function BeachMapScreen() {
               )}
             </View>
           </View>
-          {}
+          { }
           {suggestions.length > 0 && (
             <View style={[styles.suggestionsContainer, { paddingHorizontal: SPACING.md }]}>
               <View
@@ -1412,7 +1412,7 @@ export default function BeachMapScreen() {
               </View>
             </View>
           )}
-          {}
+          { }
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -1489,7 +1489,7 @@ export default function BeachMapScreen() {
           />
         </SafeAreaView>
       </View>
-      {}
+      { }
       <FlatList
         key={numColumns}
         data={filteredBeaches}
@@ -1548,7 +1548,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: SPACING.md,
     height: rs(50),
-    borderRadius: RADIUS.full, 
+    borderRadius: RADIUS.full,
     gap: SPACING.sm,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -1566,7 +1566,7 @@ const styles = StyleSheet.create({
   },
   suggestionsContainer: {
     position: 'absolute',
-    top: rs(125), 
+    top: rs(125),
     left: 0,
     right: 0,
     zIndex: 1000,
@@ -1631,7 +1631,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     overflow: "hidden",
     marginBottom: SPACING.md,
-    height: rs(220), 
+    height: rs(220),
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
@@ -1642,6 +1642,11 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: -1,
   },
   locationBadge: {
     position: 'absolute',
@@ -1651,7 +1656,7 @@ const styles = StyleSheet.create({
     paddingVertical: rs(4),
     paddingHorizontal: rs(10),
     borderRadius: RADIUS.full,
-    backdropFilter: 'blur(4px)', 
+    backdropFilter: 'blur(4px)',
     flexDirection: 'row',
     alignItems: 'center',
     gap: rs(4),
