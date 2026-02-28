@@ -507,19 +507,21 @@ export const handleClaim = async (
       if (!adminPrivateKey)
         throw new Error("adminMintViaBackend no fue provisto y no hay clave admin en .env");
 
-      // ✅ Usar JsonRpcProvider directo al RPC, no el wcProvider del usuario.
-      //    Esto evita que ethers llame a eth_gasPrice a través del browser
-      //    (que falla por CORS en dev). JsonRpcProvider hace la llamada desde
-      //    Node/el bundler, no desde fetch del browser.
-      const adminProvider = new ethers.providers.JsonRpcProvider(NETWORK_CONFIG.rpcUrl);
-      const adminWallet = new ethers.Wallet(adminPrivateKey, adminProvider);
+      // En desktop: _activeWcProvider está seteado por connectViaWalletConnect.
+      //    Las llamadas RPC van por el relay WebSocket de WalletConnect, evitando CORS.
+      // En móvil: _activeWcProvider es null (conexión directa via window.ethereum).
+      //    Usamos el provider de window.ethereum que ya está en la red correcta.
+      const adminTransport = _activeWcProvider
+        ? new ethers.providers.Web3Provider(_activeWcProvider)
+        : provider;
+      const adminWallet = new ethers.Wallet(adminPrivateKey, adminTransport);
       const abi = MissionNFT.abi || MissionNFT;
       const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, adminWallet);
 
-      // gasPrice fijo para evitar la llamada eth_gasPrice al RPC desde el browser.
+      // gasPrice fijo — evita una llamada adicional a eth_gasPrice.
       const gasPrice = ethers.utils.parseUnits('1', 'gwei');
 
-      console.log("⏳ Enviando minteo desde Admin (modo dev)...");
+      console.log("\u23F3 Enviando minteo desde Admin (modo dev)...");
       const tx = await contract.adminMint(recipient, missionId, tokenURI, { gasPrice });
       await tx.wait();
       txHash = tx.hash;
