@@ -507,18 +507,24 @@ export const handleClaim = async (
       if (!adminPrivateKey)
         throw new Error("adminMintViaBackend no fue provisto y no hay clave admin en .env");
 
-      // En desktop: _activeWcProvider está seteado por connectViaWalletConnect.
-      //    Las llamadas RPC van por el relay WebSocket de WalletConnect, evitando CORS.
-      // En móvil: _activeWcProvider es null (conexión directa via window.ethereum).
-      //    Usamos el provider de window.ethereum que ya está en la red correcta.
-      const adminTransport = _activeWcProvider
-        ? new ethers.providers.Web3Provider(_activeWcProvider)
-        : provider;
+      // Definimos la red manualmente para que ethers NO haga fetch al RPC
+      // para detectarla (eso falla por CORS). Con esto evitamos _uncachedDetectNetwork.
+      const zkSysNetwork = {
+        chainId: NETWORK_CONFIG.chainId,
+        name: NETWORK_CONFIG.chainName,
+      };
+
+      // Desktop: _activeWcProvider está seteado → sus llamadas RPC van por el
+      //   relay WebSocket de WalletConnect (sin CORS).
+      // Móvil: _activeWcProvider es null → usamos window.ethereum directamente,
+      //   que está dentro del browser de MetaMask (sin CORS).
+      const rawTransport = _activeWcProvider ? _activeWcProvider : window.ethereum;
+      const adminTransport = new ethers.providers.Web3Provider(rawTransport, zkSysNetwork);
       const adminWallet = new ethers.Wallet(adminPrivateKey, adminTransport);
       const abi = MissionNFT.abi || MissionNFT;
       const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, adminWallet);
 
-      // gasPrice fijo — evita una llamada adicional a eth_gasPrice.
+      // gasPrice fijo — evita la llamada eth_gasPrice al RPC desde el browser.
       const gasPrice = ethers.utils.parseUnits('1', 'gwei');
 
       console.log("\u23F3 Enviando minteo desde Admin (modo dev)...");
