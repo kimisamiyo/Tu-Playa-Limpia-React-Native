@@ -66,6 +66,85 @@ const CelebrationModal = ({ visible, onClose, nft }) => {
     );
 };
 
+// ─── Modal de confirmación de transacción ──────────────────────────────────
+const EXPLORER_URL = 'https://explorer-pob.dev11.top';
+
+const TxConfirmModal = ({ visible, txHash, onClose }) => {
+    const { colors, shadows, isDark } = useTheme();
+    const { t } = useLanguage();
+    if (!txHash) return null;
+
+    const handleOpenExplorer = () => {
+        Linking.openURL(`${EXPLORER_URL}/tx/${txHash}`);
+    };
+
+    return (
+        <Modal visible={visible} transparent animationType="fade">
+            <View style={styles.celebrationOverlay}>
+                <Animated.View
+                    entering={FadeInUp.delay(50).springify()}
+                    style={[
+                        styles.txModalContent,
+                        { backgroundColor: isDark ? '#0d1f2d' : '#ffffff' },
+                        shadows.xl,
+                    ]}
+                >
+                    {/* Icono éxito */}
+                    <LinearGradient
+                        colors={['#10b981', '#059669']}
+                        style={styles.celebrationIconBg}
+                    >
+                        <Ionicons name="checkmark-circle" size={rs(36)} color="#fff" />
+                    </LinearGradient>
+
+                    <Text style={[styles.celebrationTitle, { color: colors.text, marginTop: SPACING.md }]}>
+                        {t('tx_success_title') || '✅ Transacción Completada'}
+                    </Text>
+                    <Text style={[styles.celebrationSubtitle, { color: colors.textSecondary }]}>
+                        {t('tx_success_subtitle') || 'Tu NFT fue enviado exitosamente'}
+                    </Text>
+
+                    {/* Hash box */}
+                    <View style={[styles.txHashBox, { backgroundColor: isDark ? '#0a1929' : '#f1f5f9', borderColor: isDark ? '#1e3a5f' : '#e2e8f0' }]}>
+                        <Text style={[styles.txHashLabel, { color: colors.textSecondary }]}>
+                            {t('tx_hash_label') || 'Hash de transacción:'}
+                        </Text>
+                        <Text style={[styles.txHashText, { color: '#10b981' }]} numberOfLines={3} selectable>
+                            {txHash}
+                        </Text>
+                    </View>
+
+                    {/* Botón explorer */}
+                    <TouchableOpacity
+                        style={styles.explorerButton}
+                        onPress={handleOpenExplorer}
+                        activeOpacity={0.8}
+                    >
+                        <LinearGradient
+                            colors={['#0ea5e9', '#0284c7']}
+                            style={styles.explorerButtonInner}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                        >
+                            <Ionicons name="open-outline" size={rs(18)} color="#fff" />
+                            <Text style={styles.explorerButtonText}>
+                                {t('tx_view_explorer') || 'Ver en Explorer'}
+                            </Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
+
+                    {/* Botón cerrar */}
+                    <TouchableOpacity style={styles.txCloseButton} onPress={onClose}>
+                        <Text style={[styles.txCloseText, { color: colors.textSecondary }]}>
+                            {t('tx_close') || 'Cerrar'}
+                        </Text>
+                    </TouchableOpacity>
+                </Animated.View>
+            </View>
+        </Modal>
+    );
+};
+
 const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
@@ -177,7 +256,7 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
 };
 
 export default function RewardsScreen() {
-    const { points, nfts, unlockNFT, markNFTSeen, claimNFT } = useGame();
+    const { points, nfts, unlockNFT, markNFTSeen, claimNFT, updateUserProfile } = useGame();
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
     const { address, signer, setProvider, setSigner, setAddress } = useWallet();
@@ -187,6 +266,8 @@ export default function RewardsScreen() {
     const [lastUnlockedNFT, setLastUnlockedNFT] = useState(null);
     const [connectTarget, setConnectTarget] = useState(null);
     const [claimingMap, setClaimingMap] = useState({});
+    // ✅ Nuevo: estado para el modal de confirmación de TX
+    const [txConfirmation, setTxConfirmation] = useState({ visible: false, txHash: null });
     const { width } = useWindowDimensions();
     const isDesktop = width >= 1024;
 
@@ -290,10 +371,9 @@ export default function RewardsScreen() {
             if (result?.success) {
                 await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 claimNFT(nft.id, result.txHash);
-                Alert.alert(
-                    t('rewards_success') || 'NFT minteado 🎉',
-                    `${t('rewards_success_desc') || 'Tu NFT fue enviado a tu wallet'}\n\nHash: ${result.txHash.slice(0, 20)}...`
-                );
+                // ✅ Mostrar modal de confirmación con el txHash real
+                setShowDetail(false);
+                setTxConfirmation({ visible: true, txHash: result.txHash });
             } else {
                 throw result?.error || new Error('Error desconocido');
             }
@@ -342,6 +422,12 @@ export default function RewardsScreen() {
                 nft={selectedNFT}
                 onClaim={handleClaimNFT}
             />
+            {/* ✅ Modal de confirmación de TX con hash y link al explorer */}
+            <TxConfirmModal
+                visible={txConfirmation.visible}
+                txHash={txConfirmation.txHash}
+                onClose={() => setTxConfirmation({ visible: false, txHash: null })}
+            />
         </View>
     );
 }
@@ -385,4 +471,61 @@ const styles = StyleSheet.create({
     claimButton: { width: '100%', borderRadius: RADIUS.md, padding: SPACING.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm },
     claimButtonText: { fontSize: rf(14), fontWeight: '700', color: '#fff' },
     connectWalletContainer: { flex: 1, width: '100%' },
+    // ── TxConfirmModal ──────────────────────────────────────────────────────
+    txModalContent: {
+        width: '100%',
+        maxWidth: rs(380),
+        borderRadius: RADIUS.xl,
+        padding: SPACING.xl,
+        alignItems: 'center',
+    },
+    txHashBox: {
+        width: '100%',
+        borderRadius: RADIUS.md,
+        borderWidth: 1,
+        padding: SPACING.md,
+        marginTop: SPACING.lg,
+        marginBottom: SPACING.md,
+    },
+    txHashLabel: {
+        fontSize: rf(11),
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
+        marginBottom: SPACING.xs,
+        fontWeight: '600',
+    },
+    txHashText: {
+        fontSize: rf(12),
+        fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+        lineHeight: rf(18),
+        fontWeight: '500',
+    },
+    explorerButton: {
+        width: '100%',
+        borderRadius: RADIUS.md,
+        overflow: 'hidden',
+        marginBottom: SPACING.sm,
+    },
+    explorerButtonInner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: SPACING.md,
+        paddingHorizontal: SPACING.lg,
+        gap: SPACING.sm,
+    },
+    explorerButtonText: {
+        fontSize: rf(14),
+        fontWeight: '700',
+        color: '#ffffff',
+    },
+    txCloseButton: {
+        paddingVertical: SPACING.sm,
+        paddingHorizontal: SPACING.lg,
+        marginTop: SPACING.xs,
+    },
+    txCloseText: {
+        fontSize: rf(14),
+        fontWeight: '500',
+    },
 });

@@ -31,8 +31,51 @@ export const GameProvider = ({ children }) => {
             ]);
             if (storedPoints) setPoints(parseInt(storedPoints));
             if (storedItems) setScannedItems(JSON.parse(storedItems));
-            if (storedNfts) setNfts(JSON.parse(storedNfts));
             if (storedUser) setUser(prev => ({ ...prev, ...JSON.parse(storedUser) }));
+
+            if (storedNfts) {
+                // AsyncStorage tiene datos — usarlos directamente
+                setNfts(JSON.parse(storedNfts));
+            } else {
+                // AsyncStorage vacío → intentar recuperar desde MongoDB
+                console.log('📦 AsyncStorage vacío, buscando NFTs en MongoDB...');
+                try {
+                    const userData = storedUser ? JSON.parse(storedUser) : null;
+                    const walletAddress = userData?.walletAddress;
+                    if (walletAddress) {
+                        const appUrl = process.env.EXPO_PUBLIC_APP_URL || 'https://tu-playa-limpia.vercel.app';
+                        const resp = await fetch(`${appUrl}/api/nfts?wallet=${walletAddress}`);
+                        if (resp.ok) {
+                            const { nfts: backupNfts } = await resp.json();
+                            if (backupNfts && backupNfts.length > 0) {
+                                // Reconstruir objetos NFT mínimos desde el registro de MongoDB
+                                const recovered = backupNfts.map(n => ({
+                                    id: n.nftLocalId || n._id,
+                                    hash: n.txHash,
+                                    txHash: n.txHash,
+                                    claimed: true,
+                                    date: new Date(n.mintedAt).toLocaleDateString(),
+                                    lockedUntil: new Date(new Date(n.mintedAt).getTime() + 86400000 * 30).toLocaleDateString(),
+                                    owner: 'Ocean Guardian',
+                                    ownerInitials: 'OG',
+                                    isNew: false,
+                                    title: n.metadata?.name || 'Ocean Guardian NFT',
+                                    description: n.metadata?.description || '',
+                                    attributes: n.metadata?.attributes || [],
+                                    rarity: 'Common',
+                                    acquisition: 'nft_acq_default',
+                                }));
+                                setNfts(recovered);
+                                console.log(`✅ ${recovered.length} NFTs recuperados desde MongoDB`);
+                            }
+                        }
+                    } else {
+                        console.log('ℹ️ Sin wallet conectada, no se puede recuperar desde MongoDB');
+                    }
+                } catch (mongoErr) {
+                    console.warn('⚠️ Error recuperando desde MongoDB:', mongoErr.message);
+                }
+            }
         } catch (e) {
             console.warn('Failed to load game state:', e);
         }

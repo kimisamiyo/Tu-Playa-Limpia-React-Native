@@ -534,6 +534,26 @@ export const handleClaim = async (
     }
 
     console.log("🎉 NFT minteado. TX:", txHash);
+
+    // --- 5. Guardar registro en MongoDB (silencioso, no bloquea el flujo) ---
+    try {
+      const appUrl = process.env.EXPO_PUBLIC_APP_URL || 'https://tu-playa-limpia.vercel.app';
+      await fetch(`${appUrl}/api/nfts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          wallet: recipient,
+          missionId,
+          txHash,
+          metadata,
+          nftLocalId: String(missionId),
+        }),
+      });
+      console.log('💾 NFT guardado en MongoDB');
+    } catch (mongoErr) {
+      console.warn('⚠️ No se pudo guardar en MongoDB (el NFT sí fue minteado):', mongoErr.message);
+    }
+
     return { success: true, txHash };
 
   } catch (error) {
