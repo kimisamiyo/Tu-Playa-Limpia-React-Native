@@ -65,6 +65,7 @@ export function AuthProvider({ children }) {
                 AsyncStorage.setItem(KEYS.USERNAME, name),
                 AsyncStorage.setItem(KEYS.ACCOUNT, JSON.stringify(accountData)),
                 AsyncStorage.setItem(KEYS.SESSION, 'true'),
+                AsyncStorage.setItem('@tpl_wallet_screen_seen', 'false'), // Forzar pantalla de wallet
             ]);
             setAccountId(newAccountId);
             setUsername(name);
@@ -83,6 +84,7 @@ export function AuthProvider({ children }) {
             const isValid = await verifyDrawing(drawingData, storedHash);
             if (isValid) {
                 await AsyncStorage.setItem(KEYS.SESSION, 'true');
+                await AsyncStorage.setItem('@tpl_wallet_screen_seen', 'false'); // Forzar pantalla de wallet en re-login
                 setIsAuthenticated(true);
                 return { success: true };
             }
@@ -132,7 +134,7 @@ export function AuthProvider({ children }) {
                 username: savedUsername,
                 account: accountData,
                 profile: profileData,
-                checksum: (await hashExportPassword(filePassword)).slice(0, 16) 
+                checksum: (await hashExportPassword(filePassword)).slice(0, 16)
             };
             const jsonStr = JSON.stringify(internalPayload);
             const filePasswordHash = await hashExportPassword(filePassword);
@@ -140,7 +142,7 @@ export function AuthProvider({ children }) {
             return {
                 success: true,
                 data: JSON.stringify({
-                    data: encrypted, 
+                    data: encrypted,
                 }),
             };
         } catch (e) {
@@ -163,7 +165,7 @@ export function AuthProvider({ children }) {
             if (importedPayload.app !== 'TuPlayaLimpia') {
                 return { success: false, error: 'Este archivo no pertenece a Tu Playa Limpia.' };
             }
-            const importedData = importedPayload; 
+            const importedData = importedPayload;
             const newPasswordHash = await hashExportPassword(newPassword);
             const newDrawingHash = await hashDrawing(newDrawingData);
             const GAME_KEYS = {
@@ -183,6 +185,7 @@ export function AuthProvider({ children }) {
                 AsyncStorage.setItem(KEYS.ACCOUNT, accountDataStr),
                 AsyncStorage.setItem(KEYS.PROFILE, profileDataStr),
                 AsyncStorage.setItem(KEYS.SESSION, 'true'),
+                AsyncStorage.setItem('@tpl_wallet_screen_seen', 'false'), // Forzar pantalla de wallet tras import
                 AsyncStorage.setItem(GAME_KEYS.POINTS, (accountObj.points || 0).toString()),
                 AsyncStorage.setItem(GAME_KEYS.ITEMS, JSON.stringify(accountObj.scannedItems || { bottles: 0, cans: 0, total: 0 })),
                 AsyncStorage.setItem(GAME_KEYS.NFTS, JSON.stringify(accountObj.nfts || [])),

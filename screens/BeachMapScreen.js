@@ -1194,6 +1194,8 @@ export default function BeachMapScreen() {
   }, [language]);
   const [lastUnlockedNFT, setLastUnlockedNFT] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
+  // ✅ Guard anti-duplicado: evita generar un 2° NFT si el usuario hace doble-click
+  const [processingBeach, setProcessingBeach] = useState(false);
   const { width } = useWindowDimensions();
   const isDesktop = width >= 1024;
   const numColumns = isDesktop ? 4 : 1;
@@ -1289,14 +1291,21 @@ export default function BeachMapScreen() {
   const headerBg = isDark ? BRAND.oceanDark : "#ffffff";
   const navBarHeight = 90;
   const handleBeachPress = (beach) => {
+    // ✅ Debounce: si ya hay un NFT siendo procesado, ignorar el click
+    if (processingBeach) return;
+    setProcessingBeach(true);
+    setTimeout(() => setProcessingBeach(false), 2000);
+
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    const newNFT = unlockRegionNFT(beach.name, beach.image);
+    const newNFT = unlockRegionNFT(beach);
     if (newNFT) {
+      // NFT nuevo creado exitosamente
       setLastUnlockedNFT(newNFT);
       setShowCelebration(true);
     }
+    // Si newNFT === null, ya existía — no mostramos celebración
     const url = `https://www.google.com/maps/search/?api=1&query=${beach.lat},${beach.lng}`;
     if (Platform.OS !== "web")
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

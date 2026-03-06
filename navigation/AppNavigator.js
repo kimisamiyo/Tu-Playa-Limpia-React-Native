@@ -16,7 +16,9 @@ import ScanScreen from '../screens/ScanScreen';
 import PromotionsScreen from '../screens/PromotionsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import BeachMapScreen from '../screens/BeachMapScreen';
+import ConnectWalletScreen from '../screens/ConnectWalletScreen';
 import AnimatedTabIcon from './AnimatedTabIcon';
+import { useWallet } from '../context/WalletContext';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 function LockedPromotionsScreen() {
@@ -92,9 +94,9 @@ function TabNavigator() {
     const showSidebar = width >= 1024;
     return (
         <View style={{ flex: 1, flexDirection: 'row' }}>
-            {}
+            { }
             {showSidebar && <DesktopSidebar />}
-            {}
+            { }
             <View style={{ flex: 1 }}>
                 <Tab.Navigator
                     screenOptions={{
@@ -187,7 +189,7 @@ export default function AppNavigator({ isAuthenticated, isFirstTime, onRegister,
                     {props => (
                         <AuthScreen
                             {...props}
-                            onAuthenticated={() => { }} 
+                            onAuthenticated={() => { }}
                             isFirstTime={isFirstTime}
                             onRegister={onRegister}
                             onLogin={onLogin}
@@ -199,6 +201,16 @@ export default function AppNavigator({ isAuthenticated, isFirstTime, onRegister,
             </Stack.Navigator>
         );
     }
+    const { hasSeenWalletScreen } = useWallet();
+
+    if (!hasSeenWalletScreen) {
+        return (
+            <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
+                <Stack.Screen name="Web3Onboarding" component={ConnectWalletScreen} />
+            </Stack.Navigator>
+        );
+    }
+
     return (
         <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
             <Stack.Screen name="MainTabs" component={TabNavigator} />

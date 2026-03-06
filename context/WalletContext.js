@@ -1,6 +1,7 @@
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
 import { ethers } from "ethers"
 import EthereumProvider from "@walletconnect/ethereum-provider"
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const WalletContext = createContext()
 
@@ -22,6 +23,39 @@ export function WalletProvider({ children }) {
   const [provider, setProvider] = useState(null)
   const [signer, setSigner] = useState(null)
   const [address, setAddress] = useState(null)
+  const [hasSeenWalletScreen, setHasSeenWalletScreen] = useState(true)
+
+  // Cargar estado inicial (pantalla vista y última dirección conexa)
+  useEffect(() => {
+    (async () => {
+      try {
+        const [seen, lastAddress] = await Promise.all([
+          AsyncStorage.getItem('@tpl_wallet_screen_seen'),
+          AsyncStorage.getItem('@tpl_last_wallet_address')
+        ]);
+        setHasSeenWalletScreen(seen === 'true');
+        if (lastAddress) setAddress(lastAddress);
+      } catch (e) {
+        console.error("Error loading wallet state", e);
+      }
+    })();
+  }, []);
+
+  const markWalletScreenSeen = async () => {
+    try {
+      await AsyncStorage.setItem('@tpl_wallet_screen_seen', 'true');
+      setHasSeenWalletScreen(true);
+    } catch (e) {
+      console.error("Error setting wallet screen state", e);
+    }
+  };
+
+  // Guardar address cuando cambie
+  useEffect(() => {
+    if (address) {
+      AsyncStorage.setItem('@tpl_last_wallet_address', address).catch(() => { });
+    }
+  }, [address]);
 
   // --------------------------------------------------
   // SWITCH / ADD NETWORK
@@ -56,7 +90,7 @@ export function WalletProvider({ children }) {
   // --------------------------------------------------
   // 🦊 METAMASK (EXTENSIÓN DESKTOP)
   // --------------------------------------------------
-  const connectMetaMask = async () => {
+  const connectMetaMask = async (providerName = "MetaMask") => {
     try {
 
       if (!window.ethereum) {
@@ -76,7 +110,7 @@ export function WalletProvider({ children }) {
         return
       }
 
-      const ethersProvider = new ethers.BrowserProvider(mmProvider)
+      const ethersProvider = new ethers.providers.Web3Provider(mmProvider)
 
       // ✅ ESTO ABRE LA EXTENSIÓN
       await ethersProvider.send("eth_requestAccounts", [])
@@ -90,7 +124,7 @@ export function WalletProvider({ children }) {
       setSigner(signer)
       setAddress(address)
 
-      console.log("🦊 MetaMask conectado:", address)
+      console.log(`🦊 ${providerName} conectado:`, address)
 
     } catch (err) {
       console.log("MetaMask connection error:", err)
@@ -117,7 +151,7 @@ export function WalletProvider({ children }) {
 
       await switchNetwork(wcProvider)
 
-      const ethersProvider = new ethers.BrowserProvider(wcProvider)
+      const ethersProvider = new ethers.providers.Web3Provider(wcProvider)
 
       const signer = await ethersProvider.getSigner()
       const address = await signer.getAddress()
@@ -150,7 +184,9 @@ export function WalletProvider({ children }) {
         disconnectWallet,
         provider,
         signer,
-        address
+        address,
+        hasSeenWalletScreen,
+        markWalletScreenSeen
       }}
     >
       {children}

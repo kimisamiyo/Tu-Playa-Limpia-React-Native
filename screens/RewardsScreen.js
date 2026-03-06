@@ -103,6 +103,9 @@ const TxConfirmModal = ({ visible, txHash, onClose }) => {
                     <Text style={[styles.celebrationSubtitle, { color: colors.textSecondary }]}>
                         {t('tx_success_subtitle') || 'Tu NFT fue enviado exitosamente'}
                     </Text>
+                    <Text style={[styles.celebrationSubtitle, { color: colors.textSecondary, marginTop: SPACING.md, fontSize: rf(12), fontStyle: 'italic', opacity: 0.8 }]}>
+                        {t('tx_success_delay') || 'La visualización en la red puede demorar hasta 30 segundos'}
+                    </Text>
 
                     {/* Hash box */}
                     <View style={[styles.txHashBox, { backgroundColor: isDark ? '#0a1929' : '#f1f5f9', borderColor: isDark ? '#1e3a5f' : '#e2e8f0' }]}>
@@ -151,11 +154,11 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
     const [claiming, setClaiming] = useState(false);
     if (!nft) return null;
 
-    const handleClaimPress = async (walletType) => {
+    const handleClaimPress = async () => {
         if (nft.claimed || claiming) return;
         setClaiming(true);
         try {
-            await onClaim(nft, walletType);
+            await onClaim(nft); // ya no pasamos walletType porque viene de WalletContext
         } catch (error) {
             console.error(error);
         } finally {
@@ -209,43 +212,24 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
                                 </View>
                             )}
 
-                            {/* ✅ Ambos botones visibles siempre, en desktop y móvil */}
                             <View style={{ marginTop: SPACING.xl, width: '100%', gap: SPACING.md }}>
-
-                                {/* Botón Pali Wallet */}
+                                {/* Un solo botón de reclamar, ya que la cuenta está globalmente conectada */}
                                 <AnimatedButton
-                                    title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_pali')}
-                                    onPress={() => handleClaimPress('pali')}
+                                    title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_nft', 'RECLAMAR NFT')}
+                                    onPress={handleClaimPress}
                                     variant="primary"
                                     icon={
-                                        <Image
-                                            source={require('../assets/logo-pali.png')}
-                                            style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
-                                            resizeMode="contain"
+                                        <Ionicons
+                                            name={nft.claimed ? "checkmark-circle" : "sparkles"}
+                                            size={rs(20)}
+                                            color="#fff"
+                                            style={{ marginRight: rs(8) }}
                                         />
                                     }
                                     disabled={nft.claimed || claiming}
                                     fullWidth
                                     style={{ justifyContent: 'center', alignItems: 'center' }}
                                 />
-
-                                {/* Botón MetaMask (WalletConnect) — visible en todas las plataformas */}
-                                <AnimatedButton
-                                    title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_metamask')}
-                                    onPress={() => handleClaimPress('metamask')}
-                                    variant="secondary"
-                                    icon={
-                                        <Image
-                                            source={require('../assets/logo-metamask.png')}
-                                            style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
-                                            resizeMode="contain"
-                                        />
-                                    }
-                                    disabled={nft.claimed || claiming}
-                                    fullWidth
-                                    style={{ justifyContent: 'center', alignItems: 'center' }}
-                                />
-
                             </View>
                         </View>
                     </Animated.View>
@@ -259,7 +243,7 @@ export default function RewardsScreen() {
     const { points, nfts, unlockNFT, markNFTSeen, claimNFT, updateUserProfile } = useGame();
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
-    const { address, signer, setProvider, setSigner, setAddress } = useWallet();
+    const { address, signer, setProvider, setSigner, setAddress, connectMetaMask } = useWallet();
     const [showCelebration, setShowCelebration] = useState(false);
     const [showDetail, setShowDetail] = useState(false);
     const [selectedNFT, setSelectedNFT] = useState(null);
@@ -268,6 +252,51 @@ export default function RewardsScreen() {
     const [claimingMap, setClaimingMap] = useState({});
     // ✅ Nuevo: estado para el modal de confirmación de TX
     const [txConfirmation, setTxConfirmation] = useState({ visible: false, txHash: null });
+    const [claimingId, setClaimingId] = useState(null);
+
+    const handleCloseDetail = () => {
+        setShowDetail(false);
+        setTimeout(() => setSelectedNFT(null), 300);
+    };
+
+    const handleClaimNFT = async (nft) => {
+        if (!address || !signer) {
+            Alert.alert("Wallet desconectada", "Por favor, vuelve a tu perfil y conecta tu wallet.");
+            // Opcional: open connect modal here
+            await connectMetaMask();
+            return;
+        }
+
+        setClaimingId(nft.id);
+        setSelectedNFT(null); // Close detail modal immediately
+
+        try {
+            // Pasamos `null` a walletType y enviamos explícitamente el `signer` del contexto
+            const result = await Promise.race([
+                handleClaim(nft.id, null, signer),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout: la transacción tardó demasiado')), 120000))
+            ]);
+            console.log("Resultado del claim:", result);
+            if (result?.success) {
+                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                claimNFT(nft.id, result.txHash);
+                // ✅ Mostrar modal de confirmación con el txHash real
+                setShowDetail(false); // Ensure detail modal is closed
+                setTxConfirmation({ visible: true, txHash: result.txHash });
+            } else {
+                throw result?.error || new Error('Error desconocido');
+            }
+        } catch (err) {
+            console.error("Error en handleClaimNFT:", err);
+            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            Alert.alert(
+                'Error',
+                err?.message || 'No se pudo mintear el NFT'
+            );
+        } finally {
+            setClaimingId(null);
+        }
+    };
     const { width } = useWindowDimensions();
     const isDesktop = width >= 1024;
 
@@ -347,45 +376,6 @@ export default function RewardsScreen() {
             </GlassCard>
         </Animated.View>
     );
-
-    // ✅ Al cerrar el modal, desconectar la sesión WalletConnect activa.
-    //    Evita que MetaMask reciba solicitudes duplicadas en la próxima
-    //    conexión, lo que causaría el error -32002 "Request already pending".
-    const handleCloseDetail = () => {
-        disconnectWalletConnect();
-        setShowDetail(false);
-    };
-
-    const handleClaimNFT = async (nft, walletType = 'any') => {
-        try {
-            if (!nft) return;
-            console.log(`🚀 Claim iniciado (${walletType}) para missionId:`, nft.id);
-            const timeout = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error('Timeout: la transacción tardó demasiado')), 120000)
-            );
-            const result = await Promise.race([
-                handleClaim(nft.id, walletType),
-                timeout
-            ]);
-            console.log("Resultado del claim:", result);
-            if (result?.success) {
-                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                claimNFT(nft.id, result.txHash);
-                // ✅ Mostrar modal de confirmación con el txHash real
-                setShowDetail(false);
-                setTxConfirmation({ visible: true, txHash: result.txHash });
-            } else {
-                throw result?.error || new Error('Error desconocido');
-            }
-        } catch (err) {
-            console.error("Error en handleClaimNFT:", err);
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert(
-                'Error',
-                err?.message || 'No se pudo mintear el NFT'
-            );
-        }
-    };
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>

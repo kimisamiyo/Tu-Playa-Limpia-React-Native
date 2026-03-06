@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import MissionNFT from "./blockchain/MissionNFT.json";
 import { NETWORK_CONFIG } from './blockchain/networkConfig';
 import { EthereumProvider } from '@walletconnect/ethereum-provider';
+import { getMissionName } from './missions';
 
 // ✅ SEGURIDAD: Estas variables deben vivir en el servidor (backend/serverless).
 //    Nunca hardcodear aquí. Se reciben como parámetros desde el backend.
@@ -108,11 +109,18 @@ const chooseElement = (layer) => {
   return layer.elements[0];
 };
 
-export const generateNFTAttributes = () => {
+export const generateNFTAttributes = (missionId = null) => {
   const attributes = layersSetup.map((layer) => ({
     trait_type: layer.name,
     value: chooseElement(layer).name,
   }));
+
+  if (missionId) {
+    attributes.push({
+      trait_type: "Misión",
+      value: getMissionName(missionId)
+    });
+  }
 
   return {
     attributes,
@@ -487,9 +495,11 @@ export const handleClaim = async (
     console.log("✅ Aceptación firmada.");
 
     // --- 3. Generar metadata del NFT ---
-    const nftData = generateNFTAttributes();
+    const nftData = generateNFTAttributes(missionId);
+    const missionName = getMissionName(missionId);
+
     const metadata = {
-      name: "Ocean Guardian NFT",
+      name: `Ocean Guardian: ${missionName}`,
       description: nftData.description,
       attributes: nftData.attributes,
     };
@@ -534,25 +544,6 @@ export const handleClaim = async (
     }
 
     console.log("🎉 NFT minteado. TX:", txHash);
-
-    // --- 5. Guardar registro en MongoDB (silencioso, no bloquea el flujo) ---
-    try {
-      const appUrl = process.env.EXPO_PUBLIC_APP_URL || 'https://tu-playa-limpia.vercel.app';
-      await fetch(`${appUrl}/api/nfts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          wallet: recipient,
-          missionId,
-          txHash,
-          metadata,
-          nftLocalId: String(missionId),
-        }),
-      });
-      console.log('💾 NFT guardado en MongoDB');
-    } catch (mongoErr) {
-      console.warn('⚠️ No se pudo guardar en MongoDB (el NFT sí fue minteado):', mongoErr.message);
-    }
 
     return { success: true, txHash };
 
