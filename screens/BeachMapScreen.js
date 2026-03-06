@@ -18,9 +18,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../context/ThemeContext";
 import { BRAND } from "../constants/theme";
 import { rs, rf, SPACING, RADIUS } from "../constants/responsive";
-import { useGame } from '../context/GameContext';
-import { useLanguage } from '../context/LanguageContext';
-import CelebrationModal from '../components/CelebrationModal';
+import { useGame } from "../context/GameContext";
+import { useLanguage } from "../context/LanguageContext";
+import CelebrationModal from "../components/CelebrationModal";
 import { mintNFT } from "../utils/blockchain/missionNFT";
 import { generateNFTAttributes } from "../utils/nftGenerator";
 import FlagIcon from "../components/FlagIcon";
@@ -1023,45 +1023,79 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos((lat1 * Math.PI) / 180) *
-    Math.cos((lat2 * Math.PI) / 180) *
-    Math.sin(dLon / 2) ** 2;
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 const getFlag = (district, zone) => {
   const mapping = {
-    "Ancón": "pe", "Santa Rosa": "pe", "Miraflores": "pe", "Barranco": "pe",
-    "Chorrillos": "pe", "Villa El Salvador": "pe", "Lurín": "pe", "Punta Hermosa": "pe",
-    "Lima Norte": "pe", "Lima Centro": "pe", "Lima Sur": "pe", "Sur Chico": "pe", "Sur Grande": "pe",
-    "Los Angeles": "us", "Malibu": "us", "Miami Beach": "us", "Honolulu": "us",
-    "Orange County": "us", "San Diego": "us", "Clearwater": "us",
-    "Quintana Roo": "mx", "Cancún": "mx", "Tulum": "mx", "Isla Mujeres": "mx",
-    "Los Cabos": "mx", "Puerto Vallarta": "mx",
-    "Rio de Janeiro": "br", "Ceará": "br", "Fernando de Noronha": "br",
-    "Cartagena": "co", "La Guajira": "co", "San Andrés": "co",
+    Ancón: "pe",
+    "Santa Rosa": "pe",
+    Miraflores: "pe",
+    Barranco: "pe",
+    Chorrillos: "pe",
+    "Villa El Salvador": "pe",
+    Lurín: "pe",
+    "Punta Hermosa": "pe",
+    "Lima Norte": "pe",
+    "Lima Centro": "pe",
+    "Lima Sur": "pe",
+    "Sur Chico": "pe",
+    "Sur Grande": "pe",
+    "Los Angeles": "us",
+    Malibu: "us",
+    "Miami Beach": "us",
+    Honolulu: "us",
+    "Orange County": "us",
+    "San Diego": "us",
+    Clearwater: "us",
+    "Quintana Roo": "mx",
+    Cancún: "mx",
+    Tulum: "mx",
+    "Isla Mujeres": "mx",
+    "Los Cabos": "mx",
+    "Puerto Vallarta": "mx",
+    "Rio de Janeiro": "br",
+    Ceará: "br",
+    "Fernando de Noronha": "br",
+    Cartagena: "co",
+    "La Guajira": "co",
+    "San Andrés": "co",
     "Punta Cana": "do",
-    "Culebra": "pr",
-    "Buenos Aires": "ar", "Mar del Plata": "ar",
-    "Maldonado": "uy", "Punta del Este": "uy",
-    "Isla de Pascua": "cl", "Valparaíso": "cl",
-    "San Sebastián": "es", "Galicia": "es", "Barcelona": "es", "Formentera": "es",
-    "Algarve": "pt",
-    "Corsica": "fr", "Saint-Tropez": "fr",
-    "Lampedusa": "it",
-    "Zakynthos": "gr", "Crete": "gr",
-    "Dubai": "ae",
+    Culebra: "pr",
+    "Buenos Aires": "ar",
+    "Mar del Plata": "ar",
+    Maldonado: "uy",
+    "Punta del Este": "uy",
+    "Isla de Pascua": "cl",
+    Valparaíso: "cl",
+    "San Sebastián": "es",
+    Galicia: "es",
+    Barcelona: "es",
+    Formentera: "es",
+    Algarve: "pt",
+    Corsica: "fr",
+    "Saint-Tropez": "fr",
+    Lampedusa: "it",
+    Zakynthos: "gr",
+    Crete: "gr",
+    Dubai: "ae",
     "Sharm El Sheikh": "eg",
-    "Agadir": "ma",
-    "Muscat": "om",
-    "Goa": "in", "Kerala": "in", "Andaman Islands": "in",
-    "Hainan": "cn", "Sanya": "cn",
+    Agadir: "ma",
+    Muscat: "om",
+    Goa: "in",
+    Kerala: "in",
+    "Andaman Islands": "in",
+    Hainan: "cn",
+    Sanya: "cn",
     "Hong Kong": "hk",
-    "Taiwan": "tw",
+    Taiwan: "tw",
   };
   return mapping[district] || mapping[zone] || null;
 };
 const getZoneEmoji = (zone) => {
   const mapping = {
-    "all": "all",
+    all: "all",
     "Lima Norte": "pe",
     "Lima Centro": "pe",
     "Lima Sur": "pe",
@@ -1069,10 +1103,10 @@ const getZoneEmoji = (zone) => {
     "Sur Grande": "pe",
     "North America": "us",
     "South America": "br",
-    "Caribbean": "do",
-    "Europe": "eu",
+    Caribbean: "do",
+    Europe: "eu",
     "Middle East": "ae",
-    "Asia": "cn",
+    Asia: "cn",
   };
   return mapping[zone] || null;
 };
@@ -1117,7 +1151,7 @@ const BeachCard = ({ beach, isDark, onPress, t }) => {
         style={styles.beachCardImage}
         resizeMode="cover"
       />
-      { }
+      {}
       <View style={styles.locationBadge}>
         <FlagIcon code={flag} size={0.8} />
         <Text style={styles.locationBadgeText}>{locationText}</Text>
@@ -1144,7 +1178,8 @@ const BeachCard = ({ beach, isDark, onPress, t }) => {
               </Text>
             </View>
             <TouchableOpacity
-              onPress={() => {
+              onPress={(e) => {
+                e.stopPropagation();
                 const url = `https://www.google.com/maps/search/?api=1&query=${beach.lat},${beach.lng}`;
                 if (Platform.OS !== "web")
                   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -1248,18 +1283,28 @@ export default function BeachMapScreen() {
     const maxSuggestions = 5;
     LIMA_BEACHES.forEach((beach) => {
       if (beach.name.toLowerCase().includes(searchLower)) {
-        suggestionSet.add(JSON.stringify({ type: 'beach', text: beach.name, beach }));
+        suggestionSet.add(
+          JSON.stringify({ type: "beach", text: beach.name, beach }),
+        );
       }
     });
     LIMA_BEACHES.forEach((beach) => {
       if (beach.district.toLowerCase().includes(searchLower)) {
-        suggestionSet.add(JSON.stringify({ type: 'district', text: beach.district }));
+        suggestionSet.add(
+          JSON.stringify({ type: "district", text: beach.district }),
+        );
       }
     });
     Object.keys(zoneMapping).forEach((zone) => {
       const translatedZone = t(zoneMapping[zone]);
       if (translatedZone.toLowerCase().includes(searchLower)) {
-        suggestionSet.add(JSON.stringify({ type: 'zone', text: translatedZone, originalZone: zone }));
+        suggestionSet.add(
+          JSON.stringify({
+            type: "zone",
+            text: translatedZone,
+            originalZone: zone,
+          }),
+        );
       }
     });
     const suggestionsArray = Array.from(suggestionSet)
@@ -1272,11 +1317,11 @@ export default function BeachMapScreen() {
     generateSuggestions(text);
   };
   const handleSuggestionPress = (suggestion) => {
-    if (suggestion.type === 'beach') {
+    if (suggestion.type === "beach") {
       setSearch(suggestion.text);
-    } else if (suggestion.type === 'district') {
+    } else if (suggestion.type === "district") {
       setSearch(suggestion.text);
-    } else if (suggestion.type === 'zone') {
+    } else if (suggestion.type === "zone") {
       setSearch("");
       setSelectedZone(zoneMapping[suggestion.originalZone]);
     }
@@ -1306,10 +1351,6 @@ export default function BeachMapScreen() {
       setShowCelebration(true);
     }
     // Si newNFT === null, ya existía — no mostramos celebración
-    const url = `https://www.google.com/maps/search/?api=1&query=${beach.lat},${beach.lng}`;
-    if (Platform.OS !== "web")
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Linking.openURL(url);
   };
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -1322,12 +1363,10 @@ export default function BeachMapScreen() {
             : t("celebration_thanks")
         }
       />
-      { }
+      {}
       <View style={{ backgroundColor: headerBg, zIndex: 100 }}>
         <SafeAreaView edges={["top"]}>
-          <View
-            style={[styles.header, { backgroundColor: headerBg }]}
-          >
+          <View style={[styles.header, { backgroundColor: headerBg }]}>
             <Text style={[styles.headerTitle, { color: textColor }]}>
               {t("map_title")}
             </Text>
@@ -1335,17 +1374,29 @@ export default function BeachMapScreen() {
               {filteredBeaches.length} {t("map_available")}
             </Text>
           </View>
-          { }
-          <View style={[styles.searchContainer, { paddingHorizontal: SPACING.md }]}>
-            <View style={[
-              styles.searchBar,
-              {
-                backgroundColor: inputBg,
-                borderColor: isDark ? "rgba(255,255,255,0.15)" : "transparent",
-                borderWidth: isDark ? 1 : 0
-              }
-            ]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: rs(8) }}>
+          {}
+          <View
+            style={[styles.searchContainer, { paddingHorizontal: SPACING.md }]}
+          >
+            <View
+              style={[
+                styles.searchBar,
+                {
+                  backgroundColor: inputBg,
+                  borderColor: isDark
+                    ? "rgba(255,255,255,0.15)"
+                    : "transparent",
+                  borderWidth: isDark ? 1 : 0,
+                },
+              ]}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: rs(8),
+                }}
+              >
                 <FlagIcon code={LANGUAGE_LABELS[language]?.code} size={0.8} />
                 <Ionicons name="search" size={rs(20)} color={BRAND.primary} />
               </View>
@@ -1373,22 +1424,31 @@ export default function BeachMapScreen() {
               )}
             </View>
           </View>
-          { }
+          {}
           {suggestions.length > 0 && (
-            <View style={[styles.suggestionsContainer, { paddingHorizontal: SPACING.md }]}>
+            <View
+              style={[
+                styles.suggestionsContainer,
+                { paddingHorizontal: SPACING.md },
+              ]}
+            >
               <View
                 style={[
                   styles.suggestionsList,
                   {
-                    backgroundColor: isDark ? "rgba(13, 58, 77, 0.95)" : "#ffffff",
-                    borderColor: isDark ? "rgba(96, 125, 139, 0.3)" : "rgba(226, 232, 240, 1)",
+                    backgroundColor: isDark
+                      ? "rgba(13, 58, 77, 0.95)"
+                      : "#ffffff",
+                    borderColor: isDark
+                      ? "rgba(96, 125, 139, 0.3)"
+                      : "rgba(226, 232, 240, 1)",
                   },
                 ]}
               >
                 {suggestions.map((suggestion, index) => {
-                  const isBeach = suggestion.type === 'beach';
-                  const isDistrict = suggestion.type === 'district';
-                  const isZone = suggestion.type === 'zone';
+                  const isBeach = suggestion.type === "beach";
+                  const isDistrict = suggestion.type === "district";
+                  const isZone = suggestion.type === "zone";
                   return (
                     <TouchableOpacity
                       key={index}
@@ -1396,32 +1456,61 @@ export default function BeachMapScreen() {
                         styles.suggestionItem,
                         index < suggestions.length - 1 && {
                           borderBottomWidth: 1,
-                          borderBottomColor: isDark ? "rgba(96, 125, 139, 0.2)" : "rgba(226, 232, 240, 1)",
+                          borderBottomColor: isDark
+                            ? "rgba(96, 125, 139, 0.2)"
+                            : "rgba(226, 232, 240, 1)",
                         },
                       ]}
                       onPress={() => handleSuggestionPress(suggestion)}
                     >
                       <Ionicons
-                        name={isBeach ? "location" : isDistrict ? "business" : "globe"}
+                        name={
+                          isBeach
+                            ? "location"
+                            : isDistrict
+                              ? "business"
+                              : "globe"
+                        }
                         size={rs(18)}
-                        color={isBeach ? "#0ea5e9" : isDistrict ? "#8b5cf6" : "#f59e0b"}
+                        color={
+                          isBeach
+                            ? "#0ea5e9"
+                            : isDistrict
+                              ? "#8b5cf6"
+                              : "#f59e0b"
+                        }
                       />
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.suggestionText, { color: textColor }]}>
+                        <Text
+                          style={[styles.suggestionText, { color: textColor }]}
+                        >
                           {suggestion.text}
                         </Text>
-                        <Text style={[styles.suggestionLabel, { color: subTextColor }]}>
-                          {isBeach ? (t("map_suggestion_beach") || "Playa") : isDistrict ? (t("map_suggestion_district") || "Distrito") : (t("map_suggestion_zone") || "Zona")}
+                        <Text
+                          style={[
+                            styles.suggestionLabel,
+                            { color: subTextColor },
+                          ]}
+                        >
+                          {isBeach
+                            ? t("map_suggestion_beach") || "Playa"
+                            : isDistrict
+                              ? t("map_suggestion_district") || "Distrito"
+                              : t("map_suggestion_zone") || "Zona"}
                         </Text>
                       </View>
-                      <Ionicons name="arrow-forward" size={rs(16)} color={subTextColor} />
+                      <Ionicons
+                        name="arrow-forward"
+                        size={rs(16)}
+                        color={subTextColor}
+                      />
                     </TouchableOpacity>
                   );
                 })}
               </View>
             </View>
           )}
-          { }
+          {}
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -1459,10 +1548,19 @@ export default function BeachMapScreen() {
                       <Text
                         style={[
                           styles.zoneFilterText,
-                          { color: "#fff", fontWeight: "700", flexDirection: 'row', alignItems: 'center' },
+                          {
+                            color: "#fff",
+                            fontWeight: "700",
+                            flexDirection: "row",
+                            alignItems: "center",
+                          },
                         ]}
                       >
-                        <FlagIcon code={getZoneEmoji(item)} size={0.7} style={{ marginRight: 4 }} />
+                        <FlagIcon
+                          code={getZoneEmoji(item)}
+                          size={0.7}
+                          style={{ marginRight: 4 }}
+                        />
                         {t(item)}
                       </Text>
                     </LinearGradient>
@@ -1484,10 +1582,18 @@ export default function BeachMapScreen() {
                       <Text
                         style={[
                           styles.zoneFilterText,
-                          { color: isDark ? "#fff" : "#475569", flexDirection: 'row', alignItems: 'center' },
+                          {
+                            color: isDark ? "#fff" : "#475569",
+                            flexDirection: "row",
+                            alignItems: "center",
+                          },
                         ]}
                       >
-                        <FlagIcon code={getZoneEmoji(item)} size={0.7} style={{ marginRight: 4 }} />
+                        <FlagIcon
+                          code={getZoneEmoji(item)}
+                          size={0.7}
+                          style={{ marginRight: 4 }}
+                        />
                         {t(item)}
                       </Text>
                     </View>
@@ -1498,7 +1604,7 @@ export default function BeachMapScreen() {
           />
         </SafeAreaView>
       </View>
-      { }
+      {}
       <FlatList
         key={numColumns}
         data={filteredBeaches}
@@ -1509,16 +1615,17 @@ export default function BeachMapScreen() {
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <View style={{ width: cardWidth }}>
-            <BeachCard beach={item} isDark={isDark} onPress={handleBeachPress} t={t} />
+            <BeachCard
+              beach={item}
+              isDark={isDark}
+              onPress={handleBeachPress}
+              t={t}
+            />
           </View>
         )}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons
-              name="beach-outline"
-              size={rs(64)}
-              color={subTextColor}
-            />
+            <Ionicons name="beach-outline" size={rs(64)} color={subTextColor} />
             <Text style={[styles.emptyText, { color: textColor }]}>
               {t("map_no_beaches")}
             </Text>
@@ -1574,7 +1681,7 @@ const styles = StyleSheet.create({
     padding: rs(4),
   },
   suggestionsContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: rs(125),
     left: 0,
     right: 0,
@@ -1658,23 +1765,23 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
   locationBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: SPACING.sm,
     left: SPACING.sm,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: "rgba(0,0,0,0.6)",
     paddingVertical: rs(4),
     paddingHorizontal: rs(10),
     borderRadius: RADIUS.full,
-    backdropFilter: 'blur(4px)',
-    flexDirection: 'row',
-    alignItems: 'center',
+    backdropFilter: "blur(4px)",
+    flexDirection: "row",
+    alignItems: "center",
     gap: rs(4),
-    zIndex: 5
+    zIndex: 5,
   },
   locationBadgeText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: rf(12),
-    fontWeight: '700',
+    fontWeight: "700",
   },
   beachCardGradient: {
     flex: 1,
