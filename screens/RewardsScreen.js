@@ -98,10 +98,10 @@ const TxConfirmModal = ({ visible, txHash, onClose }) => {
                     </LinearGradient>
 
                     <Text style={[styles.celebrationTitle, { color: colors.text, marginTop: SPACING.md }]}>
-                        {t('tx_success_title') || '✅ Transacción Completada'}
+                        {t('tx_success_title') || 'Transacción completada'}
                     </Text>
-                    <Text style={[styles.celebrationSubtitle, { color: colors.textSecondary }]}>
-                        {t('tx_success_subtitle') || 'Tu NFT fue enviado exitosamente'}
+                    <Text style={[styles.celebrationSubtitle, { color: colors.textSecondary, fontStyle: 'italic', marginTop: SPACING.xs }]}>
+                        {t('tx_success_desc') || 'La transacción puede tardar hasta 30 segundos en visualizarse en la red'}
                     </Text>
 
                     {/* Hash box */}
@@ -148,6 +148,7 @@ const TxConfirmModal = ({ visible, txHash, onClose }) => {
 const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
     const { colors, shadows, isDark } = useTheme();
     const { t } = useLanguage();
+    const { address, connectedWalletType } = useWallet();
     const [claiming, setClaiming] = useState(false);
     if (!nft) return null;
 
@@ -209,43 +210,24 @@ const NFTDetailModal = ({ visible, onClose, nft, onClaim }) => {
                                 </View>
                             )}
 
-                            {/* ✅ Ambos botones visibles siempre, en desktop y móvil */}
+                            {/* ✅ Updated Claim Layout */}
                             <View style={{ marginTop: SPACING.xl, width: '100%', gap: SPACING.md }}>
+                                {!address && !nft.claimed && (
+                                    <Animated.View entering={FadeInDown.delay(100)} style={styles.walletWarningContent}>
+                                        <Text style={[styles.walletWarningTextDesc, { color: colors.error || '#ef4444' }]}>
+                                            {t('rewards_connect_wallet_warning') || 'Para reclamar el NFT, debes tener una wallet conectada. Puedes conectar una en Perfil.'}
+                                        </Text>
+                                    </Animated.View>
+                                )}
 
-                                {/* Botón Pali Wallet */}
                                 <AnimatedButton
-                                    title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_pali')}
-                                    onPress={() => handleClaimPress('pali')}
-                                    variant="primary"
-                                    icon={
-                                        <Image
-                                            source={require('../assets/logo-pali.png')}
-                                            style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
-                                            resizeMode="contain"
-                                        />
-                                    }
-                                    disabled={nft.claimed || claiming}
+                                    title={nft.claimed ? t('rewards_claimed') : (t('rewards_claim_nft') || 'Reclamar NFT')}
+                                    onPress={() => handleClaimPress(connectedWalletType || 'metamask')}
+                                    variant={!address && !nft.claimed ? "secondary" : "primary"}
+                                    disabled={nft.claimed || claiming || !address}
                                     fullWidth
-                                    style={{ justifyContent: 'center', alignItems: 'center' }}
+                                    style={{ justifyContent: 'center', alignItems: 'center', opacity: (!address && !nft.claimed) ? 0.5 : 1 }}
                                 />
-
-                                {/* Botón MetaMask (WalletConnect) — visible en todas las plataformas */}
-                                <AnimatedButton
-                                    title={nft.claimed ? t('rewards_claimed') : t('rewards_claim_metamask')}
-                                    onPress={() => handleClaimPress('metamask')}
-                                    variant="secondary"
-                                    icon={
-                                        <Image
-                                            source={require('../assets/logo-metamask.png')}
-                                            style={{ width: rs(32), height: rs(32), marginRight: rs(8) }}
-                                            resizeMode="contain"
-                                        />
-                                    }
-                                    disabled={nft.claimed || claiming}
-                                    fullWidth
-                                    style={{ justifyContent: 'center', alignItems: 'center' }}
-                                />
-
                             </View>
                         </View>
                     </Animated.View>

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { hashDrawing, verifyDrawing, hashExportPassword, obfuscateData, deobfuscateData, encryptData, decryptData } from '../utils/crypto';
 const AuthContext = createContext(null);
@@ -9,6 +10,7 @@ const KEYS = {
     PASSWORD_HASH: '@tpl_password_hash',
     PROFILE: '@tpl_user_profile',
     USERNAME: '@tpl_username',
+    REGISTRATION_DATE: '@tpl_registration_date',
 };
 
 const OBFUSCATION_KEY = 'tpl_secure_storage_v1';
@@ -73,6 +75,13 @@ export function AuthProvider({ children }) {
     }, []);
     const register = useCallback(async (name, password, drawingData) => {
         try {
+            // Capa extra de sanitización (Sanitization layer) para Prevenir Stored XSS
+            const sanitizeString = (str) => {
+                if (!str) return '';
+                return str.replace(/[<>"'&;/]/g, '');
+            };
+            const cleanName = sanitizeString(name).trim();
+
             const timestamp = Date.now().toString(16);
             const random = Math.random().toString(16).slice(2, 14);
             const newAccountId = `0x${timestamp}${random}`.slice(0, 42).padEnd(42, '0');
@@ -86,14 +95,19 @@ export function AuthProvider({ children }) {
             await Promise.all([
                 setSecureItem(KEYS.DRAWING_HASH, drawingHashed),
                 setSecureItem(KEYS.PASSWORD_HASH, passwordHashed),
-                AsyncStorage.setItem(KEYS.USERNAME, name),
+                AsyncStorage.setItem(KEYS.USERNAME, cleanName),
                 AsyncStorage.setItem(KEYS.ACCOUNT, JSON.stringify(accountData)),
                 AsyncStorage.setItem(KEYS.SESSION, 'true'),
+                AsyncStorage.setItem(KEYS.REGISTRATION_DATE, new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })),
             ]);
             setAccountId(newAccountId);
-            setUsername(name);
+            setUsername(cleanName);
             setIsFirstTime(false);
             setIsAuthenticated(true);
+
+            // Emitir evento global para refrescar el GameContext y el Dashboard
+            DeviceEventEmitter.emit('TPL_ACCOUNT_IMPORTED');
+
             return { success: true, accountId: newAccountId };
         } catch (e) {
             console.error('Registration error:', e);
@@ -108,6 +122,10 @@ export function AuthProvider({ children }) {
             if (isValid) {
                 await AsyncStorage.setItem(KEYS.SESSION, 'true');
                 setIsAuthenticated(true);
+
+                // Emitir evento global para leer el storage actual
+                DeviceEventEmitter.emit('TPL_ACCOUNT_IMPORTED');
+
                 return { success: true };
             }
             return { success: false, error: 'Invalid drawing' };
@@ -207,6 +225,7 @@ export function AuthProvider({ children }) {
                 AsyncStorage.setItem(KEYS.ACCOUNT, accountDataStr),
                 AsyncStorage.setItem(KEYS.PROFILE, profileDataStr),
                 AsyncStorage.setItem(KEYS.SESSION, 'true'),
+                AsyncStorage.setItem(KEYS.REGISTRATION_DATE, importedPayload.exportedAt ? new Date(importedPayload.exportedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString()),
                 AsyncStorage.setItem(GAME_KEYS.POINTS, (accountObj.points || 0).toString()),
                 AsyncStorage.setItem(GAME_KEYS.ITEMS, JSON.stringify(accountObj.scannedItems || { bottles: 0, cans: 0, total: 0 })),
                 AsyncStorage.setItem(GAME_KEYS.NFTS, JSON.stringify(accountObj.nfts || [])),
@@ -217,6 +236,10 @@ export function AuthProvider({ children }) {
             setUsername(importedData.username || '');
             setIsFirstTime(false);
             setIsAuthenticated(true);
+
+            // Avisar a todo el aplicativo (principalmente GameContext) que recargue del Storage
+            DeviceEventEmitter.emit('TPL_ACCOUNT_IMPORTED');
+
             return { success: true };
         } catch (error) {
             console.error('Import error:', error);

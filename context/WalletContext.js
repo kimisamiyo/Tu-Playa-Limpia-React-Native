@@ -22,6 +22,8 @@ export function WalletProvider({ children }) {
   const [provider, setProvider] = useState(null)
   const [signer, setSigner] = useState(null)
   const [address, setAddress] = useState(null)
+  const [connectedWalletType, setConnectedWalletType] = useState(null)
+  const [hasSkippedConnection, setHasSkippedConnection] = useState(false)
 
   // --------------------------------------------------
   // SWITCH / ADD NETWORK
@@ -75,8 +77,7 @@ export function WalletProvider({ children }) {
         alert("MetaMask no disponible")
         return
       }
-
-      const ethersProvider = new ethers.BrowserProvider(mmProvider)
+      const ethersProvider = new ethers.providers.Web3Provider(mmProvider)
 
       // ✅ ESTO ABRE LA EXTENSIÓN
       await ethersProvider.send("eth_requestAccounts", [])
@@ -89,6 +90,7 @@ export function WalletProvider({ children }) {
       setProvider(ethersProvider)
       setSigner(signer)
       setAddress(address)
+      setConnectedWalletType('metamask')
 
       console.log("🦊 MetaMask conectado:", address)
 
@@ -117,7 +119,7 @@ export function WalletProvider({ children }) {
 
       await switchNetwork(wcProvider)
 
-      const ethersProvider = new ethers.BrowserProvider(wcProvider)
+      const ethersProvider = new ethers.providers.Web3Provider(wcProvider)
 
       const signer = await ethersProvider.getSigner()
       const address = await signer.getAddress()
@@ -125,11 +127,50 @@ export function WalletProvider({ children }) {
       setProvider(ethersProvider)
       setSigner(signer)
       setAddress(address)
+      setConnectedWalletType('metamask')
 
       console.log("📱 WalletConnect conectado:", address)
 
     } catch (err) {
       console.log("WalletConnect error:", err)
+    }
+  }
+
+  // --------------------------------------------------
+  // 🟢 PALI WALLET
+  // --------------------------------------------------
+  const connectPali = async () => {
+    try {
+      let ethProvider = window.pali || window.ethereum;
+
+      if (window.ethereum?.providers) {
+        ethProvider =
+          window.ethereum.providers.find((p) => p.isPali || p.isPaliWallet) ||
+          window.ethereum;
+      }
+
+      if (!ethProvider) {
+        alert("Pali Wallet no detectada.");
+        return;
+      }
+
+      const ethersProvider = new ethers.providers.Web3Provider(ethProvider);
+      await ethProvider.request({ method: "eth_requestAccounts" });
+
+      await switchNetwork(ethProvider);
+
+      const signer = await ethersProvider.getSigner();
+      const address = await signer.getAddress();
+
+      setProvider(ethersProvider);
+      setSigner(signer);
+      setAddress(address);
+      setConnectedWalletType('pali');
+
+      console.log("🟢 Pali Wallet conectado:", address);
+
+    } catch (err) {
+      console.log("Pali connection error:", err);
     }
   }
 
@@ -140,6 +181,8 @@ export function WalletProvider({ children }) {
     setProvider(null)
     setSigner(null)
     setAddress(null)
+    setConnectedWalletType(null)
+    setHasSkippedConnection(false)
   }
 
   return (
@@ -147,10 +190,14 @@ export function WalletProvider({ children }) {
       value={{
         connectMetaMask,
         connectWalletConnect,
+        connectPali,
         disconnectWallet,
         provider,
         signer,
-        address
+        address,
+        connectedWalletType,
+        hasSkippedConnection,
+        setHasSkippedConnection
       }}
     >
       {children}

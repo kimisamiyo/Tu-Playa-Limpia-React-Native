@@ -9,13 +9,27 @@ export const LANGUAGES = {
     PT: 'pt',
 };
 export const LANGUAGE_LABELS = {
-    es: { label: 'Español', code: 'pe' },
-    en: { label: 'English', code: 'us' },
-    zh: { label: '中文', code: 'cn' },
-    hi: { label: 'हिन्दी', code: 'in' },
-    ar: { label: 'العربية', code: 'sa' },
-    fr: { label: 'Français', code: 'fr' },
-    pt: { label: 'Português', code: 'br' },
+    es: {
+        label: 'Español', code: 'pe'
+    },
+    en: {
+        label: 'English', code: 'us'
+    },
+    zh: {
+        label: '中文', code: 'cn'
+    },
+    hi: {
+        label: 'हनद', code: 'in'
+    },
+    ar: {
+        label: 'العربية', code: 'sa'
+    },
+    fr: {
+        label: 'Français', code: 'fr'
+    },
+    pt: {
+        label: 'Português', code: 'br'
+    },
 };
 export const REWARDS_CLAIM_LABELS = {
     es: {
@@ -56,6 +70,15 @@ export const REWARDS_CLAIM_LABELS = {
 };
 const translations = {
     es: {
+        rewards_claim_nft: 'Reclamar NFT',
+        tx_success_desc: 'La visualización en la red puede demorar hasta 30 segundos',
+        auth_intro_text: '¡Colecciona puntos escaneando residuos, reclama NFTs y explora las diversas funcionalidades que Tu Playa Limpia ofrece! Cada transacción completada es transparente y verificable: De esta forma, las acciones que realices tiene un impacto ambiental reconocible por la comunidad (Clean Missions - CMISS)',
+        wallet_connect_subtitle: 'Reclama tus recompensas y verifica tu impacto en la red.',
+        wallet_connect_pali: 'Conectar Pali',
+        wallet_connect_metamask: 'Conectar MetaMask',
+        wallet_connect_skip: 'Saltar / Conectar más tarde',
+        wallet_connect_hint: 'Si ya te encuentras conectado en Pali / Metamask a la red zkSYS, el proceso de conexión se salta de forma automática',
+
         auth_welcome: 'Bienvenido',
         auth_welcome_back: 'Bienvenido',
         auth_your_impact: 'Tu impacto comienza hoy',
@@ -326,7 +349,7 @@ const translations = {
         sidebar_promos: 'Promos',
         sidebar_settings: 'Configuración',
         sidebar_version: 'TPL • Escritorio',
-        sidebar_role: 'Ocean Guardian',
+        sidebar_role: 'TPL Explorer',
         map_title: 'Playas de Perú',
         map_available: 'playas disponibles',
         map_search_placeholder: 'Buscar playa, distrito o zona...',
@@ -350,8 +373,25 @@ const translations = {
         map_suggestion_beach: 'Playa',
         map_suggestion_district: 'Distrito',
         map_suggestion_zone: 'Zona',
+        beach_detail_located_in: ", ubicado en {location},",
+        beach_detail_about: "Acerca de esta playa",
+        beach_detail_desc_clean: " es un hermoso destino costero. ¡Gran trabajo de la comunidad manteniendo esta área impecable y preservando el ecosistema marino!",
+        beach_detail_desc_dirty: " es una zona costera que actualmente requiere nuestra ayuda. Únete a las campañas de Tu Playa Limpia para restaurar su estado prístino.",
+        beach_detail_location: "Detalles de Ubicación",
+        beach_detail_open_map: "Abrir en Google Maps",
+        beach_detail_go_back: "Regresar",
+        beach_detail_error: "Error al cargar los datos de la playa"
     },
     en: {
+        rewards_claim_nft: 'Claim NFT',
+        tx_success_desc: 'Network visualization may take up to 30 seconds',
+        auth_intro_text: 'Collect points by scanning waste, claim NFTs and explore the diverse features that Tu Playa Limpia offers! Every completed transaction is transparent and verifiable: This way, the actions you take have an environmental impact recognizable by the community (Clean Missions - CMISS)',
+        wallet_connect_subtitle: 'Claim your rewards and verify your network impact.',
+        wallet_connect_pali: 'Connect Pali',
+        wallet_connect_metamask: 'Connect MetaMask',
+        wallet_connect_skip: 'Skip / Connect later',
+        wallet_connect_hint: 'If you are already connected to the zkSYS network via Pali / MetaMask, the connection process will be skipped automatically',
+
         auth_welcome: 'Welcome',
         auth_welcome_back: 'Welcome',
         auth_your_impact: 'Your impact starts today',
@@ -622,7 +662,7 @@ const translations = {
         sidebar_promos: 'Promos',
         sidebar_settings: 'Settings',
         sidebar_version: 'TPL • Desktop',
-        sidebar_role: 'Ocean Guardian',
+        sidebar_role: 'TPL Explorer',
         map_title: 'Beaches of Peru',
         map_available: 'beaches available',
         map_search_placeholder: 'Search beach, district or zone...',
@@ -646,8 +686,25 @@ const translations = {
         map_suggestion_beach: 'Beach',
         map_suggestion_district: 'District',
         map_suggestion_zone: 'Zone',
+        beach_detail_located_in: ", located in {location},",
+        beach_detail_about: "About this beach",
+        beach_detail_desc_clean: " is a beautiful coastal area. Great job by the community keeping this area spotless and preserving the marine ecosystem!",
+        beach_detail_desc_dirty: " is a coastal region that currently requires our help. Join Tu Playa Limpia campaigns to restore its pristine state.",
+        beach_detail_location: "Location Details",
+        beach_detail_open_map: "Open in Google Maps",
+        beach_detail_go_back: "Go Back",
+        beach_detail_error: "Error loading beach data"
     },
     zh: {
+        rewards_claim_nft: '领取 NFT',
+        tx_success_desc: '网络可视化可能需要长达 30 秒',
+        auth_intro_text: '通过扫描垃圾收集积分，领取 NFT 并探索 Tu Playa Limpia 提供的各种功能！完成的每笔交易都是透明且可验证的：通过这种方式，您采取的行动将产生社区认可的环境影响 (Clean Missions - CMISS)',
+        wallet_connect_subtitle: '领取您的奖励并验证您的网络影响。',
+        wallet_connect_pali: '连接 Pali',
+        wallet_connect_metamask: '连接 MetaMask',
+        wallet_connect_skip: '跳过 / 稍后连接',
+        wallet_connect_hint: '如果您已通过 Pali / MetaMask 连接到 zkSYS 网络，连接过程将自动跳过',
+
         auth_welcome: '欢迎',
         auth_welcome_back: '欢迎回来',
         auth_your_impact: '你的影响从今天开始',
@@ -932,8 +989,25 @@ const translations = {
         map_suggestion_beach: '海滩',
         map_suggestion_district: '地区',
         map_suggestion_zone: '区域',
+        beach_detail_located_in: "，位于 {location}，",
+        beach_detail_about: "关于这片海滩",
+        beach_detail_desc_clean: " 是一个美丽的沿海地区。社区在保持该地区清洁和保护海洋生态系统方面做得非常出色！",
+        beach_detail_desc_dirty: " 是一个目前需要我们帮助的沿海地区。加入 Tu Playa Limpia 活动，恢复其原始状态。",
+        beach_detail_location: "位置详情",
+        beach_detail_open_map: "在 Google Maps 中打开",
+        beach_detail_go_back: "返回",
+        beach_detail_error: "加载海滩数据时出错"
     },
     hi: {
+        rewards_claim_nft: 'NFT दव कर',
+        tx_success_desc: 'नटवरक वजअलइजशन म 30 सकड तक क समय लग सकत ह',
+        auth_intro_text: 'कचरा स्कैन करके अंक एकत्र करें, NFT का दावा करें और Tu Playa Limpia द्वारा प्रदान की जाने वाली विभिन्न सुविधाओं का अन्वेषण करें! प्रत्येक पूर्ण लेनदेन पारदर्शी और सत्यापन योग्य है: इस तरह, आपके द्वारा की जाने वाली कार्रवाइयों का समुदाय द्वारा पहचाने जाने वाला पर्यावरणीय प्रभाव होता है (Clean Missions - CMISS)',
+        wallet_connect_subtitle: 'अपने पुरस्कारों का दावा करें और अपने नेटवर्क प्रभाव की पुष्टि करें।',
+        wallet_connect_pali: 'Pali कनेक्ट करें',
+        wallet_connect_metamask: 'MetaMask कनेक्ट करें',
+        wallet_connect_skip: 'छोड़ें / बाद में कनेक्ट करें',
+        wallet_connect_hint: 'यदि आप पहले से ही पाली / मेटामास्क के माध्यम से zkSYS नेटवर्क से जुड़े हैं, तो कनेक्शन प्रक्रिया स्वचालित रूप से छोड़ दी जाएगी',
+
         auth_welcome: 'स्वागत है',
         auth_welcome_back: 'वापसी पर स्वागत है',
         auth_your_impact: 'आपका प्रभाव आज से शुरू',
@@ -1218,8 +1292,25 @@ const translations = {
         map_suggestion_beach: 'समुद्र तट',
         map_suggestion_district: 'जिला',
         map_suggestion_zone: 'क्षेत्र',
+        beach_detail_located_in: ", {location} में स्थित है,",
+        beach_detail_about: "इस समुद्र तट के बारे में",
+        beach_detail_desc_clean: " एक सुंदर तटीय क्षेत्र है। समुदाय द्वारा इस क्षेत्र को बेदाग रखने और समुद्री पारिस्थितिकी तंत्र को संरक्षित करने का बहुत अच्छा काम!",
+        beach_detail_desc_dirty: " एक तटीय क्षेत्र है जिसे वर्तमान में हमारी सहायता की आवश्यकता है। इसकी प्राचीन स्थिति को बहाल करने के लिए Tu Playa Limpia अभियानों में शामिल हों।",
+        beach_detail_location: "स्थान विवरण",
+        beach_detail_open_map: "Google मानचित्र में खोलें",
+        beach_detail_go_back: "वापस जाएँ",
+        beach_detail_error: "समुद्र तट डेटा लोड करने में त्रुटि"
     },
     ar: {
+        rewards_claim_nft: 'المطالبة بـ NFT',
+        tx_success_desc: 'قد يستغرق ظهور المعاملة على الشبكة ما يصل إلى 30 ثانية',
+        auth_intro_text: 'اجمع النقاط عن طريق مسح النفايات، وطالب بـ NFTs واستكشف الميزات المتنوعة التي يقدمها Tu Playa Limpia! كل معاملة مكتملة شفافة وقابلة للتحقق: وبهذه الطريقة، فإن الإجراءات التي تتخذها لها تأثير بيئي يعترف به المجتمع (Clean Missions - CMISS)',
+        wallet_connect_subtitle: 'طالب بمكافآتك وتحقق من تأثيرك على الشبكة.',
+        wallet_connect_pali: 'ربط Pali',
+        wallet_connect_metamask: 'ربط MetaMask',
+        wallet_connect_skip: 'تخطي / الربط لاحقًا',
+        wallet_connect_hint: 'إذا كنت متصلاً بالفعل بشبكة zkSYS عبر Pali / MetaMask، فسيتم تخطي عملية الاتصال تلقائيًا',
+
         auth_welcome: 'مرحباً',
         auth_welcome_back: 'مرحباً بعودتك',
         auth_your_impact: 'تأثيرك يبدأ اليوم',
@@ -1505,8 +1596,25 @@ const translations = {
         map_suggestion_beach: 'شاطئ',
         map_suggestion_district: 'منطقة',
         map_suggestion_zone: 'منطقة',
+        beach_detail_located_in: "، يقع في {location}،",
+        beach_detail_about: "حول هذا الشاطئ",
+        beach_detail_desc_clean: " هي منطقة ساحلية جميلة. عمل رائع من المجتمع في الحفاظ على هذه المنطقة نظيفة والحفاظ على النظام البيئي البحري!",
+        beach_detail_desc_dirty: " هي منطقة ساحلية تتطلب حاليا مساعدتنا. انضم إلى حملات Tu Playa Limpia لاستعادة حالتها الأصلية.",
+        beach_detail_location: "تفاصيل الموقع",
+        beach_detail_open_map: "افتح في خرائط جوجل",
+        beach_detail_go_back: "عُد",
+        beach_detail_error: "خطأ في تحميل بيانات الشاطئ"
     },
     fr: {
+        rewards_claim_nft: 'Récupérer le NFT',
+        tx_success_desc: 'La visualisation sur le réseau peut prendre jusqu\'à 30 secondes',
+        auth_intro_text: "Collectez des points en scannant les déchets, réclamez des NFT et explorez les diverses fonctionnalités qu'offre Tu Playa Limpia ! Chaque transaction effectuée est transparente et vérifiable: De cette façon, les actions que vous entreprenez ont un impact environnemental reconnu par la communauté(Clean Missions - CMISS) ",
+        wallet_connect_subtitle: 'Réclamez vos récompenses et vérifiez votre impact réseau.',
+        wallet_connect_pali: 'Connecter Pali',
+        wallet_connect_metamask: 'Connecter MetaMask',
+        wallet_connect_skip: 'Passer / Connecter plus tard',
+        wallet_connect_hint: 'Si vous êtes déjà connecté au réseau zkSYS via Pali / MetaMask, le processus de connexion sera automatiquement ignoré',
+
         auth_welcome: 'Bienvenue',
         auth_welcome_back: 'Bienvenue',
         auth_your_impact: 'Votre impact commence aujourd\'hui',
@@ -1792,8 +1900,25 @@ const translations = {
         map_suggestion_district: 'District',
         map_suggestion_zone: 'Zone',
         map_explore: 'Explorer',
+        beach_detail_located_in: ", situé à {location},",
+        beach_detail_about: "À propos de cette plage",
+        beach_detail_desc_clean: " est une magnifique région côtière. Excellent travail de la communauté pour garder cette zone impeccable et préserver l'écosystème marin!",
+        beach_detail_desc_dirty: " est une région côtière qui a actuellement besoin de notre aide. Rejoignez les campagnes Tu Playa Limpia pour restaurer son état d'origine.",
+        beach_detail_location: "Détails de l'emplacement",
+        beach_detail_open_map: "Ouvrir dans Google Maps",
+        beach_detail_go_back: "Retour",
+        beach_detail_error: "Erreur lors du chargement des données de la plage"
     },
     pt: {
+        rewards_claim_nft: 'Resgatar NFT',
+        tx_success_desc: 'A visualização na rede pode levar até 30 segundos',
+        auth_intro_text: 'Colete pontos escaneando resíduos, resgate NFTs e explore as diversas funcionalidades que o Tu Playa Limpia oferece! Cada transação concluída é transparente e verificável: Dessa forma, as ações que você realiza têm um impacto ambiental reconhecido pela comunidade (Clean Missions - CMISS)',
+        wallet_connect_subtitle: 'Resgate suas recompensas e verifique seu impacto na rede.',
+        wallet_connect_pali: 'Conectar Pali',
+        wallet_connect_metamask: 'Conectar MetaMask',
+        wallet_connect_skip: 'Pular / Conectar depois',
+        wallet_connect_hint: 'Se você já estiver conectado à rede zkSYS via Pali / MetaMask, o processo de conexão será ignorado automaticamente',
+
         auth_welcome: 'Bem-vindo',
         auth_welcome_back: 'Bem-vindo de volta',
         auth_your_impact: 'Seu impacto começa hoje',
@@ -2054,7 +2179,7 @@ const translations = {
         sidebar_promos: 'Promos',
         sidebar_settings: 'Configurações',
         sidebar_version: 'TPL • Desktop',
-        sidebar_role: 'Guardião do Oceano',
+        sidebar_role: 'Explorador TPL',
         map_title: 'Praias do Peru',
         map_available: 'praias disponíveis',
         map_search_placeholder: 'Buscar praia, distrito ou zona...',
@@ -2079,6 +2204,14 @@ const translations = {
         map_suggestion_district: 'Distrito',
         map_suggestion_zone: 'Zona',
         map_explore: 'Explorar',
+        beach_detail_located_in: ", localizado em {location},",
+        beach_detail_about: "Sobre esta praia",
+        beach_detail_desc_clean: " é uma bela área costeira. Ótimo trabalho da comunidade em manter esta área impecável e preservar o ecossistema marinho!",
+        beach_detail_desc_dirty: " é uma região costeira que atualmente precisa de nossa ajuda. Junte-se às campanhas Tu Playa Limpia para restaurar seu estado imaculado.",
+        beach_detail_location: "Detalhes da Localização",
+        beach_detail_open_map: "Abrir no Google Maps",
+        beach_detail_go_back: "Voltar",
+        beach_detail_error: "Erro ao carregar os dados da praia"
     },
 };
 export default translations;

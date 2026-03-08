@@ -38,7 +38,8 @@ export default function ProfileScreen({ navigation }) {
     const { user, updateUserProfile, nfts, points, level, scannedItems, unlockNFT } = useGame();
     const { colors, shadows, isDark, themeMode, setDarkMode, setLightMode, setSystemMode, THEME_MODES } = useTheme();
     const { t, language, setLanguage, LANGUAGES, LANGUAGE_LABELS, isAutoMode } = useLanguage();
-    const { verifySessionPassword, exportAccount } = useAuth(); 
+    const { verifySessionPassword, exportAccount } = useAuth();
+    const { address, connectMetaMask, connectPali } = useWallet();
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState(user.name);
     const [showImagePicker, setShowImagePicker] = useState(false);
@@ -48,7 +49,7 @@ export default function ProfileScreen({ navigation }) {
     const [celebrationMessage, setCelebrationMessage] = useState('');
     // Export State
     const [showExportModal, setShowExportModal] = useState(false);
-    const [exportStep, setExportStep] = useState('verify_session'); 
+    const [exportStep, setExportStep] = useState('verify_session');
     const [sessionPassword, setSessionPassword] = useState('');
     const [filePassword, setFilePassword] = useState('');
     const [filePasswordConfirm, setFilePasswordConfirm] = useState('');
@@ -268,7 +269,7 @@ export default function ProfileScreen({ navigation }) {
                 contentContainerStyle={[styles.scrollContent, isDesktop && { width: '100%', maxWidth: 800, alignSelf: 'center' }]}
                 showsVerticalScrollIndicator={false}
             >
-                {}
+                { }
                 <Animated.View
                     entering={FadeInDown.delay(100).springify()}
                     style={styles.header}
@@ -282,7 +283,7 @@ export default function ProfileScreen({ navigation }) {
                     <Text style={[styles.headerTitle, { color: colors.text }]}>{t('profile_title')}</Text>
                     <View style={{ width: rs(44) }} />
                 </Animated.View>
-                {}
+                { }
                 <Animated.View entering={FadeInUp.delay(200).springify()}>
                     <ScalePressable
                         style={styles.avatarContainer}
@@ -307,7 +308,7 @@ export default function ProfileScreen({ navigation }) {
                         </View>
                     </ScalePressable>
                 </Animated.View>
-                {}
+                { }
                 <Animated.View
                     entering={FadeInUp.delay(300).springify()}
                     style={styles.nameContainer}
@@ -351,7 +352,7 @@ export default function ProfileScreen({ navigation }) {
                         </Text>
                     )}
                 </Animated.View>
-                {}
+                { }
                 <Animated.View entering={FadeInUp.delay(350).springify()}>
                     <LinearGradient
                         colors={BRAND.goldShimmer ? [BRAND.sandGold, BRAND.goldShimmer] : ['#e8d5b5', '#FFD700']}
@@ -360,7 +361,7 @@ export default function ProfileScreen({ navigation }) {
                         <Text style={styles.levelText}>{t('profile_level')} {level}</Text>
                     </LinearGradient>
                 </Animated.View>
-                {}
+                { }
                 <Animated.View entering={FadeInUp.delay(400).springify()}>
                     <GlassCard variant="elevated" style={styles.statsCard}>
                         <View style={styles.statsGrid}>
@@ -381,11 +382,11 @@ export default function ProfileScreen({ navigation }) {
                         </View>
                     </GlassCard>
                 </Animated.View>
-                {}
+                { }
                 <Animated.View entering={FadeInUp.delay(450).springify()}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('profile_appearance')}</Text>
                     <GlassCard variant="default" style={styles.settingsCard}>
-                        {}
+                        { }
                         <View style={styles.themeRow}>
                             <View style={styles.themeInfo}>
                                 <Ionicons name={isDark ? 'moon' : 'sunny'} size={rs(22)} color={colors.accent} />
@@ -434,7 +435,7 @@ export default function ProfileScreen({ navigation }) {
                                 </ScalePressable>
                             ))}
                         </View>
-                        {}
+                        { }
                         <View style={[styles.sectionDivider, { backgroundColor: colors.border }]} />
                         <View style={styles.themeRow}>
                             <View style={styles.themeInfo}>
@@ -501,7 +502,7 @@ export default function ProfileScreen({ navigation }) {
                         </View>
                     </GlassCard>
                 </Animated.View>
-                {}
+                { }
                 <Animated.View entering={FadeInUp.delay(500).springify()}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('profile_private_info')}</Text>
                     <GlassCard variant="default" style={styles.infoCard}>
@@ -530,9 +531,39 @@ export default function ProfileScreen({ navigation }) {
                             </View>
                         </GlassCard>
                     </ScalePressable>
-                    {}
+
+                    {!address && (
+                        <View style={{ marginTop: SPACING.md }}>
+                            <Text style={[styles.infoValue, { color: colors.text, marginBottom: SPACING.sm, fontWeight: '700' }]}>
+                                {t('profile_connect_wallet') || 'Conectar Billetera'}
+                            </Text>
+                            <GlassCard variant="default" style={{ padding: SPACING.md, gap: SPACING.sm }}>
+                                <ScalePressable
+                                    onPress={async () => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                        await connectPali();
+                                    }}
+                                    style={[styles.exportButton, { backgroundColor: '#1a365d', width: '100%', paddingVertical: SPACING.sm, gap: SPACING.sm, justifyContent: 'center' }]}
+                                >
+                                    <Image source={require('../assets/logo-pali.png')} style={{ width: rs(20), height: rs(20) }} resizeMode="contain" />
+                                    <Text style={{ color: '#fff', fontWeight: '700' }}>{t('wallet_connect_pali') || 'Conectar Pali'}</Text>
+                                </ScalePressable>
+
+                                <ScalePressable
+                                    onPress={async () => {
+                                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                                        await connectMetaMask();
+                                    }}
+                                    style={[styles.exportButton, { backgroundColor: '#1e293b', width: '100%', paddingVertical: SPACING.sm, gap: SPACING.sm, justifyContent: 'center' }]}
+                                >
+                                    <Image source={require('../assets/logo-metamask.png')} style={{ width: rs(20), height: rs(20) }} resizeMode="contain" />
+                                    <Text style={{ color: '#fff', fontWeight: '700' }}>{t('wallet_connect_metamask') || 'Conectar MetaMask'}</Text>
+                                </ScalePressable>
+                            </GlassCard>
+                        </View>
+                    )}
                 </Animated.View>
-                {}
+                { }
                 <Animated.View entering={FadeInUp.delay(550).springify()} style={styles.privacyNotice}>
                     <Ionicons name="lock-closed" size={rs(14)} color={colors.textMuted} />
                     <Text style={[styles.privacyText, { color: colors.textMuted }]}>
@@ -540,7 +571,7 @@ export default function ProfileScreen({ navigation }) {
                     </Text>
                 </Animated.View>
             </ScrollView>
-            {}
+            { }
             <Modal visible={showImagePicker} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
@@ -562,7 +593,7 @@ export default function ProfileScreen({ navigation }) {
                     </View>
                 </View>
             </Modal>
-            {}
+            { }
             <Modal visible={showExportModal} transparent animationType="fade">
                 <View style={styles.modalOverlay}>
                     <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
@@ -661,14 +692,14 @@ export default function ProfileScreen({ navigation }) {
                     </View>
                 </View>
             </Modal>
-            {}
-            {}
+            { }
+            { }
             <CelebrationModal
                 visible={showCelebration}
                 onClose={() => setShowCelebration(false)}
                 message={celebrationMessage}
             />
-            {}
+            { }
             {showSuccessToast && (
                 <Animated.View style={[styles.toastCard, { backgroundColor: colors.surface }, shadows.lg, toastStyle]}>
                     <LinearGradient colors={isDark ? [BRAND.oceanLight, BRAND.oceanMid] : [BRAND.success, '#388e3c']} style={styles.toastIconGradient}>

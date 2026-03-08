@@ -489,7 +489,7 @@ export const handleClaim = async (
     // --- 3. Generar metadata del NFT ---
     const nftData = generateNFTAttributes();
     const metadata = {
-      name: "Ocean Guardian NFT",
+      name: "TPL Explorer NFT",
       description: nftData.description,
       attributes: nftData.attributes,
     };

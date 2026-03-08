@@ -1180,7 +1180,7 @@ const BeachCard = ({ beach, isDark, onPress, t }) => {
     </TouchableOpacity>
   );
 };
-export default function BeachMapScreen() {
+export default function BeachMapScreen({ navigation }) {
   const { colors, shadows, isDark } = useTheme();
   const { unlockRegionNFT } = useGame();
   const { t, language } = useLanguage();
@@ -1297,10 +1297,9 @@ export default function BeachMapScreen() {
       setLastUnlockedNFT(newNFT);
       setShowCelebration(true);
     }
-    const url = `https://www.google.com/maps/search/?api=1&query=${beach.lat},${beach.lng}`;
-    if (Platform.OS !== "web")
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    Linking.openURL(url);
+
+    // Navegar internamente a BeachDetailScreen, sin salir de la app
+    navigation.navigate("BeachDetail", { beach });
   };
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

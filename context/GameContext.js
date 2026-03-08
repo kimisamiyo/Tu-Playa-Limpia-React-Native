@@ -1,6 +1,8 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { generateNFTAttributes } from '../utils/nftGenerator';
+import { fetchUserNFTs } from '../utils/blockchain/missionNFT';
 const GameContext = createContext();
 export const useGame = () => useContext(GameContext);
 const GAME_KEYS = {
@@ -15,33 +17,102 @@ export const GameProvider = ({ children }) => {
     const [nfts, setNfts] = useState([]);
     const [level, setLevel] = useState(1);
     const [user, setUser] = useState({
-        name: 'Ocean Guardian',
+        name: 'TPL Explorer',
         avatar: null,
-        initials: 'OG',
+        initials: 'TE',
         hasChangedUsername: false,
         tplTitle: 'Cleanup Rookie',
     });
+    const unlockingSet = useRef(new Set());
     const loadGameState = async () => {
         try {
-            const [storedPoints, storedItems, storedNfts, storedUser] = await Promise.all([
+            const [storedPoints, storedItems, storedNfts, storedUser, storedRegDate, storedUsername] = await Promise.all([
                 AsyncStorage.getItem(GAME_KEYS.POINTS),
                 AsyncStorage.getItem(GAME_KEYS.ITEMS),
                 AsyncStorage.getItem(GAME_KEYS.NFTS),
                 AsyncStorage.getItem(GAME_KEYS.USER),
+                AsyncStorage.getItem('@tpl_registration_date'),
+                AsyncStorage.getItem('@tpl_username'),
             ]);
             if (storedPoints) setPoints(parseInt(storedPoints));
             if (storedItems) setScannedItems(JSON.parse(storedItems));
-            if (storedUser) setUser(prev => ({ ...prev, ...JSON.parse(storedUser) }));
+
+            const joinDate = storedRegDate || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Sync Username logic
+            let finalName = 'Ocean Guardian';
+            if (storedUsername) {
+                finalName = storedUsername;
+            } else if (storedUser) {
+                const parsed = JSON.parse(storedUser);
+                if (parsed.name && parsed.name !== 'Ocean Guardian') {
+                    finalName = parsed.name;
+                }
+            }
+
+            const initials = finalName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+            if (storedUser) {
+                setUser(prev => ({
+                    ...prev,
+                    ...JSON.parse(storedUser),
+                    name: finalName,
+                    initials: initials || 'OG',
+                    joinDate
+                }));
+            } else {
+                setUser(prev => ({
+                    ...prev,
+                    name: finalName,
+                    initials: initials || 'OG',
+                    joinDate
+                }));
+            }
+
+            const userData = storedUser ? JSON.parse(storedUser) : null;
+            const walletAddress = userData?.walletAddress;
+
+            // Patch existing NFTs to reflect the real username instead of "Ocean Guardian"
+            let initialNfts = storedNfts ? JSON.parse(storedNfts) : [];
+            let nftsPatched = false;
+            const updatedNfts = initialNfts.map(nft => {
+                if (nft.owner === 'Ocean Guardian' || !nft.owner) {
+                    nftsPatched = true;
+                    return { ...nft, owner: finalName };
+                }
+                return nft;
+            });
 
             if (storedNfts) {
-                // AsyncStorage tiene datos — usarlos directamente
+                setNfts(updatedNfts);
+                if (nftsPatched) {
+                    AsyncStorage.setItem(GAME_KEYS.NFTS, JSON.stringify(updatedNfts)).catch(() => { });
+                    console.log(`✅ ${updatedNfts.length} NFTs parchados con el nombre: ${finalName}`);
+                }
+            }
+
+            let finalNfts = null;
+            if (walletAddress) {
+                try {
+                    console.log('📡 Buscando NFTs On-Chain en contrato TPL...');
+                    const onChainNfts = await fetchUserNFTs(walletAddress);
+                    if (onChainNfts && onChainNfts.length > 0) {
+                        console.log(`✅ ${onChainNfts.length} NFTs recuperados desde la Blockchain`);
+                        finalNfts = onChainNfts;
+                    }
+                } catch (blockchainErr) {
+                    console.warn('⚠️ Error consultando Blockchain:', blockchainErr.message);
+                }
+            }
+
+            if (finalNfts) {
+                setNfts(finalNfts);
+            } else if (storedNfts) {
                 setNfts(JSON.parse(storedNfts));
             } else {
-                // AsyncStorage vacío → intentar recuperar desde MongoDB
-                console.log('📦 AsyncStorage vacío, buscando NFTs en MongoDB...');
+                // 3. Fallback 2: AsyncStorage vacío → intentar recuperar desde MongoDB
+                console.log('📦 AsyncStorage y Blockchain vacíos, buscando NFTs en MongoDB...');
                 try {
-                    const userData = storedUser ? JSON.parse(storedUser) : null;
-                    const walletAddress = userData?.walletAddress;
                     if (walletAddress) {
                         const appUrl = process.env.EXPO_PUBLIC_APP_URL || 'https://tu-playa-limpia.vercel.app';
                         const resp = await fetch(`${appUrl}/api/nfts?wallet=${walletAddress}`);
@@ -56,10 +127,10 @@ export const GameProvider = ({ children }) => {
                                     claimed: true,
                                     date: new Date(n.mintedAt).toLocaleDateString(),
                                     lockedUntil: new Date(new Date(n.mintedAt).getTime() + 86400000 * 30).toLocaleDateString(),
-                                    owner: 'Ocean Guardian',
-                                    ownerInitials: 'OG',
+                                    owner: finalName,
+                                    ownerInitials: initials || 'OG',
                                     isNew: false,
-                                    title: n.metadata?.name || 'Ocean Guardian NFT',
+                                    title: n.metadata?.name || `${finalName} NFT`,
                                     description: n.metadata?.description || '',
                                     attributes: n.metadata?.attributes || [],
                                     rarity: 'Common',
@@ -70,7 +141,7 @@ export const GameProvider = ({ children }) => {
                             }
                         }
                     } else {
-                        console.log('ℹ️ Sin wallet conectada, no se puede recuperar desde MongoDB');
+                        console.log('ℹ️ Sin wallet conectada, no se puede recuperar nfts remotos.');
                     }
                 } catch (mongoErr) {
                     console.warn('⚠️ Error recuperando desde MongoDB:', mongoErr.message);
@@ -82,6 +153,16 @@ export const GameProvider = ({ children }) => {
     };
     useEffect(() => {
         loadGameState();
+
+        // Listener reactivo a las importaciones/registros de cuenta desde Auth
+        const accountListener = DeviceEventEmitter.addListener('TPL_ACCOUNT_IMPORTED', () => {
+            console.log('🔄 Sincronizando GameContext tras nueva sesión...');
+            loadGameState();
+        });
+
+        return () => {
+            accountListener.remove();
+        };
     }, []);
     useEffect(() => {
         AsyncStorage.setItem(GAME_KEYS.NFTS, JSON.stringify(nfts)).catch(() => { });
@@ -119,6 +200,21 @@ export const GameProvider = ({ children }) => {
         return newNFT;
     };
     const unlockRegionNFT = (regionName, regionImage) => {
+        // 1. Check if the user already owns this specific region NFT
+        const alreadyOwns = nfts.some(n => n.title === regionName && n.acquisition === 'nft_acq_region');
+
+        // 2. Race-condition check (debounce rapid clicks)
+        if (alreadyOwns || unlockingSet.current.has(regionName)) {
+            console.warn(`[GameContext] Duplicación evitada: NFT de la zona ${regionName} ya está en proceso o en posesión.`);
+            return null;
+        }
+
+        // 3. Lock the process for this specific region
+        unlockingSet.current.add(regionName);
+
+        // 4. Release the lock after a small delay (180ms) to allow UI recovery
+        setTimeout(() => unlockingSet.current.delete(regionName), 180);
+
         return unlockNFT({ title: regionName, image: regionImage, rarity: 'Common', acquisition: 'nft_acq_region' });
     };
     const markNFTSeen = (id) => {

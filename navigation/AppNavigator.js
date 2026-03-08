@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useGame } from '../context/GameContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useWallet } from '../context/WalletContext';
 import { BRAND } from '../constants/theme';
 import { rs, rh, SPACING, RADIUS, HEIGHT } from '../constants/responsive';
 import HomeScreen from '../screens/HomeScreen';
@@ -16,6 +17,7 @@ import ScanScreen from '../screens/ScanScreen';
 import PromotionsScreen from '../screens/PromotionsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import BeachMapScreen from '../screens/BeachMapScreen';
+import BeachDetailScreen from '../screens/BeachDetailScreen';
 import AnimatedTabIcon from './AnimatedTabIcon';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -92,9 +94,9 @@ function TabNavigator() {
     const showSidebar = width >= 1024;
     return (
         <View style={{ flex: 1, flexDirection: 'row' }}>
-            {}
+            { }
             {showSidebar && <DesktopSidebar />}
-            {}
+            { }
             <View style={{ flex: 1 }}>
                 <Tab.Navigator
                     screenOptions={{
@@ -179,7 +181,11 @@ function TabNavigator() {
         </View>
     );
 }
+import WalletConnectScreen from '../components/WalletConnectScreen';
+
 export default function AppNavigator({ isAuthenticated, isFirstTime, onRegister, onLogin, onImport, username }) {
+    const { address, hasSkippedConnection, setHasSkippedConnection } = useWallet();
+
     if (!isAuthenticated) {
         return (
             <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade_from_bottom' }}>
@@ -187,7 +193,7 @@ export default function AppNavigator({ isAuthenticated, isFirstTime, onRegister,
                     {props => (
                         <AuthScreen
                             {...props}
-                            onAuthenticated={() => { }} 
+                            onAuthenticated={() => { }}
                             isFirstTime={isFirstTime}
                             onRegister={onRegister}
                             onLogin={onLogin}
@@ -199,12 +205,35 @@ export default function AppNavigator({ isAuthenticated, isFirstTime, onRegister,
             </Stack.Navigator>
         );
     }
+
+    // Si ya está autenticado pero aún no tiene Wallet ni ha decidido omitirlo, forzamos WalletConnectScreen
+    if (!address && !hasSkippedConnection) {
+        return (
+            <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
+                <Stack.Screen name="WalletConnect">
+                    {props => (
+                        <WalletConnectScreen
+                            {...props}
+                            onComplete={() => setHasSkippedConnection(true)}
+                        />
+                    )}
+                </Stack.Screen>
+            </Stack.Navigator>
+        );
+    }
+
+    // Ruta Principal con Tabs
     return (
         <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
             <Stack.Screen name="MainTabs" component={TabNavigator} />
             <Stack.Screen
                 name="Profile"
                 component={ProfileScreen}
+                options={{ animation: 'slide_from_right' }}
+            />
+            <Stack.Screen
+                name="BeachDetail"
+                component={BeachDetailScreen}
                 options={{ animation: 'slide_from_right' }}
             />
         </Stack.Navigator>

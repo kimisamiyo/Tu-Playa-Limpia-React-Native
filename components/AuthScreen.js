@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Platform, TouchableOpacity, TextInput, useWindowDimensions, Linking } from 'react-native';
+import { View, Text, StyleSheet, Platform, TouchableOpacity, TextInput, useWindowDimensions, Linking, Modal, FlatList, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as Haptics from 'expo-haptics';
@@ -33,13 +33,15 @@ import DrawingPad from './DrawingPad';
 import LivingWater from './LivingWater';
 import FloatingBubbles from './premium/FloatingBubbles';
 import GlassCard from './premium/GlassCard';
+import FlagIcon from './FlagIcon';
 export default function AuthScreen({ onAuthenticated }) {
     const { colors, isDark } = useTheme();
     const { register: onRegister, login: onLogin, isFirstTime, importAccount: onImport, username: savedUsername } = useAuth();
     const { user, updateUserProfile, reloadGameState } = useGame();
-    const { t } = useLanguage();
+    const { t, language, setLanguage, LANGUAGES, LANGUAGE_LABELS } = useLanguage();
     const { height: winH } = useWindowDimensions();
     const [mode, setMode] = useState(isFirstTime ? 'choice' : 'login');
+    const [showLangDropdown, setShowLangDropdown] = useState(false);
     const [drawingStrokes, setDrawingStrokes] = useState(null);
     const [showEmailModal, setShowEmailModal] = useState(false);
     const [statusText, setStatusText] = useState('');
@@ -229,8 +231,16 @@ export default function AuthScreen({ onAuthenticated }) {
     };
     const handleRegisterNameNext = () => {
         const trimmed = regUsername.trim();
+        // Bloquear símbolos potencialmente maliciosos para prevenir XSS
+        const isSafe = /^[\p{L}\p{N} \-_.]+$/u.test(trimmed);
+
         if (trimmed.length < 3) {
             setErrorText(t('profile_name_invalid'));
+            triggerShake();
+            return;
+        }
+        if (!isSafe) {
+            setErrorText(t('profile_name_unsafe') || 'Nombre contiene caracteres no permitidos.');
             triggerShake();
             return;
         }
@@ -350,6 +360,11 @@ export default function AuthScreen({ onAuthenticated }) {
             if (mode === 'choice') {
                 return (
                     <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.choiceContainer}>
+                        <View style={styles.introTextContainer}>
+                            <Text style={[styles.introText, { color: colors.textSecondary }]}>
+                                {t('auth_intro_text')}
+                            </Text>
+                        </View>
                         <TouchableOpacity
                             activeOpacity={0.9}
                             onPress={() => { hapticLight(); setMode('register_name'); }}
@@ -588,6 +603,56 @@ export default function AuthScreen({ onAuthenticated }) {
             </Animated.View>
         );
     };
+    const renderLangSelector = () => (
+        <View style={styles.langSelectorContainer}>
+            <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => { hapticLight(); setShowLangDropdown(true); }}
+                style={[styles.langButton, { backgroundColor: isDark ? 'rgba(0,18,32,0.6)' : 'rgba(255,255,255,0.6)', borderColor: colors.border }]}
+            >
+                <Text style={{ color: colors.textSecondary, fontSize: rf(12), marginRight: rs(4) }}>{t('profile_language') || 'Selecciona idioma:'}</Text>
+                <FlagIcon code={LANGUAGE_LABELS[language]?.code} size={0.7} style={{ marginRight: rs(4) }} />
+                <Text style={{ color: colors.text, fontWeight: '700', fontSize: rf(12) }}>
+                    {language.toUpperCase()}
+                </Text>
+                <Ionicons name="chevron-down" size={14} color={colors.textSecondary} style={{ marginLeft: rs(4) }} />
+            </TouchableOpacity>
+
+            <Modal visible={showLangDropdown} transparent animationType="fade">
+                <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowLangDropdown(false)}>
+                    <View style={[styles.langDropdownMenu, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                        <Text style={[styles.langMenuTitle, { color: colors.textSecondary }]}>{t('profile_language') || 'Selecciona idioma:'}</Text>
+                        <ScrollView showsVerticalScrollIndicator={false}>
+                            {LANGUAGES && Object.values(LANGUAGES).map((lang) => (
+                                <TouchableOpacity
+                                    key={lang}
+                                    style={[
+                                        styles.langMenuItem,
+                                        language === lang && { backgroundColor: isDark ? BRAND.oceanMid : BRAND.oceanLight + '30' }
+                                    ]}
+                                    onPress={() => {
+                                        hapticLight();
+                                        setLanguage(lang);
+                                        setShowLangDropdown(false);
+                                    }}
+                                >
+                                    <FlagIcon code={LANGUAGE_LABELS[lang]?.code} size={0.8} style={{ marginRight: rs(10) }} />
+                                    <Text style={[
+                                        styles.langMenuItemText,
+                                        { color: language === lang ? colors.accent : colors.text },
+                                        language === lang && { fontWeight: '700' }
+                                    ]}>
+                                        {LANGUAGE_LABELS[lang]?.name || lang.toUpperCase()}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+                </TouchableOpacity>
+            </Modal>
+        </View>
+    );
+
     return (
         <View style={[styles.mainContainer, { backgroundColor: colors.background }]}>
             <LinearGradient
@@ -602,6 +667,7 @@ export default function AuthScreen({ onAuthenticated }) {
                 <LivingWater />
             </View>
             <SafeAreaView style={styles.safeContainer}>
+                {renderLangSelector()}
                 {isDrawingMode ? (
                     <Animated.View style={[styles.contentWrapper, contentStyle]}>
                         {renderHeader()}
@@ -677,6 +743,21 @@ const styles = StyleSheet.create({
     drawingArea: { flex: 3, justifyContent: 'center', alignItems: 'center', paddingBottom: rh(10) },
     pinHint: { fontSize: rf(12), marginTop: rs(8), letterSpacing: rs(0.5), textAlign: 'center' },
     pinError: { fontSize: rf(11), marginTop: rs(6), color: '#ef4444', textAlign: 'center', fontWeight: '600' },
+    introTextContainer: {
+        width: '100%',
+        maxWidth: rs(600),
+        alignSelf: 'center',
+        paddingHorizontal: SPACING.md,
+        paddingBottom: SPACING.xl,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    introText: {
+        fontSize: rf(14),
+        textAlign: 'center',
+        lineHeight: rf(22),
+        fontWeight: '500',
+    },
     choiceContainer: { width: '100%', maxWidth: 500, alignSelf: 'center', gap: SPACING.lg, paddingHorizontal: SPACING.md },
     choiceCard: {
         borderRadius: rs(24),
@@ -777,4 +858,57 @@ const styles = StyleSheet.create({
     dividerText: { marginHorizontal: SPACING.md, fontSize: rf(12), textTransform: 'uppercase' },
     emailButton: { marginTop: rs(16), padding: rs(12), alignItems: 'center' },
     emailButtonText: { fontSize: rf(14), fontWeight: '600', textDecorationLine: 'underline' },
+    langSelectorContainer: {
+        position: 'absolute',
+        top: Platform.OS === 'web' ? rs(16) : rs(10), // Safe area handles mobile offset
+        right: SPACING.md,
+        zIndex: 50,
+        elevation: 10,
+    },
+    langButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: rs(10),
+        paddingVertical: rs(6),
+        borderRadius: rs(20),
+        borderWidth: 1,
+        backdropFilter: 'blur(10px)',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: SPACING.lg,
+    },
+    langDropdownMenu: {
+        width: '100%',
+        maxWidth: rs(320),
+        maxHeight: rh(400),
+        borderRadius: rs(16),
+        padding: SPACING.md,
+        borderWidth: 1,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+        elevation: 10,
+    },
+    langMenuTitle: {
+        fontSize: rf(14),
+        fontWeight: '600',
+        marginBottom: SPACING.md,
+        textAlign: 'center',
+    },
+    langMenuItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: SPACING.md,
+        paddingHorizontal: SPACING.sm,
+        borderRadius: rs(10),
+        marginBottom: rs(4),
+    },
+    langMenuItemText: {
+        fontSize: rf(14),
+    },
 });

@@ -22,3 +22,72 @@ export const mintNFT = async (missionId, tokenURI) => {
   await tx.wait();
   return tx.hash;
 };
+
+/**
+ * Consulta la Blockchain de EDU Chain (vía ethers) usando eventos
+ * para recuperar todos los NFTs ERC-721 minteados por este Smart Contract
+ * a favor del usuario.
+ * @param {string} walletAddress La dirección de billetera del usuario.
+ * @returns {Promise<Array>} Un array con metadatos y TX hash.
+ */
+export const fetchUserNFTs = async (walletAddress) => {
+  if (!walletAddress) return [];
+  try {
+    const contract = await getContract();
+
+    // 1. Obtener eventos Transfer hacia el usuario
+    const filter = contract.filters.Transfer(null, walletAddress);
+    const events = await contract.queryFilter(filter, 0, "latest");
+
+    if (events.length === 0) return [];
+
+    const nfts = [];
+
+    // 2. Iterar en reverso (del más reciente al más viejo)
+    for (let i = events.length - 1; i >= 0; i--) {
+      const event = events[i];
+      const tokenId = event.args.tokenId;
+
+      // 3. Obtener el Token URI desde la cadena
+      const tokenURI = await contract.tokenURI(tokenId);
+
+      // 4. Intentar descargar y parsear el URI (Suele apuntar a IPFS u HTTP)
+      let metadata = {};
+      try {
+        const uriToFetch = tokenURI.startsWith("ipfs://")
+          ? tokenURI.replace("ipfs://", "https://ipfs.io/ipfs/")
+          : tokenURI;
+
+        const resp = await fetch(uriToFetch);
+        if (resp.ok) {
+          metadata = await resp.json();
+        }
+      } catch (err) {
+        console.warn(`Error al intentar traer metadata del token ${tokenId}:`, err);
+      }
+
+      // 5. Construir el objeto unificado (Misma estructura que local/MongoDB)
+      nfts.push({
+        id: tokenId.toString(),
+        hash: event.transactionHash, // OnChain record verification!
+        txHash: event.transactionHash,
+        claimed: true,
+        date: new Date().toLocaleDateString(), // Para fecha exacta tendríamos que consultar info de bloque, esto es aproximado
+        lockedUntil: new Date(Date.now() + 86400000 * 30).toLocaleDateString(),
+        owner: 'TPL Explorer',
+        ownerInitials: 'TE',
+        isNew: false,
+        title: metadata.name || `TPL NFT #${tokenId}`,
+        description: metadata.description || 'NFT recuperado del blockchain',
+        attributes: metadata.attributes || [],
+        rarity: 'Common',
+        acquisition: 'nft_acq_default',
+      });
+    }
+
+    return nfts;
+  } catch (err) {
+    console.error("Error consultando NFTs On-Chain:", err);
+    return [];
+  }
+};
