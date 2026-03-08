@@ -87,11 +87,11 @@ export default function App() {
         <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>
-              <GameProvider>
-                <WalletProvider>
+              <WalletProvider>
+                <GameProvider>
                   <AppContent />
-                </WalletProvider>
-              </GameProvider>
+                </GameProvider>
+              </WalletProvider>
             </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
