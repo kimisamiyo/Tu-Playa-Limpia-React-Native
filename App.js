@@ -14,6 +14,29 @@ import { WalletProvider } from "./context/WalletContext";
 import ENV from './constants/env';
 import { useFonts } from 'expo-font';
 import { Ionicons, MaterialCommunityIcons, FontAwesome, Feather } from '@expo/vector-icons';
+
+const linking = {
+  prefixes: ['tuplaya://', 'https://tuplayalimpia.com'],
+  config: {
+    initialRouteName: 'Auth',
+    screens: {
+      Auth: 'Auth',
+      MainTabs: {
+        path: 'MainTabs',
+        screens: {
+          Inicio: 'Inicio',
+          Mapa: 'Mapa',
+          Escanear: 'Escanear',
+          Premios: 'Premios',
+          Promos: 'Promos',
+        },
+      },
+      Profile: 'Profile',
+      NotFound: '*',
+    },
+  },
+};
+
 function AppContent() {
   const { isDark } = useTheme();
   const { isAuthenticated, isLoading, isFirstTime, register, login, importAccount, username } = useAuth();
@@ -43,7 +66,7 @@ function AppContent() {
   if (isLoading) return null;
   return (
     <>
-      <NavigationContainer>
+      <NavigationContainer linking={linking}>
         <AppNavigator
           isAuthenticated={isAuthenticated}
           isFirstTime={isFirstTime}

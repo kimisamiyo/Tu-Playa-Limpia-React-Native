@@ -10,6 +10,30 @@ const KEYS = {
     PROFILE: '@tpl_user_profile',
     USERNAME: '@tpl_username',
 };
+
+const OBFUSCATION_KEY = 'tpl_secure_storage_v1';
+
+const getSecureItem = async (key) => {
+    try {
+        const val = await AsyncStorage.getItem(key);
+        if (!val) return null;
+        if (val.startsWith('v2:') || val.startsWith('v2-js:')) {
+            return await deobfuscateData(val, OBFUSCATION_KEY);
+        }
+        return val;
+    } catch (e) {
+        return null;
+    }
+};
+
+const setSecureItem = async (key, value) => {
+    try {
+        const obfuscated = await obfuscateData(value, OBFUSCATION_KEY);
+        await AsyncStorage.setItem(key, obfuscated);
+    } catch (e) {
+        console.warn('Set secure item error:', e);
+    }
+};
 export function AuthProvider({ children }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isFirstTime, setIsFirstTime] = useState(true);
@@ -21,7 +45,7 @@ export function AuthProvider({ children }) {
         (async () => {
             try {
                 const [drawingHash, sessionActive, accountData, savedUsername] = await Promise.all([
-                    AsyncStorage.getItem(KEYS.DRAWING_HASH),
+                    getSecureItem(KEYS.DRAWING_HASH),
                     AsyncStorage.getItem(KEYS.SESSION),
                     AsyncStorage.getItem(KEYS.ACCOUNT),
                     AsyncStorage.getItem(KEYS.USERNAME),
@@ -60,8 +84,8 @@ export function AuthProvider({ children }) {
                 version: 2,
             };
             await Promise.all([
-                AsyncStorage.setItem(KEYS.DRAWING_HASH, drawingHashed),
-                AsyncStorage.setItem(KEYS.PASSWORD_HASH, passwordHashed),
+                setSecureItem(KEYS.DRAWING_HASH, drawingHashed),
+                setSecureItem(KEYS.PASSWORD_HASH, passwordHashed),
                 AsyncStorage.setItem(KEYS.USERNAME, name),
                 AsyncStorage.setItem(KEYS.ACCOUNT, JSON.stringify(accountData)),
                 AsyncStorage.setItem(KEYS.SESSION, 'true'),
@@ -78,7 +102,7 @@ export function AuthProvider({ children }) {
     }, []);
     const login = useCallback(async (drawingData) => {
         try {
-            const storedHash = await AsyncStorage.getItem(KEYS.DRAWING_HASH);
+            const storedHash = await getSecureItem(KEYS.DRAWING_HASH);
             if (!storedHash) return { success: false, error: 'No account found' };
             const isValid = await verifyDrawing(drawingData, storedHash);
             if (isValid) {
@@ -97,7 +121,7 @@ export function AuthProvider({ children }) {
     }, []);
     const verifySessionPassword = useCallback(async (password) => {
         try {
-            const storedHash = await AsyncStorage.getItem(KEYS.PASSWORD_HASH);
+            const storedHash = await getSecureItem(KEYS.PASSWORD_HASH);
             if (!storedHash) return false;
             const inputHash = await hashExportPassword(password);
             return inputHash === storedHash;
@@ -116,10 +140,10 @@ export function AuthProvider({ children }) {
                 accountData = JSON.stringify(liveAccountData);
                 profileData = JSON.stringify(liveProfileData);
                 savedUsername = liveProfileData.name;
-                passwordHash = await AsyncStorage.getItem(KEYS.PASSWORD_HASH);
+                passwordHash = await getSecureItem(KEYS.PASSWORD_HASH);
             } else {
                 [passwordHash, accountData, profileData, savedUsername] = await Promise.all([
-                    AsyncStorage.getItem(KEYS.PASSWORD_HASH),
+                    getSecureItem(KEYS.PASSWORD_HASH),
                     AsyncStorage.getItem(KEYS.ACCOUNT),
                     AsyncStorage.getItem(KEYS.PROFILE),
                     AsyncStorage.getItem(KEYS.USERNAME),
@@ -132,7 +156,7 @@ export function AuthProvider({ children }) {
                 username: savedUsername,
                 account: accountData,
                 profile: profileData,
-                checksum: (await hashExportPassword(filePassword)).slice(0, 16) 
+                checksum: (await hashExportPassword(filePassword)).slice(0, 16)
             };
             const jsonStr = JSON.stringify(internalPayload);
             const filePasswordHash = await hashExportPassword(filePassword);
@@ -140,7 +164,7 @@ export function AuthProvider({ children }) {
             return {
                 success: true,
                 data: JSON.stringify({
-                    data: encrypted, 
+                    data: encrypted,
                 }),
             };
         } catch (e) {
@@ -163,7 +187,7 @@ export function AuthProvider({ children }) {
             if (importedPayload.app !== 'TuPlayaLimpia') {
                 return { success: false, error: 'Este archivo no pertenece a Tu Playa Limpia.' };
             }
-            const importedData = importedPayload; 
+            const importedData = importedPayload;
             const newPasswordHash = await hashExportPassword(newPassword);
             const newDrawingHash = await hashDrawing(newDrawingData);
             const GAME_KEYS = {
@@ -177,8 +201,8 @@ export function AuthProvider({ children }) {
             const accountObj = JSON.parse(accountDataStr);
             const profileObj = JSON.parse(profileDataStr);
             await Promise.all([
-                AsyncStorage.setItem(KEYS.DRAWING_HASH, newDrawingHash),
-                AsyncStorage.setItem(KEYS.PASSWORD_HASH, newPasswordHash),
+                setSecureItem(KEYS.DRAWING_HASH, newDrawingHash),
+                setSecureItem(KEYS.PASSWORD_HASH, newPasswordHash),
                 AsyncStorage.setItem(KEYS.USERNAME, importedData.username || ''),
                 AsyncStorage.setItem(KEYS.ACCOUNT, accountDataStr),
                 AsyncStorage.setItem(KEYS.PROFILE, profileDataStr),
