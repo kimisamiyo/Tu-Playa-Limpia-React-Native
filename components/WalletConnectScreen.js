@@ -182,7 +182,7 @@ export default function WalletConnectScreen({ onComplete }) {
                                     {t('wallet_connect_skip') || 'Saltar / Conectar más tarde'}
                                 </Text>
                             </ScalePressable>
-                            <Text style={styles.connectionHint}>
+                            <Text style={[styles.connectionHint, { color: colors.textSecondary }]}>
                                 {t('wallet_connect_hint')}
                             </Text>
                         </Animated.View>
@@ -257,8 +257,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: SPACING.md,
         paddingHorizontal: SPACING.lg,
-        opacity: 0.7,
-        color: 'rgba(255, 255, 255, 0.6)',
+        opacity: 0.8,
     },
     langSelectorContainer: {
         position: 'absolute',
