@@ -535,7 +535,7 @@ export default function ProfileScreen({ navigation }) {
                     {!address && (
                         <View style={{ marginTop: SPACING.md }}>
                             <Text style={[styles.infoValue, { color: colors.text, marginBottom: SPACING.sm, fontWeight: '700' }]}>
-                                {t('profile_connect_wallet') || 'Conectar Billetera'}
+                                {t('profile_connect_wallet')}
                             </Text>
                             <GlassCard variant="default" style={{ padding: SPACING.md, gap: SPACING.sm }}>
                                 <ScalePressable

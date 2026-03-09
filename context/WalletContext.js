@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react"
 import { ethers } from "ethers"
+import { Platform } from "react-native"
 import EthereumProvider from "@walletconnect/ethereum-provider"
 
 const WalletContext = createContext()
@@ -56,11 +57,17 @@ export function WalletProvider({ children }) {
   }
 
   // --------------------------------------------------
-  // 🦊 METAMASK (EXTENSIÓN DESKTOP)
+  // 🦊 METAMASK (EXTENSIÓN DESKTOP / MOBILE FALLBACK)
   // --------------------------------------------------
   const connectMetaMask = async () => {
     try {
+      // 📱 En móvil (fuera de in-app browser de MetaMask), usamos WalletConnect como puente
+      if (Platform.OS !== 'web' || !window.ethereum) {
+        console.log("📱 Mobile detection or missing window.ethereum: triggering WalletConnect fallback");
+        return await connectWalletConnect();
+      }
 
+      // 🖥️ Lógica de Desktop (cuando existe window.ethereum)
       if (!window.ethereum) {
         alert("MetaMask no está instalado")
         return
