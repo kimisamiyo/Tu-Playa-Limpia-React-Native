@@ -432,17 +432,27 @@ export default function AuthScreen({ onAuthenticated }) {
                                 <Ionicons name="person-outline" size={rs(24)} color={colors.accent} />
                             </View>
                             <TextInput
-                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                style={[
+                                    styles.input,
+                                    { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass },
+                                    errorText ? styles.inputError : null
+                                ]}
                                 placeholder={t('auth_username_placeholder')}
                                 placeholderTextColor={colors.textMuted}
                                 value={regUsername}
-                                onChangeText={setRegUsername}
+                                onChangeText={(val) => {
+                                    setRegUsername(val);
+                                    if (errorText) setErrorText('');
+                                }}
                                 autoCapitalize="words"
                                 autoFocus
                                 maxLength={30}
                             />
                             {errorText ? (
-                                <Text style={styles.errorText}>{errorText}</Text>
+                                <Animated.View entering={FadeInDown.duration(400)} style={[styles.errorBanner, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)' }]}>
+                                    <Ionicons name="alert-circle" size={rs(18)} color="#ef4444" style={{ marginRight: rs(8) }} />
+                                    <Text style={styles.errorBannerText}>{errorText}</Text>
+                                </Animated.View>
                             ) : null}
                             <TouchableOpacity
                                 style={[styles.nextButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.oceanDark }]}
@@ -469,12 +479,20 @@ export default function AuthScreen({ onAuthenticated }) {
                             </View>
                             <View style={styles.passwordContainer}>
                                 <TextInput
-                                    style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                    style={[
+                                        styles.input,
+                                        styles.passwordInput,
+                                        { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass },
+                                        (errorText && (errorText.includes('password') || errorText === t('auth_password_short') || errorText === t('auth_password_mismatch'))) || (regPassword.length > 0 && regPassword.length < 6) ? styles.inputError : null
+                                    ]}
                                     placeholder={t('auth_password_placeholder')}
                                     placeholderTextColor={colors.textMuted}
                                     secureTextEntry={!showPassword}
                                     value={regPassword}
-                                    onChangeText={setRegPassword}
+                                    onChangeText={(val) => {
+                                        setRegPassword(val);
+                                        if (errorText) setErrorText('');
+                                    }}
                                     autoFocus
                                 />
                                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
@@ -482,18 +500,28 @@ export default function AuthScreen({ onAuthenticated }) {
                                 </TouchableOpacity>
                             </View>
                             <TextInput
-                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                style={[
+                                    styles.input,
+                                    { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass },
+                                    errorText === t('auth_password_mismatch') ? styles.inputError : null
+                                ]}
                                 placeholder={t('auth_password_confirm_placeholder')}
                                 placeholderTextColor={colors.textMuted}
                                 secureTextEntry={!showPassword}
                                 value={regPasswordConfirm}
-                                onChangeText={setRegPasswordConfirm}
+                                onChangeText={(val) => {
+                                    setRegPasswordConfirm(val);
+                                    if (errorText) setErrorText('');
+                                }}
                             />
-                            <Text style={[styles.hintText, { color: colors.textMuted }]}>
+                            <Text style={[styles.hintText, { color: isDark ? colors.accent : BRAND.oceanDark }]}>
                                 {t('auth_password_hint')}
                             </Text>
                             {errorText ? (
-                                <Text style={styles.errorText}>{errorText}</Text>
+                                <Animated.View entering={FadeInDown.duration(400)} style={[styles.errorBanner, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)' }]}>
+                                    <Ionicons name="alert-circle" size={rs(18)} color="#ef4444" style={{ marginRight: rs(8) }} />
+                                    <Text style={styles.errorBannerText}>{errorText}</Text>
+                                </Animated.View>
                             ) : null}
                             <TouchableOpacity
                                 style={[styles.nextButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.oceanDark }]}
@@ -532,12 +560,20 @@ export default function AuthScreen({ onAuthenticated }) {
                             { }
                             <View style={styles.passwordContainer}>
                                 <TextInput
-                                    style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                    style={[
+                                        styles.input,
+                                        styles.passwordInput,
+                                        { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass },
+                                        errorText === t('auth_enter_file_password') || errorText === t('account_import_error') ? styles.inputError : null
+                                    ]}
                                     placeholder={t('auth_file_password_placeholder')}
                                     placeholderTextColor={colors.textMuted}
                                     secureTextEntry={!showPassword}
                                     value={importFilePassword}
-                                    onChangeText={setImportFilePassword}
+                                    onChangeText={(val) => {
+                                        setImportFilePassword(val);
+                                        if (errorText) setErrorText('');
+                                    }}
                                 />
                                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
                                     <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
@@ -551,30 +587,48 @@ export default function AuthScreen({ onAuthenticated }) {
                             </View>
                             <View style={styles.passwordContainer}>
                                 <TextInput
-                                    style={[styles.input, styles.passwordInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                    style={[
+                                        styles.input,
+                                        styles.passwordInput,
+                                        { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass },
+                                        (errorText && (errorText.includes('password') || errorText === t('auth_password_short') || errorText === t('auth_password_mismatch'))) || (importNewPassword.length > 0 && importNewPassword.length < 6) ? styles.inputError : null
+                                    ]}
                                     placeholder={t('auth_new_password_placeholder')}
                                     placeholderTextColor={colors.textMuted}
                                     secureTextEntry={!showPassword}
                                     value={importNewPassword}
-                                    onChangeText={setImportNewPassword}
+                                    onChangeText={(val) => {
+                                        setImportNewPassword(val);
+                                        if (errorText) setErrorText('');
+                                    }}
                                 />
                                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
                                     <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={colors.accent} />
                                 </TouchableOpacity>
                             </View>
                             <TextInput
-                                style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass }]}
+                                style={[
+                                    styles.input,
+                                    { color: colors.text, borderColor: colors.border, backgroundColor: colors.glass },
+                                    errorText === t('auth_password_mismatch') ? styles.inputError : null
+                                ]}
                                 placeholder={t('auth_password_confirm_placeholder')}
                                 placeholderTextColor={colors.textMuted}
                                 secureTextEntry={!showPassword}
                                 value={importNewPasswordConfirm}
-                                onChangeText={setImportNewPasswordConfirm}
+                                onChangeText={(val) => {
+                                    setImportNewPasswordConfirm(val);
+                                    if (errorText) setErrorText('');
+                                }}
                             />
-                            <Text style={[styles.hintText, { color: colors.textMuted }]}>
+                            <Text style={[styles.hintText, { color: isDark ? colors.accent : BRAND.oceanDark }]}>
                                 {t('auth_password_hint')}
                             </Text>
                             {errorText ? (
-                                <Text style={styles.errorText}>{errorText}</Text>
+                                <Animated.View entering={FadeInDown.duration(400)} style={[styles.errorBanner, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)' }]}>
+                                    <Ionicons name="alert-circle" size={rs(18)} color="#ef4444" style={{ marginRight: rs(8) }} />
+                                    <Text style={styles.errorBannerText}>{errorText}</Text>
+                                </Animated.View>
                             ) : null}
                             <TouchableOpacity
                                 style={[styles.nextButton, { backgroundColor: isDark ? BRAND.oceanLight : BRAND.oceanDark }]}
@@ -688,7 +742,12 @@ export default function AuthScreen({ onAuthenticated }) {
                                     strokeCountLabel={t('auth_draw_strokes')}
                                 />
                                 <Text style={[styles.pinHint, { color: colors.textMuted, marginTop: rs(8) }]}>{statusText}</Text>
-                                {errorText ? <Text style={[styles.pinError]}>{errorText}</Text> : null}
+                                {errorText ? (
+                                    <Animated.View entering={FadeInDown.duration(400)} style={[styles.errorBanner, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)' }]}>
+                                        <Ionicons name="alert-circle" size={rs(18)} color="#ef4444" style={{ marginRight: rs(8) }} />
+                                        <Text style={styles.errorBannerText}>{errorText}</Text>
+                                    </Animated.View>
+                                ) : null}
                             </View>
                             { }
                             {(mode === 'create_drawing' || mode === 'import_drawing') && (
@@ -840,7 +899,30 @@ const styles = StyleSheet.create({
     },
     backButtonText: { marginLeft: SPACING.xs, fontSize: rf(14), fontWeight: '600' },
     errorText: { color: '#ef4444', textAlign: 'center', marginBottom: SPACING.md, fontSize: rf(13) },
-    hintText: { fontSize: rf(12), textAlign: 'center', marginBottom: SPACING.md },
+    inputError: { borderColor: '#ef4444', borderWeight: 1.5, shadowColor: '#ef4444', shadowOpacity: 0.1, shadowRadius: 4 },
+    errorBanner: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: SPACING.md,
+        borderRadius: RADIUS.md,
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.3)',
+        marginBottom: SPACING.md,
+        width: '100%',
+    },
+    errorBannerText: {
+        color: '#ef4444',
+        fontSize: rf(13),
+        fontWeight: '600',
+        flex: 1,
+    },
+    hintText: {
+        fontSize: rf(13.5),
+        textAlign: 'center',
+        marginBottom: SPACING.md,
+        fontWeight: '700',
+        opacity: 0.9
+    },
     filePicker: {
         flexDirection: 'row',
         alignItems: 'center',

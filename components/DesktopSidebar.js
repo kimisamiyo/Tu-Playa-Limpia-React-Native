@@ -78,7 +78,7 @@ export default function DesktopSidebar() {
     const handleNavigate = (routeName) => {
         navigation.navigate('MainTabs', {
             screen: routeName,
-            params: { timestamp: Date.now() } 
+            params: { timestamp: Date.now() }
         });
     };
     return (
@@ -89,7 +89,7 @@ export default function DesktopSidebar() {
                 borderRightColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
             }
         ]}>
-            {}
+            { }
             <Pressable
                 style={({ pressed }) => [
                     styles.logoContainer,
@@ -107,7 +107,7 @@ export default function DesktopSidebar() {
                 </LinearGradient>
                 <Text style={[styles.appName, { color: colors.text }]}>Tu Playa</Text>
             </Pressable>
-            {}
+            { }
             <Pressable
                 style={({ pressed }) => [
                     styles.profileCard,
@@ -128,12 +128,12 @@ export default function DesktopSidebar() {
                         {user.name}
                     </Text>
                     <Text style={[styles.userLevel, { color: colors.textSecondary }]}>
-                        {t('profile_level')} {level} • {t('sidebar_role')}
+                        {t('profile_level')} {level} • {t('sidebar_role', { role: user.tplTitle || 'Explorer' })}
                     </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={rs(16)} color={colors.textMuted} />
             </Pressable>
-            {}
+            { }
             <ScrollView style={styles.navContainer} showsVerticalScrollIndicator={false}>
                 <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>{t('sidebar_menu')}</Text>
                 {navItems.map((item, index) => (
@@ -148,7 +148,7 @@ export default function DesktopSidebar() {
                     />
                 ))}
             </ScrollView>
-            {}
+            { }
             <View style={styles.footer}>
                 <Pressable
                     style={({ pressed }) => [
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     },
     activeIndicator: {
         position: 'absolute',
-        right: -SPACING.lg, 
+        right: -SPACING.lg,
         width: 4,
         height: '60%',
         borderRadius: 2,

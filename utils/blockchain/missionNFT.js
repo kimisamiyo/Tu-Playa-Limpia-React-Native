@@ -74,8 +74,8 @@ export const fetchUserNFTs = async (walletAddress) => {
         claimed: true,
         date: new Date().toLocaleDateString(), // Para fecha exacta tendríamos que consultar info de bloque, esto es aproximado
         lockedUntil: new Date(Date.now() + 86400000 * 30).toLocaleDateString(),
-        owner: 'TPL Explorer',
-        ownerInitials: 'TE',
+        owner: '...',
+        ownerInitials: '..',
         isNew: false,
         title: metadata.name || `TPL NFT #${tokenId}`,
         description: metadata.description || 'NFT recuperado del blockchain',

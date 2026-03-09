@@ -78,6 +78,7 @@ const translations = {
         wallet_connect_metamask: 'Conectar MetaMask',
         wallet_connect_skip: 'Saltar / Conectar más tarde',
         wallet_connect_hint: 'Si ya te encuentras conectado en Pali / Metamask a la red zkSYS, el proceso de conexión se salta de forma automática',
+        scan_beach_required: 'Selecciona una playa donde te encuentres para empezar el escaneo',
 
         auth_welcome: 'Bienvenido',
         auth_welcome_back: 'Bienvenido',
@@ -352,7 +353,7 @@ const translations = {
         sidebar_promos: 'Promos',
         sidebar_settings: 'Configuración',
         sidebar_version: 'TPL • Escritorio',
-        sidebar_role: 'TPL Explorer',
+        sidebar_role: '{{role}}',
         map_title: 'Playas de Perú',
         map_available: 'playas disponibles',
         map_search_placeholder: 'Buscar playa, distrito o zona...',
@@ -383,7 +384,10 @@ const translations = {
         beach_detail_location: "Detalles de Ubicación",
         beach_detail_open_map: "Abrir en Google Maps",
         beach_detail_go_back: "Regresar",
-        beach_detail_error: "Error al cargar los datos de la playa"
+        beach_detail_error: "Error al cargar los datos de la playa",
+        beach_start_cleanup: "Empezar Limpieza",
+        scan_cleaning_at: "Limpiando en: {{beach}}",
+        scan_finish_cleanup: "Finalizar Limpieza",
     },
     en: {
         rewards_claim_nft: 'Claim NFT',
@@ -394,6 +398,8 @@ const translations = {
         wallet_connect_metamask: 'Connect MetaMask',
         wallet_connect_skip: 'Skip / Connect later',
         wallet_connect_hint: 'If you are already connected to the zkSYS network via Pali / MetaMask, the connection process will be skipped automatically',
+        scan_beach_required: 'Select a beach where you are to start scanning',
+        scan_beach_required: 'Select a beach where you are to start scanning',
 
         auth_welcome: 'Welcome',
         auth_welcome_back: 'Welcome',
@@ -668,7 +674,7 @@ const translations = {
         sidebar_promos: 'Promos',
         sidebar_settings: 'Settings',
         sidebar_version: 'TPL • Desktop',
-        sidebar_role: 'TPL Explorer',
+        sidebar_role: '{{role}}',
         map_title: 'Beaches of Peru',
         map_available: 'beaches available',
         map_search_placeholder: 'Search beach, district or zone...',
@@ -699,7 +705,10 @@ const translations = {
         beach_detail_location: "Location Details",
         beach_detail_open_map: "Open in Google Maps",
         beach_detail_go_back: "Go Back",
-        beach_detail_error: "Error loading beach data"
+        beach_detail_error: "Error loading beach data",
+        beach_start_cleanup: "Start Cleanup",
+        scan_cleaning_at: "Cleaning at: {{beach}}",
+        scan_finish_cleanup: "Finish Cleanup",
     },
     zh: {
         rewards_claim_nft: '领取 NFT',
@@ -710,6 +719,7 @@ const translations = {
         wallet_connect_metamask: '连接 MetaMask',
         wallet_connect_skip: '跳过 / 稍后连接',
         wallet_connect_hint: '如果您已通过 Pali / MetaMask 连接到 zkSYS 网络，连接过程将自动跳过',
+        scan_beach_required: '选择您所在的海滩开始扫描',
 
         auth_welcome: '欢迎',
         auth_welcome_back: '欢迎回来',
@@ -972,7 +982,7 @@ const translations = {
         sidebar_promos: '促销',
         sidebar_settings: '设置',
         sidebar_version: 'TPL • 桌面端',
-        sidebar_role: '海洋卫士',
+        sidebar_role: '{{role}}',
         map_title: '秘鲁海滩',
         map_available: '个海滩可用',
         map_search_placeholder: '搜索海滩、地区或区域...',
@@ -1003,7 +1013,10 @@ const translations = {
         beach_detail_location: "位置详情",
         beach_detail_open_map: "在 Google Maps 中打开",
         beach_detail_go_back: "返回",
-        beach_detail_error: "加载海滩数据时出错"
+        beach_detail_error: "加载海滩数据时出错",
+        beach_start_cleanup: "开始清理",
+        scan_cleaning_at: "正在清理：{{beach}}",
+        scan_finish_cleanup: "结束清理",
     },
     hi: {
         rewards_claim_nft: 'NFT दव कर',
@@ -1014,6 +1027,8 @@ const translations = {
         wallet_connect_metamask: 'MetaMask कनेक्ट करें',
         wallet_connect_skip: 'छोड़ें / बाद में कनेक्ट करें',
         wallet_connect_hint: 'यदि आप पहले से ही पाली / मेटामास्क के माध्यम से zkSYS नेटवर्क से जुड़े हैं, तो कनेक्शन प्रक्रिया स्वचालित रूप से छोड़ दी जाएगी',
+        scan_beach_required: 'स्कैनिंग शुरू करने के लिए उस बीच का चयन करें जहाँ आप हैं',
+        scan_beach_required: 'स्कैनिंग शुरू करने के लिए उस बीच का चयन करें जहाँ आप हैं',
 
         auth_welcome: 'स्वागत है',
         auth_welcome_back: 'वापसी पर स्वागत है',
@@ -1276,7 +1291,7 @@ const translations = {
         sidebar_promos: 'प्रचार',
         sidebar_settings: 'सेटिंग्स',
         sidebar_version: 'TPL • डेस्कटॉप',
-        sidebar_role: 'महासागर रक्षक',
+        sidebar_role: '{{role}}',
         map_title: 'पेरू के समुद्र तट',
         map_available: 'समुद्र तट उपलब्ध',
         map_search_placeholder: 'समुद्र तट, जिला या क्षेत्र खोजें...',
@@ -1307,7 +1322,10 @@ const translations = {
         beach_detail_location: "स्थान विवरण",
         beach_detail_open_map: "Google मानचित्र में खोलें",
         beach_detail_go_back: "वापस जाएँ",
-        beach_detail_error: "समुद्र तट डेटा लोड करने में त्रुटि"
+        beach_detail_error: "समुद्र तट डेटा लोड करने में त्रुटि",
+        beach_start_cleanup: "सफाई शुरू करें",
+        scan_cleaning_at: "सफाई कर रहे हैं: {{beach}}",
+        scan_finish_cleanup: "सफाई समाप्त करें",
     },
     ar: {
         rewards_claim_nft: 'المطالبة بـ NFT',
@@ -1581,7 +1599,7 @@ const translations = {
         sidebar_promos: 'العروض',
         sidebar_settings: 'الإعدادات',
         sidebar_version: 'TPL • سطح المكتب',
-        sidebar_role: 'حارس المحيط',
+        sidebar_role: '{{role}}',
         map_title: 'شواطئ بيرو',
         map_available: 'شواطئ متاحة',
         map_search_placeholder: 'ابحث عن شاطئ أو منطقة...',
@@ -1612,7 +1630,10 @@ const translations = {
         beach_detail_location: "تفاصيل الموقع",
         beach_detail_open_map: "افتح في خرائط جوجل",
         beach_detail_go_back: "عُد",
-        beach_detail_error: "خطأ في تحميل بيانات الشاطئ"
+        beach_detail_error: "خطأ في تحميل بيانات الشاطئ",
+        beach_start_cleanup: "بدء التنظيف",
+        scan_cleaning_at: "تنظيف في: {{beach}}",
+        scan_finish_cleanup: "إنهاء التنظيف",
     },
     fr: {
         rewards_claim_nft: 'Récupérer le NFT',
@@ -1623,6 +1644,7 @@ const translations = {
         wallet_connect_metamask: 'Connecter MetaMask',
         wallet_connect_skip: 'Passer / Connecter plus tard',
         wallet_connect_hint: 'Si vous êtes déjà connecté au réseau zkSYS via Pali / MetaMask, le processus de connexion sera automatiquement ignoré',
+        scan_beach_required: 'Sélectionnez une plage où vous vous trouvez pour commencer le scan',
 
         auth_welcome: 'Bienvenue',
         auth_welcome_back: 'Bienvenue',
@@ -1885,7 +1907,7 @@ const translations = {
         sidebar_promos: 'Promos',
         sidebar_settings: 'Paramètres',
         sidebar_version: 'TPL • Bureau',
-        sidebar_role: 'Gardien de l\'Océan',
+        sidebar_role: '{{role}}',
         map_title: 'Plages du Pérou',
         map_available: 'plages disponibles',
         map_search_placeholder: 'Chercher plage, district ou zone...',
@@ -1917,7 +1939,10 @@ const translations = {
         beach_detail_location: "Détails de l'emplacement",
         beach_detail_open_map: "Ouvrir dans Google Maps",
         beach_detail_go_back: "Retour",
-        beach_detail_error: "Erreur lors du chargement des données de la plage"
+        beach_detail_error: "Erreur lors du chargement des données de la plage",
+        beach_start_cleanup: "Commencer le Nettoyage",
+        scan_cleaning_at: "Nettoyage à: {{beach}}",
+        scan_finish_cleanup: "Terminer le Nettoyage",
     },
     pt: {
         rewards_claim_nft: 'Resgatar NFT',
@@ -1928,6 +1953,7 @@ const translations = {
         wallet_connect_metamask: 'Conectar MetaMask',
         wallet_connect_skip: 'Pular / Conectar depois',
         wallet_connect_hint: 'Se você já estiver conectado à rede zkSYS via Pali / MetaMask, o processo de conexão será ignorado automaticamente',
+        scan_beach_required: 'Selecione uma praia onde você está para começar a digitalização',
 
         auth_welcome: 'Bem-vindo',
         auth_welcome_back: 'Bem-vindo de volta',
@@ -2190,7 +2216,7 @@ const translations = {
         sidebar_promos: 'Promos',
         sidebar_settings: 'Configurações',
         sidebar_version: 'TPL • Desktop',
-        sidebar_role: 'Explorador TPL',
+        sidebar_role: '{{role}}',
         map_title: 'Praias do Peru',
         map_available: 'praias disponíveis',
         map_search_placeholder: 'Buscar praia, distrito ou zona...',
@@ -2222,7 +2248,10 @@ const translations = {
         beach_detail_location: "Detalhes da Localização",
         beach_detail_open_map: "Abrir no Google Maps",
         beach_detail_go_back: "Voltar",
-        beach_detail_error: "Erro ao carregar os dados da praia"
+        beach_detail_error: "Erro ao carregar os dados da praia",
+        beach_start_cleanup: "Iniciar Limpeza",
+        scan_cleaning_at: "Limpando em: {{beach}}",
+        scan_finish_cleanup: "Finalizar Limpieza",
     },
 };
 export default translations;

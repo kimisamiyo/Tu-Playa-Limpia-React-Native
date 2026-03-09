@@ -381,7 +381,7 @@ const LastScanInfoPanel = ({ scanInfo, isDark, onDismiss }) => {
     );
 };
 export default function ScanScreen() {
-    const { scanItem } = useGame();
+    const { scanItem, activeBeach, endCleanup } = useGame();
     const { colors, isDark } = useTheme();
     const { t } = useLanguage();
     const navigation = useNavigation();
@@ -412,6 +412,9 @@ export default function ScanScreen() {
     const [showCelebration, setShowCelebration] = useState(false);
     const [celebrationMessage, setCelebrationMessage] = useState('');
     const scannerSize = getScannerSize();
+    const waterGradient = isDark
+        ? [BRAND.oceanDeep, '#002844', BRAND.oceanMid]
+        : ['#1a6b8f', '#2d8ab0', '#4aa3c7'];
     // Scanner line animation
     const scanLineY = useSharedValue(0);
     const pulseOpacity = useSharedValue(0.6);
@@ -432,14 +435,11 @@ export default function ScanScreen() {
     }, [scannerSize]);
     // Continuous scanning effect with locking logic
     useEffect(() => {
-        if (permission?.granted && isCameraActive && isAutoScanning && cameraRef.current && isFocused) {
+        if (permission?.granted && isCameraActive && isAutoScanning && cameraRef.current && isFocused && activeBeach) {
             console.log('Starting continuous scan loop...');
-            // Clear existing interval
+            // ... (rest of the logic remains the same but wrapped in activeBeach check)
             if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
-            // Start locked scanning interval
             scanIntervalRef.current = setInterval(() => {
-                // VERIFICATION LOGIC: Continues scanning to verify object presence
-                // Only skip if currently processing a frame (isScanningRef)
                 if (!isScanningRef.current && cameraRef.current) {
                     performScan();
                 }
@@ -450,7 +450,7 @@ export default function ScanScreen() {
                 }
             };
         }
-    }, [permission?.granted, isCameraActive, isAutoScanning, isFocused]);
+    }, [permission?.granted, isCameraActive, isAutoScanning, isFocused, activeBeach]);
     const scanLineStyle = useAnimatedStyle(() => ({
         transform: [{ translateY: scanLineY.value }],
     }));
@@ -459,7 +459,7 @@ export default function ScanScreen() {
     }));
     // Real-time scan function - calls Roboflow API directly
     const performScan = async () => {
-        if (!cameraRef.current || isScanning) return;
+        if (!cameraRef.current || isScanning || !activeBeach) return;
         // If locked, we are verifying. If not locked, we are searching.
         setIsScanning(true);
         try {
@@ -633,6 +633,54 @@ export default function ScanScreen() {
             </View>
         );
     }
+    if (!activeBeach) {
+        return (
+            <View style={styles.container}>
+                <LinearGradient colors={waterGradient} style={StyleSheet.absoluteFill} />
+                <FloatingBubbles count={12} minSize={4} maxSize={16} zIndex={1} />
+                <View style={styles.permissionContainer}>
+                    <Animated.View
+                        entering={FadeIn.springify()}
+                        style={[
+                            styles.permissionCard,
+                            { backgroundColor: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.95)' }
+                        ]}
+                    >
+                        <View style={[
+                            styles.permissionIconContainer,
+                            { backgroundColor: isDark ? BRAND.oceanMid : '#e0f2fe' }
+                        ]}>
+                            <Ionicons
+                                name="location"
+                                size={rs(48)}
+                                color={isDark ? BRAND.biolum : '#0d4a6f'}
+                            />
+                        </View>
+                        <Text style={[
+                            styles.permissionTitle,
+                            { color: isDark ? '#fff' : '#1a3a4a' }
+                        ]}>
+                            {t('scan_beach_required')}
+                        </Text>
+                        <Pressable
+                            onPress={() => navigation.navigate('MainTabs', { screen: 'Mapa' })}
+                            style={({ pressed }) => [
+                                styles.permissionButton,
+                                {
+                                    backgroundColor: isDark ? BRAND.biolum : '#0d4a6f',
+                                    opacity: pressed ? 0.8 : 1
+                                }
+                            ]}
+                        >
+                            <Ionicons name="map" size={rs(20)} color="#fff" />
+                            <Text style={styles.permissionButtonText}>{t('sidebar_map')}</Text>
+                        </Pressable>
+                    </Animated.View>
+                </View>
+            </View>
+        );
+    }
+
     if (!permission.granted || !isCameraActive) {
         return (
             <PermissionScreen
@@ -652,9 +700,6 @@ export default function ScanScreen() {
             />
         );
     }
-    const waterGradient = isDark
-        ? [BRAND.oceanDeep, '#002844', BRAND.oceanMid]
-        : ['#1a6b8f', '#2d8ab0', '#4aa3c7'];
     return (
         <View style={styles.container}>
             { }
@@ -668,7 +713,7 @@ export default function ScanScreen() {
                     setPredictions([]);
                     setDetectionResults(null);
                     setIsCameraActive(false);
-                    if (scanIntervalRef.current) clearInterval(scanIntervalRef.current);
+                    endCleanup();
                     if (navigation.canGoBack()) {
                         navigation.goBack();
                     } else {
@@ -719,6 +764,19 @@ export default function ScanScreen() {
                         : t('scan_searching')}
                 </Text>
             </Animated.View>
+
+            {/* Banner de Playa Activa */}
+            {activeBeach && (
+                <Animated.View
+                    entering={FadeInDown.delay(600)}
+                    style={[styles.activeBeachBanner, { backgroundColor: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)' }]}
+                >
+                    <Ionicons name="location" size={rs(16)} color={BRAND.oceanLight} />
+                    <Text style={[styles.activeBeachText, { color: isDark ? '#fff' : BRAND.oceanDeep }]}>
+                        {t('scan_cleaning_at', { beach: activeBeach.name })}
+                    </Text>
+                </Animated.View>
+            )}
             { }
             <View style={styles.scannerOverlay}>
                 { }
@@ -825,31 +883,40 @@ export default function ScanScreen() {
                     </Animated.View>
                     { }
                     <Animated.View entering={FadeInUp.delay(100).springify()}>
-                        <Pressable
-                            onPress={handleCollect}
-                            disabled={!isReadyToCollect}
-                            style={({ pressed }) => [
-                                styles.aiScanButton,
-                                {
-                                    backgroundColor: isReadyToCollect
-                                        ? (isDark ? '#3b82f6' : '#2563eb')
-                                        : 'rgba(100,100,100,0.3)',
-                                    opacity: pressed ? 0.8 : 1,
-                                    transform: [{ scale: pressed ? 0.95 : 1 }],
-                                }
-                            ]}
-                        >
-                            <Ionicons
-                                name="scan"
-                                size={rs(32)}
-                                color="#fff"
-                            />
-                            <Text style={[styles.aiScanButtonText, { color: '#fff' }]}>
-                                {isReadyToCollect
-                                    ? `${t('scan_button')} +${detectionResults?.totalPoints || 0} TPL`
-                                    : t('scan_paused')}
-                            </Text>
-                        </Pressable>
+                        {!activeBeach ? (
+                            <View style={[styles.aiScanButton, { backgroundColor: 'rgba(239,68,68,0.2)', borderColor: '#ef4444', borderWidth: 1 }]}>
+                                <Ionicons name="location-outline" size={rs(24)} color="#ef4444" />
+                                <Text style={[styles.aiScanButtonText, { color: '#ef4444', fontSize: rf(12), letterSpacing: 0.5, textAlign: 'center' }]}>
+                                    {t('scan_beach_required')}
+                                </Text>
+                            </View>
+                        ) : (
+                            <Pressable
+                                onPress={handleCollect}
+                                disabled={!isReadyToCollect}
+                                style={({ pressed }) => [
+                                    styles.aiScanButton,
+                                    {
+                                        backgroundColor: isReadyToCollect
+                                            ? (isDark ? '#3b82f6' : '#2563eb')
+                                            : 'rgba(100,100,100,0.3)',
+                                        opacity: pressed ? 0.8 : 1,
+                                        transform: [{ scale: pressed ? 0.95 : 1 }],
+                                    }
+                                ]}
+                            >
+                                <Ionicons
+                                    name="scan"
+                                    size={rs(32)}
+                                    color="#fff"
+                                />
+                                <Text style={[styles.aiScanButtonText, { color: '#fff' }]}>
+                                    {isReadyToCollect
+                                        ? `${t('scan_button')} +${detectionResults?.totalPoints || 0} TPL`
+                                        : (isScanning ? t('scan_analyzing') : t('scan_searching'))}
+                                </Text>
+                            </Pressable>
+                        )}
                     </Animated.View>
                     { }
                     <View style={styles.controlButtonRow}>
@@ -1273,4 +1340,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    activeBeachBanner: {
+        position: 'absolute',
+        top: rs(130),
+        alignSelf: 'center',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: rs(6),
+        paddingHorizontal: rs(12),
+        borderRadius: RADIUS.full,
+        gap: rs(6),
+        zIndex: 10,
+    },
+    activeBeachText: {
+        fontSize: rf(14),
+        fontWeight: '600',
+    }
 });

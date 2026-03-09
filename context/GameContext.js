@@ -10,61 +10,68 @@ const GAME_KEYS = {
     ITEMS: '@tpl_game_items',
     NFTS: '@tpl_game_nfts',
     USER: '@tpl_game_user_meta',
+    CLEANUP_HISTORY: '@tpl_game_cleanup_history',
 };
 export const GameProvider = ({ children }) => {
     const [points, setPoints] = useState(0);
     const [scannedItems, setScannedItems] = useState({ bottles: 0, cans: 0, total: 0 });
     const [nfts, setNfts] = useState([]);
     const [level, setLevel] = useState(1);
+    const [activeBeach, setActiveBeach] = useState(null);
+    const [cleanupHistory, setCleanupHistory] = useState([]);
     const [user, setUser] = useState({
-        name: 'TPL Explorer',
+        name: '...',
         avatar: null,
-        initials: 'TE',
+        initials: '..',
         hasChangedUsername: false,
         tplTitle: 'Cleanup Rookie',
     });
     const unlockingSet = useRef(new Set());
     const loadGameState = async () => {
         try {
-            const [storedPoints, storedItems, storedNfts, storedUser, storedRegDate, storedUsername] = await Promise.all([
+            const [storedPoints, storedItems, storedNfts, storedUser, storedCleanupHistory, storedRegDate, storedUsername] = await Promise.all([
                 AsyncStorage.getItem(GAME_KEYS.POINTS),
                 AsyncStorage.getItem(GAME_KEYS.ITEMS),
                 AsyncStorage.getItem(GAME_KEYS.NFTS),
                 AsyncStorage.getItem(GAME_KEYS.USER),
+                AsyncStorage.getItem(GAME_KEYS.CLEANUP_HISTORY),
                 AsyncStorage.getItem('@tpl_registration_date'),
                 AsyncStorage.getItem('@tpl_username'),
             ]);
             if (storedPoints) setPoints(parseInt(storedPoints));
             if (storedItems) setScannedItems(JSON.parse(storedItems));
+            if (storedCleanupHistory) setCleanupHistory(JSON.parse(storedCleanupHistory));
 
             const joinDate = storedRegDate || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
             // Sync Username logic
-            let finalName = 'Ocean Guardian';
+            let finalName = '...';
             if (storedUsername) {
                 finalName = storedUsername;
             } else if (storedUser) {
                 const parsed = JSON.parse(storedUser);
-                if (parsed.name && parsed.name !== 'Ocean Guardian') {
+                if (parsed.name && (parsed.name !== '...' && parsed.name !== 'TPL Explorer' && parsed.name !== 'Ocean Guardian')) {
                     finalName = parsed.name;
                 }
             }
 
-            const initials = finalName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+            const initials = finalName && (finalName !== '...' && finalName !== 'TPL Explorer' && finalName !== 'Ocean Guardian')
+                ? finalName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                : '..';
 
             if (storedUser) {
                 setUser(prev => ({
                     ...prev,
                     ...JSON.parse(storedUser),
                     name: finalName,
-                    initials: initials || 'OG',
+                    initials: initials,
                     joinDate
                 }));
             } else {
                 setUser(prev => ({
                     ...prev,
                     name: finalName,
-                    initials: initials || 'OG',
+                    initials: initials,
                     joinDate
                 }));
             }
@@ -72,13 +79,13 @@ export const GameProvider = ({ children }) => {
             const userData = storedUser ? JSON.parse(storedUser) : null;
             const walletAddress = userData?.walletAddress;
 
-            // Patch existing NFTs to reflect the real username instead of "Ocean Guardian"
+            // Patch existing NFTs to reflect the real username
             let initialNfts = storedNfts ? JSON.parse(storedNfts) : [];
             let nftsPatched = false;
             const updatedNfts = initialNfts.map(nft => {
-                if (nft.owner === 'Ocean Guardian' || !nft.owner) {
+                if (nft.owner === 'Ocean Guardian' || nft.owner === 'TPL Explorer' || !nft.owner || nft.owner === '...') {
                     nftsPatched = true;
-                    return { ...nft, owner: finalName };
+                    return { ...nft, owner: finalName, ownerInitials: initials };
                 }
                 return nft;
             });
@@ -176,6 +183,9 @@ export const GameProvider = ({ children }) => {
     useEffect(() => {
         AsyncStorage.setItem(GAME_KEYS.ITEMS, JSON.stringify(scannedItems)).catch(() => { });
     }, [scannedItems]);
+    useEffect(() => {
+        AsyncStorage.setItem(GAME_KEYS.CLEANUP_HISTORY, JSON.stringify(cleanupHistory)).catch(() => { });
+    }, [cleanupHistory]);
     const generateNFTHash = () => {
         return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-6);
     };
@@ -226,9 +236,45 @@ export const GameProvider = ({ children }) => {
     const scanItem = (type, customPoints = null) => {
         const SCORING = { bottle: 5, can: 3, trash: 1 };
         const value = customPoints !== null ? customPoints : (SCORING[type] || 0);
+
         setPoints(prev => prev + value);
         setScannedItems(prev => ({ ...prev, [type]: (prev[type] || 0) + 1, total: prev.total + 1 }));
+
+        // Track in cleanup history if there's an active beach
+        if (activeBeach) {
+            setCleanupHistory(prev => {
+                const now = new Date().toISOString();
+                const sessionDate = now.split('T')[0];
+
+                // Find existing session for today and this beach
+                const existingSessionIndex = prev.findIndex(s => s.beachId === activeBeach.id && s.timestamp.startsWith(sessionDate));
+
+                if (existingSessionIndex >= 0) {
+                    const updated = [...prev];
+                    const session = { ...updated[existingSessionIndex] };
+                    session.scans = { ...session.scans, [type]: (session.scans[type] || 0) + 1, total: (session.scans.total || 0) + 1 };
+                    session.pointsEarned += value;
+                    updated[existingSessionIndex] = session;
+                    return updated;
+                } else {
+                    return [{
+                        beachId: activeBeach.id,
+                        beachName: activeBeach.name,
+                        timestamp: now,
+                        scans: { [type]: 1, total: 1 },
+                        pointsEarned: value
+                    }, ...prev];
+                }
+            });
+        }
+
         return { value };
+    };
+    const startCleanup = (beach) => {
+        setActiveBeach(beach);
+    };
+    const endCleanup = () => {
+        setActiveBeach(null);
     };
     const updateUserProfile = (updates) => {
         setUser(prev => ({ ...prev, ...updates }));
@@ -240,6 +286,10 @@ export const GameProvider = ({ children }) => {
             points,
             level,
             user,
+            activeBeach,
+            cleanupHistory,
+            startCleanup,
+            endCleanup,
             updateUserProfile,
             scanItem,
             unlockNFT,

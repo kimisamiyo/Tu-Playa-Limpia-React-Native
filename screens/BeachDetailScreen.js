@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { useGame } from '../context/GameContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { rs, rf, SPACING, RADIUS } from '../constants/responsive';
+import { BRAND } from '../constants/theme';
 import FlagIcon from '../components/FlagIcon';
 
 const BLUE_GREY = "#607d8b";
@@ -16,6 +18,7 @@ export default function BeachDetailScreen({ route, navigation }) {
     const { beach } = route.params || {};
     const { colors, isDark } = useTheme();
     const { t } = useLanguage();
+    const { startCleanup } = useGame();
     const { width } = useWindowDimensions();
 
     // Si por alguna razon no llega beach data
@@ -24,7 +27,7 @@ export default function BeachDetailScreen({ route, navigation }) {
             <SafeAreaView style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
                 <Text style={{ color: colors.text }}>{t('beach_detail_error') || 'Error loading beach data'}</Text>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 20 }}>
-                    <Text style={{ color: BRAND.primary }}>{t('beach_detail_go_back') || 'Go Back'}</Text>
+                    <Text style={{ color: colors.primary }}>{t('beach_detail_go_back') || 'Go Back'}</Text>
                 </TouchableOpacity>
             </SafeAreaView>
         );
@@ -39,6 +42,13 @@ export default function BeachDetailScreen({ route, navigation }) {
         const url = `https://www.google.com/maps/search/?api=1&query=${beach.lat},${beach.lng}`;
         if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         Linking.openURL(url);
+    };
+
+    const handleStartCleanup = () => {
+        if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        startCleanup(beach);
+        // Al estar en un Stack superior, debemos navegar al TabNavigator primero
+        navigation.navigate('MainTabs', { screen: 'Escanear' });
     };
 
     return (
@@ -119,6 +129,22 @@ export default function BeachDetailScreen({ route, navigation }) {
                             <Ionicons name="open-outline" size={rs(20)} color={subTextColor} />
                         </TouchableOpacity>
                     </View>
+
+                    {/* Botón de Acción Principal: Iniciar Limpieza */}
+                    <TouchableOpacity
+                        style={[styles.primaryButton, { backgroundColor: colors.primary }]}
+                        onPress={handleStartCleanup}
+                        activeOpacity={0.8}
+                    >
+                        <LinearGradient
+                            colors={[colors.primary, BRAND.oceanDeep]}
+                            start={{ x: 0, y: 0 }}
+                            end={{ x: 1, y: 0 }}
+                            style={StyleSheet.absoluteFillObject}
+                        />
+                        <Ionicons name="camera" size={rs(22)} color="#fff" />
+                        <Text style={styles.primaryButtonText}>{t('beach_start_cleanup')}</Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
         </View>
@@ -198,5 +224,26 @@ const styles = StyleSheet.create({
     },
     mapActionSub: {
         fontSize: rf(12),
+    },
+    primaryButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: rs(16),
+        borderRadius: RADIUS.xl,
+        gap: rs(10),
+        marginTop: SPACING.lg,
+        overflow: 'hidden',
+        elevation: 4,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+    },
+    primaryButtonText: {
+        color: '#fff',
+        fontSize: rf(18),
+        fontWeight: '700',
+        letterSpacing: 0.5,
     }
 });
