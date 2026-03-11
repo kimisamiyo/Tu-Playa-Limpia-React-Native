@@ -8,10 +8,13 @@ export const TPL_TOKEN_ABI = [
     "function mint(address to, uint256 amount) external",
     "function symbol() view returns (string)"
 ];
-export const fetchUserTitle = async (address) => {
+export const fetchUserTitle = async (address, customProvider = null) => {
     try {
-        if (!window.ethereum) return "Cleanup Rookie";
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const provider = customProvider ||
+            (window.ethereum ? new ethers.providers.Web3Provider(window.ethereum) : null);
+
+        if (!provider) return "Cleanup Rookie";
+
         const contract = new ethers.Contract(TPL_TOKEN_ADDRESS, TPL_TOKEN_ABI, provider);
         const title = await contract.getTitle(address);
         return title;
@@ -20,10 +23,14 @@ export const fetchUserTitle = async (address) => {
         return "Cleanup Rookie";
     }
 };
-export const fetchTPLBalance = async (address) => {
+
+export const fetchTPLBalance = async (address, customProvider = null) => {
     try {
-        if (!window.ethereum) return "0";
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const provider = customProvider ||
+            (window.ethereum ? new ethers.providers.Web3Provider(window.ethereum) : null);
+
+        if (!provider) return "0";
+
         const contract = new ethers.Contract(TPL_TOKEN_ADDRESS, TPL_TOKEN_ABI, provider);
         const balance = await contract.balanceOf(address);
         const decimals = await contract.decimals();

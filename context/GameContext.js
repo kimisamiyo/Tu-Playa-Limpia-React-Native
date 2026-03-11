@@ -3,6 +3,7 @@ import { DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { generateNFTAttributes } from '../utils/nftGenerator';
 import { fetchUserNFTs } from '../utils/blockchain/missionNFT';
+import { fetchTPLBalance, fetchUserTitle } from '../utils/blockchain/tplToken';
 const GameContext = createContext();
 export const useGame = () => useContext(GameContext);
 const GAME_KEYS = {
@@ -108,8 +109,34 @@ export const GameProvider = ({ children }) => {
                         finalNfts = onChainNfts;
                     }
                 } catch (blockchainErr) {
-                    console.warn('⚠️ Error consultando Blockchain:', blockchainErr.message);
+                    console.warn('⚠️ Error consultando NFTs en Blockchain:', blockchainErr.message);
                 }
+
+                // --- Sync TPL Points & Title from Blockchain ---
+                try {
+                    console.log('📡 Sincronizando puntos TPL desde la Blockchain...');
+                    const [onChainBalance, onChainTitle] = await Promise.all([
+                        fetchTPLBalance(walletAddress),
+                        fetchUserTitle(walletAddress)
+                    ]);
+
+                    const numericBalance = onChainBalance ? Math.floor(parseFloat(onChainBalance)) : 0;
+
+                    if (numericBalance > 0) {
+                        setPoints(prev => Math.max(prev, numericBalance));
+                        console.log(`✅ ${numericBalance} TPL sincronizados desde la Blockchain`);
+                    } else {
+                        console.log(`ℹ️ Balance on-chain es 0 o insuficiente ("${onChainBalance}"), manteniendo puntos locales.`);
+                    }
+
+                    if (onChainTitle && onChainTitle !== "Cleanup Rookie") {
+                        setUser(prev => ({ ...prev, tplTitle: onChainTitle }));
+                        console.log(`✅ Título "${onChainTitle}" sincronizado desde la Blockchain`);
+                    }
+                } catch (syncErr) {
+                    console.warn('⚠️ Error sincronizando puntos TPL:', syncErr.message);
+                }
+                // --- End Sync ---
             }
 
             if (finalNfts) {
@@ -186,6 +213,18 @@ export const GameProvider = ({ children }) => {
     useEffect(() => {
         AsyncStorage.setItem(GAME_KEYS.CLEANUP_HISTORY, JSON.stringify(cleanupHistory)).catch(() => { });
     }, [cleanupHistory]);
+
+    // Automatic Sync to Blockchain when milestones are reached
+    useEffect(() => {
+        const autoSync = async () => {
+            // Solo sincronizar si hay wallet y múltiplos de 5 puntos para coincidir con el primer título
+            if (user.walletAddress && points > 0 && points % 5 === 0) {
+                console.log(`🎯 Milestone alcanzado: ${points} TPL. Sincronizando automáticamente...`);
+                await syncTPLToBlockchain();
+            }
+        };
+        autoSync();
+    }, [points, user.walletAddress]);
     const generateNFTHash = () => {
         return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-6);
     };
@@ -276,6 +315,43 @@ export const GameProvider = ({ children }) => {
     const endCleanup = () => {
         setActiveBeach(null);
     };
+
+    const syncTPLToBlockchain = async () => {
+        if (!user.walletAddress || points <= 0) return { success: false, error: 'No wallet or points to sync' };
+
+        try {
+            console.log(`📡 Iniciando sincronización de ${points} TPL a la Blockchain...`);
+            const appUrl = process.env.EXPO_PUBLIC_APP_URL || 'https://tu-playa-limpia.vercel.app';
+
+            const response = await fetch(`${appUrl}/api/mint-tpl`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    address: user.walletAddress,
+                    amount: points
+                }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                console.log('✅ Puntos sincronizados con éxito:', data.hash);
+                // Opcional: Podríamos marcar los puntos como "ya sincronizados" para no duplicar,
+                // pero como el contrato requiere onlyOwner y nosotros validamos, por ahora 
+                // simplemente actualizamos el estado para reflejar el éxito.
+                // En una versión más robusta, resetearíamos los puntos locales si la blockchain es la única fuente.
+                return { success: true, hash: data.hash };
+            } else {
+                throw new Error(data.error || 'Error desconocido en el servidor');
+            }
+        } catch (error) {
+            console.error('❌ Error sincronizando TPL:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
     const updateUserProfile = (updates) => {
         setUser(prev => ({ ...prev, ...updates }));
     };
@@ -300,7 +376,8 @@ export const GameProvider = ({ children }) => {
             },
             markNFTSeen: (id) => {
                 setNfts(prev => prev.map(n => n.id === id ? { ...n, isNew: false } : n));
-            }
+            },
+            syncTPLToBlockchain
         }}>
             {children}
         </GameContext.Provider>

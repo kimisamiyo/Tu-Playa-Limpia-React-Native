@@ -43,7 +43,7 @@ const TITLES_CONFIG = [
         id: 'collector',
         name: 'Collector Starter',
         min: 5,
-        color: '#32CD32', 
+        color: '#32CD32',
         desc: 'Comenzando a coleccionar actos de impacto positivo.',
     },
     {
@@ -54,9 +54,30 @@ const TITLES_CONFIG = [
         desc: 'Iniciando el camino hacia un planeta más limpio.',
     }
 ];
-const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle }) => {
+const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle, onSync }) => {
     const { colors, isDark } = useTheme();
     const { t } = useLanguage();
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncStatus, setSyncStatus] = useState(null); // 'success' | 'error' | null
+
+    const handleSync = async () => {
+        setIsSyncing(true);
+        setSyncStatus(null);
+        try {
+            const result = await onSync();
+            if (result.success) {
+                setSyncStatus('success');
+            } else {
+                setSyncStatus('error');
+            }
+        } catch (err) {
+            setSyncStatus('error');
+        } finally {
+            setIsSyncing(false);
+            // Limpiar status después de unos segundos
+            setTimeout(() => setSyncStatus(null), 3000);
+        }
+    };
     return (
         <Modal
             visible={visible}
@@ -71,7 +92,7 @@ const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle 
                         entering={FadeInDown.springify()}
                         style={[styles.modalContent, { backgroundColor: isDark ? 'rgba(10, 25, 41, 0.95)' : 'rgba(255, 255, 255, 0.95)' }]}
                     >
-                        {}
+                        { }
                         <View style={styles.header}>
                             <Text style={[styles.title, { color: colors.text }]}>{t('home_redeem_tpl')}</Text>
                             <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -79,8 +100,36 @@ const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle 
                             </TouchableOpacity>
                         </View>
                         <View style={styles.pointsDisplay}>
-                            <Text style={[styles.pointsLabel, { color: colors.textSecondary }]}>TUS PUNTOS ACTUALES</Text>
-                            <Text style={[styles.pointsValue, { color: colors.primary }]}>{points} TPL</Text>
+                            <View style={styles.pointsInfo}>
+                                <Text style={[styles.pointsLabel, { color: colors.textSecondary }]}>TUS PUNTOS ACTUALES</Text>
+                                <Text style={[styles.pointsValue, { color: colors.primary }]}>{points} TPL</Text>
+                            </View>
+
+                            <TouchableOpacity
+                                style={[
+                                    styles.syncButton,
+                                    { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' },
+                                    syncStatus === 'success' && { backgroundColor: 'rgba(50, 205, 50, 0.2)' },
+                                    syncStatus === 'error' && { backgroundColor: 'rgba(255, 69, 0, 0.2)' }
+                                ]}
+                                onPress={handleSync}
+                                disabled={isSyncing || points === 0}
+                            >
+                                <Ionicons
+                                    name={isSyncing ? "sync" : (syncStatus === 'success' ? "checkmark-circle" : (syncStatus === 'error' ? "alert-circle" : "cloud-upload-outline"))}
+                                    size={rs(20)}
+                                    color={syncStatus === 'success' ? '#32CD32' : (syncStatus === 'error' ? '#FF4500' : colors.primary)}
+                                    style={isSyncing && { transform: [{ rotate: '0deg' }] }} // Rotación se manejaría con Animated si quisiéramos
+                                />
+                                <Text style={[
+                                    styles.syncButtonText,
+                                    { color: colors.text },
+                                    syncStatus === 'success' && { color: '#32CD32' },
+                                    syncStatus === 'error' && { color: '#FF4500' }
+                                ]}>
+                                    {isSyncing ? 'SINCRONIZANDO...' : (syncStatus === 'success' ? 'LOGRADO' : (syncStatus === 'error' ? 'FALLÓ' : 'SINCRONIZAR'))}
+                                </Text>
+                            </TouchableOpacity>
                         </View>
                         <ScrollView
                             contentContainerStyle={styles.list}
@@ -178,11 +227,29 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     pointsDisplay: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
         backgroundColor: 'rgba(0,0,0,0.05)',
         padding: SPACING.md,
         borderRadius: RADIUS.lg,
         marginBottom: SPACING.xl,
+    },
+    pointsInfo: {
+        flex: 1,
+    },
+    syncButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: rs(12),
+        paddingVertical: rs(8),
+        borderRadius: RADIUS.md,
+        gap: rs(6),
+    },
+    syncButtonText: {
+        fontSize: rf(11),
+        fontWeight: '800',
+        letterSpacing: 0.5,
     },
     pointsLabel: {
         fontSize: rf(11),

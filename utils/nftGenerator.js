@@ -173,10 +173,10 @@ const clearWalletConnectCache = () => {
 // ---------------------------------------------------------------------------
 
 /**
- * Conexión a MetaMask en MÓVIL cuando la página se abre desde el
- * browser integrado de MetaMask. No usa WalletConnect ni QR modal.
+ * Conexión a MetaMask (Extensión en Desktop o Browser Móvil).
+ * Usa window.ethereum directamente sin WalletConnect/QR.
  */
-const connectMetaMaskMobileBrowser = async () => {
+const connectMetaMaskDirect = async () => {
   const ethProvider = window.ethereum;
   if (!ethProvider?.isMetaMask) throw new Error("MetaMask no detectada en este navegador.");
 
@@ -465,11 +465,11 @@ export const handleClaim = async (
       provider = externalSigner.provider;
 
     } else if (walletType === 'metamask') {
-      if (isInsideMetaMaskBrowser()) {
-        console.log("📱 MetaMask browser detectado → conexión directa");
-        ({ provider, signer, recipient } = await connectMetaMaskMobileBrowser());
+      if (window.ethereum?.isMetaMask) {
+        console.log("🦊 MetaMask detectada (Extensión o Browser) → conexión directa");
+        ({ provider, signer, recipient } = await connectMetaMaskDirect());
       } else {
-        console.log("🖥️ Desktop detectado → WalletConnect QR modal");
+        console.log("🖥️ MetaMask no detectada → Usando WalletConnect QR");
         ({ provider, signer, recipient } = await connectViaWalletConnect());
       }
 

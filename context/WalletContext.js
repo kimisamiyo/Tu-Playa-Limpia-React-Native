@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from "react"
 import { ethers } from "ethers"
-import { Platform } from "react-native"
+import { Platform, DeviceEventEmitter } from "react-native"
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import EthereumProvider from "@walletconnect/ethereum-provider"
 
 const WalletContext = createContext()
@@ -25,6 +26,23 @@ export function WalletProvider({ children }) {
   const [address, setAddress] = useState(null)
   const [connectedWalletType, setConnectedWalletType] = useState(null)
   const [hasSkippedConnection, setHasSkippedConnection] = useState(false)
+
+  // Sync wallet address with app metadata and notify observers
+  const syncWalletWithApp = async (walletAddress) => {
+    try {
+      const storedUser = await AsyncStorage.getItem('@tpl_game_user_meta');
+      const userData = storedUser ? JSON.parse(storedUser) : {};
+
+      const updatedUser = { ...userData, walletAddress: walletAddress };
+      await AsyncStorage.setItem('@tpl_game_user_meta', JSON.stringify(updatedUser));
+
+      // Global event to trigger reload in GameContext, etc.
+      DeviceEventEmitter.emit('TPL_ACCOUNT_IMPORTED');
+      console.log("📡 App state synced with wallet address:", walletAddress);
+    } catch (e) {
+      console.warn("Error syncing wallet with storage:", e);
+    }
+  }
 
   // --------------------------------------------------
   // SWITCH / ADD NETWORK
@@ -99,6 +117,7 @@ export function WalletProvider({ children }) {
       setAddress(address)
       setConnectedWalletType('metamask')
 
+      await syncWalletWithApp(address)
       console.log("🦊 MetaMask conectado:", address)
 
     } catch (err) {
@@ -136,6 +155,7 @@ export function WalletProvider({ children }) {
       setAddress(address)
       setConnectedWalletType('metamask')
 
+      await syncWalletWithApp(address)
       console.log("📱 WalletConnect conectado:", address)
 
     } catch (err) {
@@ -174,6 +194,7 @@ export function WalletProvider({ children }) {
       setAddress(address);
       setConnectedWalletType('pali');
 
+      await syncWalletWithApp(address);
       console.log("🟢 Pali Wallet conectado:", address);
 
     } catch (err) {

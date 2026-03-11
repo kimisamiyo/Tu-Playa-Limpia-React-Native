@@ -139,7 +139,7 @@ import { useAuth } from '../context/AuthContext';
 import { fetchTPLBalance } from '../utils/blockchain/tplToken';
 export default function HomeScreen() {
     const navigation = useNavigation();
-    const { user, points, nfts, level, updateUserProfile } = useGame();
+    const { user, points, nfts, level, updateUserProfile, syncTPLToBlockchain } = useGame();
     const { username } = useAuth();
     const { address } = useWallet();
     const { colors, shadows, isDark } = useTheme();
@@ -166,8 +166,8 @@ export default function HomeScreen() {
     const localeMap = { es: 'es-ES', en: 'en-US', zh: 'zh-CN', hi: 'hi-IN', ar: 'ar-SA', fr: 'fr-FR', pt: 'pt-BR' };
     const dateString = today.toLocaleDateString(localeMap[language] || 'es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
     const actionItemWidth = isDesktop
-        ? (width - 250 - (SPACING.lg * 2) - (SPACING.md * 3)) / 4  
-        : (width - (SPACING.lg * 2) - SPACING.md) / 2;             
+        ? (width - 250 - (SPACING.lg * 2) - (SPACING.md * 3)) / 4
+        : (width - (SPACING.lg * 2) - SPACING.md) / 2;
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             {isDark && (
@@ -182,7 +182,7 @@ export default function HomeScreen() {
                     contentContainerStyle={styles.scrollContent}
                     showsVerticalScrollIndicator={false}
                 >
-                    {}
+                    { }
                     <Animated.View
                         entering={FadeInDown.delay(100).springify()}
                         style={styles.header}
@@ -218,9 +218,9 @@ export default function HomeScreen() {
                             )}
                         </TouchableOpacity>
                     </Animated.View>
-                    {}
+                    { }
                     <View style={isDesktop ? styles.desktopRow : styles.mobileCol}>
-                        {}
+                        { }
                         <View style={isDesktop ? { flex: 0.4, marginRight: SPACING.xl } : { width: '100%' }}>
                             <BalanceCard
                                 onRedeem={() => setShowRedeemModal(true)}
@@ -228,7 +228,7 @@ export default function HomeScreen() {
                                 nfts={nfts}
                             />
                         </View>
-                        {}
+                        { }
                         <View style={isDesktop ? { flex: 0.6 } : { width: '100%' }}>
                             <Animated.View entering={FadeInUp.delay(400).springify()}>
                                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -275,9 +275,10 @@ export default function HomeScreen() {
             <TPLRedeemModal
                 visible={showRedeemModal}
                 onClose={() => setShowRedeemModal(false)}
-                points={tplBalance !== null ? tplBalance : points}
+                points={Math.max(tplBalance !== null ? tplBalance : 0, points)}
                 currentTitle={user.tplTitle}
                 onUpdateTitle={handleTitleUpdate}
+                onSync={syncTPLToBlockchain}
             />
         </View>
     );
@@ -358,8 +359,8 @@ const styles = StyleSheet.create({
     decorCircle2: { width: rs(120), height: rs(120), bottom: -rs(30), right: -rs(20) },
     sectionTitle: { fontSize: rf(18), fontWeight: '700', marginBottom: SPACING.md },
     grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-start', gap: SPACING.md },
-    actionItem: {  },
-    actionCard: { padding: 0, height: '100%' }, 
+    actionItem: {},
+    actionCard: { padding: 0, height: '100%' },
     actionContent: { alignItems: 'center', padding: SPACING.lg, justifyContent: 'center', height: '100%' },
     iconBox: {
         width: rs(52), height: rs(52), borderRadius: rs(16),
