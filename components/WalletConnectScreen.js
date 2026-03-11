@@ -25,7 +25,7 @@ import FlagIcon from './FlagIcon';
 
 export default function WalletConnectScreen({ onComplete }) {
     const { colors, isDark } = useTheme();
-    const { connectMetaMask, connectPali, address, setHasSkippedConnection } = useWallet();
+    const { connectMetaMask, connectPali, address, setHasSkippedConnection, isInitializing } = useWallet();
     const { t, language, setLanguage, LANGUAGES, LANGUAGE_LABELS } = useLanguage();
     const { height: winH } = useWindowDimensions();
 
@@ -42,6 +42,7 @@ export default function WalletConnectScreen({ onComplete }) {
     // If connected successfully, move to main app
     useEffect(() => {
         if (address) {
+            console.log("💎 WalletConnectScreen: Address detected, completing setup...", address);
             handleComplete();
         }
     }, [address]);
@@ -121,6 +122,14 @@ export default function WalletConnectScreen({ onComplete }) {
             </Modal>
         </View>
     );
+
+    if (isInitializing) {
+        return (
+            <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+                <LivingWater />
+            </View>
+        );
+    }
 
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>

@@ -188,9 +188,9 @@ export const GameProvider = ({ children }) => {
     useEffect(() => {
         loadGameState();
 
-        // Listener reactivo a las importaciones/registros de cuenta desde Auth
+        // Listener reactivo a las importaciones/registros de cuenta desde Auth o Wallet
         const accountListener = DeviceEventEmitter.addListener('TPL_ACCOUNT_IMPORTED', () => {
-            console.log('🔄 Sincronizando GameContext tras nueva sesión...');
+            console.log('🔄 Sincronizando GameContext tras nueva sesión o cambio de wallet...');
             loadGameState();
         });
 

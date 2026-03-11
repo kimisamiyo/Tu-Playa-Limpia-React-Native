@@ -3,6 +3,7 @@ import { ethers } from "ethers"
 import { Platform, DeviceEventEmitter } from "react-native"
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import EthereumProvider from "@walletconnect/ethereum-provider"
+import { useEffect } from "react"
 
 const WalletContext = createContext()
 
@@ -26,6 +27,38 @@ export function WalletProvider({ children }) {
   const [address, setAddress] = useState(null)
   const [connectedWalletType, setConnectedWalletType] = useState(null)
   const [hasSkippedConnection, setHasSkippedConnection] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
+
+  // --------------------------------------------------
+  // PERSISTENCE: RESTORE SESSION ON MOUNT
+  // --------------------------------------------------
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        const [storedUser, storedType] = await Promise.all([
+          AsyncStorage.getItem('@tpl_game_user_meta'),
+          AsyncStorage.getItem('@tpl_connected_wallet_type')
+        ]);
+
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          if (userData.walletAddress) {
+            console.log("♻️ Restoring session for:", userData.walletAddress);
+            setAddress(userData.walletAddress);
+            if (storedType) setConnectedWalletType(storedType);
+
+            // Trigger reload in GameContext
+            DeviceEventEmitter.emit('TPL_ACCOUNT_IMPORTED');
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to restore wallet session:", e);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+    restoreSession();
+  }, []);
 
   // Sync wallet address with app metadata and notify observers
   const syncWalletWithApp = async (walletAddress) => {
@@ -116,6 +149,7 @@ export function WalletProvider({ children }) {
       setSigner(signer)
       setAddress(address)
       setConnectedWalletType('metamask')
+      await AsyncStorage.setItem('@tpl_connected_wallet_type', 'metamask');
 
       await syncWalletWithApp(address)
       console.log("🦊 MetaMask conectado:", address)
@@ -154,6 +188,7 @@ export function WalletProvider({ children }) {
       setSigner(signer)
       setAddress(address)
       setConnectedWalletType('metamask')
+      await AsyncStorage.setItem('@tpl_connected_wallet_type', 'metamask');
 
       await syncWalletWithApp(address)
       console.log("📱 WalletConnect conectado:", address)
@@ -193,6 +228,7 @@ export function WalletProvider({ children }) {
       setSigner(signer);
       setAddress(address);
       setConnectedWalletType('pali');
+      await AsyncStorage.setItem('@tpl_connected_wallet_type', 'pali');
 
       await syncWalletWithApp(address);
       console.log("🟢 Pali Wallet conectado:", address);
@@ -205,12 +241,14 @@ export function WalletProvider({ children }) {
   // --------------------------------------------------
   // DISCONNECT
   // --------------------------------------------------
-  const disconnectWallet = () => {
+  const disconnectWallet = async () => {
     setProvider(null)
     setSigner(null)
     setAddress(null)
     setConnectedWalletType(null)
     setHasSkippedConnection(false)
+    await AsyncStorage.removeItem('@tpl_connected_wallet_type');
+    // We don't remove @tpl_game_user_meta address here to allow recovery but we could
   }
 
   return (
