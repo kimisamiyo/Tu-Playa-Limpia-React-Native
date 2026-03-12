@@ -42,7 +42,7 @@ export default function ConnectWalletScreen() {
             // Por consistencia con la arquitectura de PALI existente en la DApp,
             // podemos reutilizar el flujo si `pali` está en local, pero hoy
             // redirigimos a MetaMask universal que soporta WalletConnect.
-            await connectMetaMask("Pali");
+            await connectPali();
         } catch (e) {
             console.error(e);
         } finally {

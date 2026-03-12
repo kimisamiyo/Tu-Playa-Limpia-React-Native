@@ -137,6 +137,29 @@ const BalanceCard = ({ onRedeem, points, nfts }) => {
 import { useWallet } from '../context/WalletContext';
 import { useAuth } from '../context/AuthContext';
 import { fetchTPLBalance } from '../utils/blockchain/tplToken';
+const NoticeBanner = () => {
+    const { colors, isDark } = useTheme();
+    const { t } = useLanguage();
+    return (
+        <Animated.View
+            entering={FadeInDown.delay(300).springify()}
+            style={styles.noticeContainer}
+        >
+            <GlassCard variant="elevated" style={styles.noticeCard}>
+                <View style={styles.noticeHeader}>
+                    <View style={styles.noticeIconBox}>
+                        <Ionicons name="notifications" size={rs(18)} color={BRAND.sandGold} />
+                    </View>
+                    <Text style={[styles.noticeTitle, { color: colors.text }]}>{t('home_notice_title')}</Text>
+                </View>
+                <Text style={[styles.noticeDescription, { color: colors.textSecondary }]}>
+                    {t('home_notice_description')}
+                </Text>
+            </GlassCard>
+        </Animated.View>
+    );
+};
+
 export default function HomeScreen() {
     const navigation = useNavigation();
     const { user, points, nfts, level, updateUserProfile, syncTPLToBlockchain } = useGame();
@@ -227,9 +250,11 @@ export default function HomeScreen() {
                                 points={points}
                                 nfts={nfts}
                             />
+                            {!isDesktop && <NoticeBanner />}
                         </View>
                         { }
                         <View style={isDesktop ? { flex: 0.6 } : { width: '100%' }}>
+                            {isDesktop && <NoticeBanner />}
                             <Animated.View entering={FadeInUp.delay(400).springify()}>
                                 <Text style={[styles.sectionTitle, { color: colors.text }]}>
                                     {t('home_quick_actions')}
@@ -370,5 +395,31 @@ const styles = StyleSheet.create({
     waterWrapper: {
         position: 'absolute', bottom: 0, left: 0, right: 0,
         height: rh(100), zIndex: -1, opacity: 0.4,
+    },
+    noticeContainer: {
+        marginBottom: SPACING.lg,
+    },
+    noticeCard: {
+        padding: SPACING.md,
+        borderLeftWidth: 4,
+        borderLeftColor: BRAND.sandGold,
+    },
+    noticeHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: rs(6),
+    },
+    noticeIconBox: {
+        marginRight: rs(8),
+    },
+    noticeTitle: {
+        fontSize: rf(16),
+        fontWeight: '800',
+        letterSpacing: 0.5,
+    },
+    noticeDescription: {
+        fontSize: rf(13),
+        lineHeight: rf(19),
+        fontWeight: '500',
     },
 });

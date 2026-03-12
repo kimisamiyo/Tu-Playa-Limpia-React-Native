@@ -23,35 +23,35 @@ const TITLES_CONFIG = [
         name: 'Golden Eco Legend',
         min: 300,
         color: '#FFD700',
-        desc: 'La leyenda definitiva de la conservación costera.',
+        descKey: 'title_legend_desc',
     },
     {
         id: 'protector',
         name: 'Ocean Protector',
         min: 100,
         color: '#00FFFF',
-        desc: 'Un protector incansable de los ecosistemas marinos.',
+        descKey: 'title_protector_desc',
     },
     {
         id: 'guardian',
         name: 'Beach Guardian',
         min: 50,
         color: '#F4A460',
-        desc: 'Vigilante ejemplar de nuestras playas.',
+        descKey: 'title_guardian_desc',
     },
     {
         id: 'collector',
         name: 'Collector Starter',
         min: 5,
         color: '#32CD32',
-        desc: 'Comenzando a coleccionar actos de impacto positivo.',
+        descKey: 'title_collector_desc',
     },
     {
         id: 'rookie',
         name: 'Cleanup Rookie',
         min: 0,
         color: '#A9A9A9',
-        desc: 'Iniciando el camino hacia un planeta más limpio.',
+        descKey: 'title_rookie_desc',
     }
 ];
 const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle, onSync }) => {
@@ -101,7 +101,7 @@ const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle,
                         </View>
                         <View style={styles.pointsDisplay}>
                             <View style={styles.pointsInfo}>
-                                <Text style={[styles.pointsLabel, { color: colors.textSecondary }]}>TUS PUNTOS ACTUALES</Text>
+                                <Text style={[styles.pointsLabel, { color: colors.textSecondary }]}>{t('redeem_current_points')}</Text>
                                 <Text style={[styles.pointsValue, { color: colors.primary }]}>{points} TPL</Text>
                             </View>
 
@@ -127,7 +127,7 @@ const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle,
                                     syncStatus === 'success' && { color: '#32CD32' },
                                     syncStatus === 'error' && { color: '#FF4500' }
                                 ]}>
-                                    {isSyncing ? 'SINCRONIZANDO...' : (syncStatus === 'success' ? 'LOGRADO' : (syncStatus === 'error' ? 'FALLÓ' : 'SINCRONIZAR'))}
+                                    {isSyncing ? t('redeem_syncing') : (syncStatus === 'success' ? t('redeem_sync_success') : (syncStatus === 'error' ? t('redeem_sync_error') : t('redeem_sync_button')))}
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -161,19 +161,19 @@ const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle,
                                                 )}
                                                 {isActive && (
                                                     <View style={[styles.activeBadge, { backgroundColor: config.color }]}>
-                                                        <Text style={styles.activeText}>ACTIVO</Text>
+                                                        <Text style={styles.activeText}>{t('redeem_active_badge')}</Text>
                                                     </View>
                                                 )}
                                             </View>
                                             <Text style={[styles.description, { color: colors.textSecondary }]}>
-                                                {config.desc}
+                                                {t(config.descKey)}
                                             </Text>
                                             {isUnlocked && !isActive && (
                                                 <TouchableOpacity
                                                     style={[styles.claimButton, { backgroundColor: config.color }]}
                                                     onPress={() => onUpdateTitle(config.name)}
                                                 >
-                                                    <Text style={styles.claimButtonText}>EQUIPAR TÍTULO</Text>
+                                                    <Text style={styles.claimButtonText}>{t('redeem_equip_button')}</Text>
                                                 </TouchableOpacity>
                                             )}
                                         </GlassCard>
@@ -183,7 +183,7 @@ const TPLRedeemModal = ({ visible, onClose, points, currentTitle, onUpdateTitle,
                         </ScrollView>
                         <View style={styles.footer}>
                             <AnimatedButton
-                                title="CERRAR"
+                                title={t('redeem_close_button')}
                                 onPress={onClose}
                                 variant="secondary"
                                 fullWidth

@@ -396,15 +396,18 @@ const connectViaWalletConnect = async () => {
  * Conexión directa con Pali Wallet (inyectada en window).
  */
 const connectViaPali = async () => {
-  let ethProvider = window.pali || window.ethereum;
+  let ethProvider = window.pali;
 
   if (window.ethereum?.providers) {
-    ethProvider =
-      window.ethereum.providers.find((p) => p.isPali || p.isPaliWallet) ||
-      window.ethereum;
+    ethProvider = window.ethereum.providers.find((p) => p.isPali || p.isPaliWallet);
   }
 
-  if (!ethProvider) throw new Error("Pali Wallet no detectada.");
+  // Si no se encuentra explícitamente Pali, no caemos en window.ethereum automáticamente
+  if (!ethProvider && window.ethereum?.isPali) {
+    ethProvider = window.ethereum;
+  }
+
+  if (!ethProvider) throw new Error("Pali Wallet no detectada. Por favor, asegúrate de tener instalada la extensión de Pali.");
 
   const Web3Provider = ethers.providers?.Web3Provider || ethers.BrowserProvider;
   const provider = new Web3Provider(ethProvider);
