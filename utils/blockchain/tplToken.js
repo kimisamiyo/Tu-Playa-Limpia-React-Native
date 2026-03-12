@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import { NETWORK_CONFIG } from './networkConfig';
-export const TPL_TOKEN_ADDRESS = "0xdbe03da0a41ac28939876416773bec40c3b6a042";
+export const TPL_TOKEN_ADDRESS = process.env.EXPO_PUBLIC_TPL_TOKEN_ADDRESS || "0xdbe03da0a41ac28939876416773bec40c3b6a042";
 export const TPL_TOKEN_ABI = [
     "function balanceOf(address account) view returns (uint256)",
     "function decimals() view returns (uint8)",
@@ -10,8 +10,9 @@ export const TPL_TOKEN_ABI = [
 ];
 export const fetchUserTitle = async (address, customProvider = null) => {
     try {
+        const Web3Provider = ethers.providers?.Web3Provider || ethers.BrowserProvider;
         const provider = customProvider ||
-            (window.ethereum ? new ethers.providers.Web3Provider(window.ethereum) : null);
+            (window.ethereum ? new Web3Provider(window.ethereum) : null);
 
         if (!provider) return "Cleanup Rookie";
 
@@ -26,8 +27,9 @@ export const fetchUserTitle = async (address, customProvider = null) => {
 
 export const fetchTPLBalance = async (address, customProvider = null) => {
     try {
+        const Web3Provider = ethers.providers?.Web3Provider || ethers.BrowserProvider;
         const provider = customProvider ||
-            (window.ethereum ? new ethers.providers.Web3Provider(window.ethereum) : null);
+            (window.ethereum ? new Web3Provider(window.ethereum) : null);
 
         if (!provider) return "0";
 

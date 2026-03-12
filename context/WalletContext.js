@@ -135,10 +135,19 @@ export function WalletProvider({ children }) {
         alert("MetaMask no disponible")
         return
       }
-      const ethersProvider = new ethers.providers.Web3Provider(mmProvider)
+      // ✅ Soporte robusto para ethers v5 y v6
+      const Web3Provider = ethers.providers?.Web3Provider || ethers.BrowserProvider;
+      if (!Web3Provider) {
+        throw new Error("No se pudo encontrar el proveedor de Ethers (v5/v6 mismatch)");
+      }
+      const ethersProvider = new Web3Provider(mmProvider)
 
       // ✅ ESTO ABRE LA EXTENSIÓN
-      await ethersProvider.send("eth_requestAccounts", [])
+      if (ethersProvider.send) {
+        await ethersProvider.send("eth_requestAccounts", [])
+      } else {
+        await mmProvider.request({ method: "eth_requestAccounts" });
+      }
 
       await switchNetwork(mmProvider)
 
@@ -179,10 +188,11 @@ export function WalletProvider({ children }) {
 
       await switchNetwork(wcProvider)
 
-      const ethersProvider = new ethers.providers.Web3Provider(wcProvider)
+      const Web3Provider = ethers.providers?.Web3Provider || ethers.BrowserProvider;
+      const ethersProvider = new Web3Provider(wcProvider)
 
-      const signer = await ethersProvider.getSigner()
-      const address = await signer.getAddress()
+      const signer = ethersProvider.getSigner ? await ethersProvider.getSigner() : await ethersProvider.getSigner();
+      const address = signer.getAddress ? await signer.getAddress() : await signer.address;
 
       setProvider(ethersProvider)
       setSigner(signer)
@@ -216,13 +226,14 @@ export function WalletProvider({ children }) {
         return;
       }
 
-      const ethersProvider = new ethers.providers.Web3Provider(ethProvider);
+      const Web3Provider = ethers.providers?.Web3Provider || ethers.BrowserProvider;
+      const ethersProvider = new Web3Provider(ethProvider);
       await ethProvider.request({ method: "eth_requestAccounts" });
 
       await switchNetwork(ethProvider);
 
-      const signer = await ethersProvider.getSigner();
-      const address = await signer.getAddress();
+      const signer = ethersProvider.getSigner ? await ethersProvider.getSigner() : await ethersProvider.getSigner();
+      const address = signer.getAddress ? await signer.getAddress() : await signer.address;
 
       setProvider(ethersProvider);
       setSigner(signer);

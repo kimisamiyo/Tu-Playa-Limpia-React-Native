@@ -180,7 +180,8 @@ const connectMetaMaskDirect = async () => {
   const ethProvider = window.ethereum;
   if (!ethProvider?.isMetaMask) throw new Error("MetaMask no detectada en este navegador.");
 
-  const provider = new ethers.providers.Web3Provider(ethProvider);
+  const Web3Provider = ethers.providers?.Web3Provider || ethers.BrowserProvider;
+  const provider = new Web3Provider(ethProvider);
   await ethProvider.request({ method: 'eth_requestAccounts' });
 
   const currentChainId = await ethProvider.request({ method: 'eth_chainId' });
@@ -253,7 +254,8 @@ const buildFreshProvider = async (wcProvider) => {
       const raw = await wcProvider.request({ method: 'eth_chainId' });
       const current = parseInt(raw, 16);
       if (current === NETWORK_CONFIG.chainId) {
-        const p = new ethers.providers.Web3Provider(wcProvider);
+        const Web3Provider = ethers.providers?.Web3Provider || ethers.BrowserProvider;
+        const p = new Web3Provider(wcProvider);
         return p;
       }
       console.log(`⏳ Esperando red correcta... intento ${i + 1}/10 (actual: ${current})`);
@@ -289,7 +291,7 @@ const connectViaWalletConnect = async () => {
       if (accounts && accounts.length > 0) {
         return {
           provider,
-          signer: provider.getSigner(),
+          signer: provider.getSigner ? provider.getSigner() : provider.getSigner(),
           recipient: accounts[0],
           wcProvider: _wcProviderInstance,
         };
@@ -376,14 +378,15 @@ const connectViaWalletConnect = async () => {
 
   // ✅ Construir provider ethers directamente — no hace falta buildFreshProvider
   //    con reintentos porque la sesión WC ya tiene el chainId correcto.
-  const provider = new ethers.providers.Web3Provider(wcProvider);
+  const Web3Provider = ethers.providers?.Web3Provider || ethers.BrowserProvider;
+  const provider = new Web3Provider(wcProvider);
   const accounts = await provider.listAccounts();
   if (!accounts || accounts.length === 0)
     throw new Error("No hay cuenta conectada en la wallet.");
 
   return {
     provider,
-    signer: provider.getSigner(),
+    signer: provider.getSigner ? provider.getSigner() : provider.getSigner(),
     recipient: accounts[0],
     wcProvider,
   };
@@ -403,7 +406,8 @@ const connectViaPali = async () => {
 
   if (!ethProvider) throw new Error("Pali Wallet no detectada.");
 
-  const provider = new ethers.providers.Web3Provider(ethProvider);
+  const Web3Provider = ethers.providers?.Web3Provider || ethers.BrowserProvider;
+  const provider = new Web3Provider(ethProvider);
   await ethProvider.request({ method: "eth_requestAccounts" });
 
   const currentChainId = await ethProvider.request({ method: "eth_chainId" });
@@ -518,8 +522,12 @@ export const handleClaim = async (
       //   relay WebSocket de WalletConnect (sin CORS).
       // Móvil: _activeWcProvider es null → usamos window.ethereum directamente,
       //   que está dentro del browser de MetaMask (sin CORS).
+      //   relay WebSocket de WalletConnect (sin CORS).
+      // Móvil: _activeWcProvider es null → usamos window.ethereum directamente,
+      //   que está dentro del browser de MetaMask (sin CORS).
       const rawTransport = _activeWcProvider ? _activeWcProvider : window.ethereum;
-      const adminTransport = new ethers.providers.Web3Provider(rawTransport, zkSysNetwork);
+      const Web3Provider = ethers.providers?.Web3Provider || ethers.BrowserProvider;
+      const adminTransport = new Web3Provider(rawTransport, zkSysNetwork);
       const adminWallet = new ethers.Wallet(adminPrivateKey, adminTransport);
       const abi = MissionNFT.abi || MissionNFT;
       const contract = new ethers.Contract(CONTRACT_ADDRESS, abi, adminWallet);
